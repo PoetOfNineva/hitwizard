@@ -453,9 +453,9 @@ function LyricsPanel(_ref8) {
   const handleAudioUpload = async e => {
     const file = e.target.files[0];
     if (!file) return;
-    const maxSize = 50 * 1024 * 1024;
+    const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
-      setErr("File is too large. Maximum size is 50MB.");
+      setErr("File is too large for transcription. Maximum size is 25MB. WAV files are usually too large — please convert your WAV to MP3 first (free at cloudconvert.com or using GarageBand on Mac). A 5-minute MP3 is typically 5-8MB and works perfectly.");
       return;
     }
     setErr("");
@@ -577,7 +577,7 @@ function LyricsPanel(_ref8) {
   })), /*#__PURE__*/React.createElement("input", {
     ref: fileRef,
     type: "file",
-    accept: ".mp3,.wav,.m4a,.flac,.ogg",
+    accept: ".mp3,.m4a,.flac,.ogg,.wav",
     onChange: handleAudioUpload,
     style: {
       display: "none"
@@ -591,7 +591,7 @@ function LyricsPanel(_ref8) {
     disabled: transcribing || loading
   }, transcribing ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Listening to your audio...") : "🎤 Upload Audio File (MP3, WAV, M4A) — AI will transcribe lyrics"), preview && /*#__PURE__*/React.createElement("div", {
+  }), " Listening to your audio...") : "🎤 Upload Audio File — MP3 recommended (WAV files are often too large)"), preview && /*#__PURE__*/React.createElement("div", {
     className: "sp-preview"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -675,47 +675,7 @@ function LyricsPanel(_ref8) {
 }
 
 // ── CHARACTER VAULT DATA ──
-const DEFAULT_CHARACTERS = [{
-  id: "celinenya",
-  name: "Celinenya",
-  role: "Lead Artist",
-  emoji: "👩🏽",
-  dna: "Black medium biracial woman in her mid 20s with long straight black hair with bangs, warm golden brown skin, sharp defined facial features, slim face with defined cheekbones, curvy hourglass figure not slim, full figured with wide hips, balanced hourglass build, realistic human proportions non-negotiable",
-  tag: "same woman as before for consistency",
-  color: "#FFB800"
-}, {
-  id: "kiko",
-  name: "Kiko",
-  role: "Male Lead",
-  emoji: "👨🏽",
-  dna: "Light-skinned Black biracial man in his mid 20s with caramel brown skin tone, thick voluminous curly afro hairstyle, well-groomed goatee and mustache, youthful appearance, athletic build, realistic human proportions non-negotiable",
-  tag: "same man as before for consistency",
-  color: "#9B4FDE"
-}, {
-  id: "blonde",
-  name: "The Blonde",
-  role: "Rival Woman",
-  emoji: "👱‍♀️",
-  dna: "Light-skinned woman in her mid 20s with warm beige peachy skin tone, long wavy honey-blonde hair with natural sun-kissed highlights falling past shoulders, bright hazel green eyes, soft feminine features, warm approachable face, slim to average build, feminine elegant posture, realistic human proportions non-negotiable",
-  tag: "same rival woman as before for consistency",
-  color: "#00E599"
-}, {
-  id: "grandma",
-  name: "Grandma",
-  role: "Comedy / Drama",
-  emoji: "👵🏾",
-  dna: "Elegant Black woman in her mid to late 50s, warm deep brown skin, natural silver-streaked black hair worn in a neat updo, full rounded face with graceful aging lines, warm expressive eyes, full lips, dignified bearing, full-figured body with natural mature curves, poised and commanding presence, not frail not hunched, church-elegant energy, realistic human proportions non-negotiable",
-  tag: "same older woman as before for consistency",
-  color: "#FF8C00"
-}, {
-  id: "german",
-  name: "The German",
-  role: "New Love Interest",
-  emoji: "👨🏼",
-  dna: "German man in his mid 20s, tall commanding build 6 foot 2, broad shoulders and muscular athletic frame, fair to medium European skin with natural tan, sharp defined jawline, strong prominent cheekbones, short neat dark blonde hair, clean-shaven or light stubble, deep-set blue grey eyes, intense focused gaze, masculine refined features not cartoonish muscle, athletic but elegant, realistic human proportions non-negotiable",
-  tag: "same German man as before for consistency",
-  color: "#4FC3F7"
-}];
+const DEFAULT_CHARACTERS = [];
 
 // ── CHARACTER VAULT PAGE ──
 function CharacterVault(_ref9) {
@@ -775,10 +735,7 @@ function CharacterVault(_ref9) {
     setForm(nc);
   };
   const deleteChar = id => {
-    if (DEFAULT_CHARACTERS.find(c => c.id === id)) {
-      showToast("Core characters cannot be deleted", "⚠️");
-      return;
-    }
+    
     setChars(cs => cs.filter(c => c.id !== id));
     showToast("Character removed", "✓");
   };
@@ -809,7 +766,13 @@ function CharacterVault(_ref9) {
   }, "Your Characters (", chars.length, ")"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-gold btn-sm",
     onClick: addNew
-  }, "+ Add Character")), chars.map(c => /*#__PURE__*/React.createElement("div", {
+  }, "+ Add Character")), chars.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {textAlign:"center",padding:"44px 0",color:"var(--muted)"}
+  }, /*#__PURE__*/React.createElement("div", {style:{fontSize:38,marginBottom:11}}, "\uD83E\uDDEC"),
+  /*#__PURE__*/React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,marginBottom:8,color:"var(--txt)"}}, "Your Vault Is Empty"),
+  /*#__PURE__*/React.createElement("div", {style:{fontSize:12,marginBottom:16,lineHeight:1.7,maxWidth:360,margin:"0 auto 16px"}}, "Add your characters here. Give each one a name, role, and full physical description. Those tags get automatically added to every video prompt you generate — you never have to type them again."),
+  /*#__PURE__*/React.createElement("button", {className:"btn btn-gold",onClick:addNew}, "+ Add Your First Character")
+  ) : chars.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     className: "vault-card"
   }, editing === c.id ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -1055,7 +1018,7 @@ function VideoEngine(_ref0) {
       const arollCount = Math.ceil(totalClips * 0.65);
       const brollCount = totalClips - arollCount;
       const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
-      const raw = await hwAI("You are an expert AI music video director. You understand that Grok AI generates ".concat(clipLen, "-second video clips. You must plan the exact number of clips needed and write complete ready-to-use Grok prompts for each one. Always use FULL character description tags \u2014 never just a name. Always include warm golden lighting. Always use TRACKING CAMERA that moves, never static. Always include micro-movements. Always start multi-character prompts with EXACTLY N PEOPLE in this scene. Describe Celinenya first always. Include all consistency tags at the end. Respond ONLY with valid JSON."), "Create a complete video shooting script.\n\nSong: \"".concat(form.songTitle || "My Song", "\"\nVideo type: ").concat(form.videoType, " (").concat(totalSecs, " seconds)\nClip length: ").concat(clipLen, " seconds each\nTotal clips needed: ").concat(totalClips, " (").concat(arollCount, " A-roll performance clips, ").concat(brollCount, " B-roll story clips)\n\nCHARACTER DNA TO USE IN EVERY PROMPT:\n").concat(charDNA, "\n\nLYRICS:\n").concat(form.lyrics, "\n\nRULES FOR EVERY PROMPT:\n- Full character DNA tags every time \u2014 never just use the name\n- TRACKING CAMERA always moving \u2014 never static\n- Warm golden lighting every clip\n- Micro-movements: head tilts, eye shifts, breathing visible\n- EXACTLY N PEOPLE declaration for multi-character scenes\n- Celinenya always described first\n- All consistency tags at end of every prompt\n- 9:16 vertical format\n- 250-300 words per prompt maximum\n\nDetect A-roll vs B-roll automatically:\n- A-roll = artist performing/singing to camera\n- B-roll = story scene acting out lyric narrative (third person language, action events, location references)\n\nReturn ONLY this JSON:\n{\n  \"songTitle\": \"title\",\n  \"totalClips\": ").concat(totalClips, ",\n  \"arollCount\": ").concat(arollCount, ",\n  \"brollCount\": ").concat(brollCount, ",\n  \"totalSeconds\": ").concat(totalSecs, ",\n  \"clipLength\": ").concat(clipLen, ",\n  \"grokInstructions\": \"plain English instructions for the artist about how to use these prompts in Grok\",\n  \"capCutGuide\": \"plain English CapCut assembly instructions\",\n  \"clips\": [\n    {\n      \"number\": 1,\n      \"timestamp\": \"0:00 - 0:").concat(clipLen, "\",\n      \"type\": \"A-ROLL\",\n      \"characters\": [\"Celinenya\"],\n      \"lyricMoment\": \"the lyric line this clip covers\",\n      \"sceneDescription\": \"what happens visually\",\n      \"grokPrompt\": \"the complete ready-to-paste Grok prompt with full character DNA\"\n    }\n  ]\n}"));
+      const raw = await hwAI("You are an expert AI music video director. You understand that Grok AI generates ".concat(clipLen, "-second video clips. You must plan the exact number of clips needed and write complete ready-to-use Grok prompts for each one. Always use FULL character description tags \u2014 never just a name. Always include warm golden lighting. Always use TRACKING CAMERA that moves, never static. Always include micro-movements. Always start multi-character prompts with EXACTLY N PEOPLE in this scene. Describe the lead artist character first always. Include all consistency tags at the end. Respond ONLY with valid JSON."), "Create a complete video shooting script.\n\nSong: \"".concat(form.songTitle || "My Song", "\"\nVideo type: ").concat(form.videoType, " (").concat(totalSecs, " seconds)\nClip length: ").concat(clipLen, " seconds each\nTotal clips needed: ").concat(totalClips, " (").concat(arollCount, " A-roll performance clips, ").concat(brollCount, " B-roll story clips)\n\nCHARACTER DNA TO USE IN EVERY PROMPT:\n").concat(charDNA, "\n\nLYRICS:\n").concat(form.lyrics, "\n\nRULES FOR EVERY PROMPT:\n- Full character DNA tags every time \u2014 never just use the name\n- TRACKING CAMERA always moving \u2014 never static\n- Warm golden lighting every clip\n- Micro-movements: head tilts, eye shifts, breathing visible\n- EXACTLY N PEOPLE declaration for multi-character scenes\n- Celinenya always described first\n- All consistency tags at end of every prompt\n- 9:16 vertical format\n- 250-300 words per prompt maximum\n\nDetect A-roll vs B-roll automatically:\n- A-roll = artist performing/singing to camera\n- B-roll = story scene acting out lyric narrative (third person language, action events, location references)\n\nReturn ONLY this JSON:\n{\n  \"songTitle\": \"title\",\n  \"totalClips\": ").concat(totalClips, ",\n  \"arollCount\": ").concat(arollCount, ",\n  \"brollCount\": ").concat(brollCount, ",\n  \"totalSeconds\": ").concat(totalSecs, ",\n  \"clipLength\": ").concat(clipLen, ",\n  \"grokInstructions\": \"plain English instructions for the artist about how to use these prompts in Grok\",\n  \"capCutGuide\": \"plain English CapCut assembly instructions\",\n  \"clips\": [\n    {\n      \"number\": 1,\n      \"timestamp\": \"0:00 - 0:").concat(clipLen, "\",\n      \"type\": \"A-ROLL\",\n      \"characters\": [\"Lead Artist\"],\n      \"lyricMoment\": \"the lyric line this clip covers\",\n      \"sceneDescription\": \"what happens visually\",\n      \"grokPrompt\": \"the complete ready-to-paste Grok prompt with full character DNA\"\n    }\n  ]\n}"));
       const p = parseJ(raw);
       setResults(p);
       showToast("Shooting script ready! ".concat(p.totalClips, " clips generated."), "🎬");
