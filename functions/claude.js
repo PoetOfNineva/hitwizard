@@ -1,4 +1,3 @@
-
 const https = require("https");
 
 exports.handler = async function(event, context) {
@@ -37,7 +36,7 @@ exports.handler = async function(event, context) {
     const requestBody = JSON.parse(event.body);
 
     const payload = JSON.stringify({
-      model: requestBody.model || "claude-sonnet-4-20250514",
+      model: requestBody.model || "claude-sonnet-4-5",
       max_tokens: requestBody.max_tokens || 4000,
       system: requestBody.system || "",
       messages: requestBody.messages || []
