@@ -10,17 +10,20 @@ export default async (request, context) => {
     return new Response("", { status: 200, headers });
   }
 
-  if (request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
-  }
-
   try {
-    // Deno runtime - use Deno.env.get for environment variables
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
+    // Debug: check if key exists and its format
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "API key not configured on server." }),
+        JSON.stringify({ error: "NO API KEY FOUND in environment" }),
+        { status: 500, headers }
+      );
+    }
+
+    if (!apiKey.startsWith("sk-ant-")) {
+      return new Response(
+        JSON.stringify({ error: `API key format wrong. Starts with: ${apiKey.substring(0, 10)}` }),
         { status: 500, headers }
       );
     }
@@ -36,22 +39,26 @@ export default async (request, context) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 4000,
-        system: body.system || "",
-        messages: body.messages || []
+        max_tokens: 1000,
+        system: body.system || "You are a helpful assistant.",
+        messages: body.messages || [{ role: "user", content: "Say hello" }]
       })
     });
 
     const responseText = await anthropicResponse.text();
 
-    return new Response(responseText, {
-      status: anthropicResponse.status,
-      headers
-    });
+    // Return full response including status for debugging
+    return new Response(
+      JSON.stringify({
+        anthropicStatus: anthropicResponse.status,
+        anthropicResponse: responseText
+      }),
+      { status: 200, headers }
+    );
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message || "Something went wrong. Please try again." }),
+      JSON.stringify({ error: "CAUGHT ERROR: " + err.message }),
       { status: 500, headers }
     );
   }
