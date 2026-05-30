@@ -9,3 +9,6 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[functions."claude"]
+  timeout = 60
