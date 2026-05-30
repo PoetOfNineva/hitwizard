@@ -3508,68 +3508,91 @@ function BudgetPlanner(_ref45) {
 // ── HISTORY RESULT VIEWER MODAL ──
 function HistoryResultModal(_ref_hrm) {
   let item = _ref_hrm.item, onClose = _ref_hrm.onClose;
-  const _useState_hrm = useState(null), _useState_hrm2 = _slicedToArray(_useState_hrm, 2), toastMsg = _useState_hrm2[0], setToastMsg = _useState_hrm2[1];
-  const st = (msg, icon) => setToastMsg({msg, icon});
   if (!item) return null;
   const r = item.result;
-  const renderKV = (obj, depth) => {
-    if (!obj || typeof obj !== "object") return null;
-    if (Array.isArray(obj)) return obj.map((v, i) => React.createElement("div", {key: i, style:{fontSize:12,color:"var(--muted)",padding:"3px 0",lineHeight:1.7}}, typeof v === "string" ? "• " + v : renderKV(v, (depth||0)+1)));
-    return Object.entries(obj).map((_ref_kv) => {
-      let [k, v] = _ref_kv;
-      if (!v) return null;
-      const label = k.replace(/([A-Z])/g," $1").replace(/_/g," ").toUpperCase();
-      if (typeof v === "string") return React.createElement("div", {key:k, className:"rbox", style:{marginBottom:10}},
-        React.createElement("div", {className:"rbox-lbl"}, label),
-        React.createElement("div", {className:"rbox-txt", style:{paddingRight:80}}, v),
-        React.createElement(CopyBtn, {text:v, st})
-      );
-      if (Array.isArray(v)) return React.createElement("div", {key:k, className:"rbox", style:{marginBottom:10}},
-        React.createElement("div", {className:"rbox-lbl"}, label),
-        React.createElement("div", {className:"rbox-txt", style:{paddingRight:80}}, v.join("\n")),
-        React.createElement(CopyBtn, {text:v.join("\n"), st})
-      );
-      if (typeof v === "object") return React.createElement("div", {key:k, style:{marginBottom:14}},
-        React.createElement("div", {style:{fontSize:10,letterSpacing:3,textTransform:"uppercase",color:"var(--gold)",fontFamily:"JetBrains Mono,monospace",marginBottom:8,paddingBottom:5,borderBottom:"1px solid rgba(255,184,0,.1)"}}, "── " + label + " ──"),
-        renderKV(v, (depth||0)+1)
-      );
-      return null;
-    });
-  };
-  const exportText = () => {
-    if (!r) return "";
-    const lines = [];
-    const walk = (obj, prefix) => {
+
+  const exportText = function() {
+    if (!r) return "No result data stored for this entry.";
+    var lines = [];
+    var walk = function(obj, prefix) {
       if (!obj) return;
       if (typeof obj === "string") { lines.push("[" + (prefix||"").toUpperCase() + "]\n" + obj + "\n"); return; }
       if (Array.isArray(obj)) { lines.push("[" + (prefix||"").toUpperCase() + "]\n" + obj.join("\n") + "\n"); return; }
-      if (typeof obj === "object") { Object.entries(obj).forEach(([k,v]) => walk(v, prefix ? prefix + " / " + k : k)); }
+      if (typeof obj === "object") { Object.keys(obj).forEach(function(k){ walk(obj[k], prefix ? prefix + " / " + k : k); }); }
     };
     walk(r, "");
     return "HITWIZARD — " + (item.title||"") + " (" + (item.type||"").toUpperCase() + ")\nGenerated: " + item.date + "\n" + "=".repeat(60) + "\n\n" + lines.join("\n");
   };
-  return React.createElement("div", {className:"modal-bg", onClick:onClose},
-    React.createElement("div", {className:"modal", style:{maxWidth:760}, onClick:e=>e.stopPropagation()},
-      React.createElement("div", {className:"modal-head"},
+
+  var renderKV = function(obj) {
+    if (!obj || typeof obj !== "object") return null;
+    return Object.keys(obj).map(function(k) {
+      var v = obj[k];
+      if (!v) return null;
+      var label = k.replace(/([A-Z])/g," $1").replace(/_/g," ").toUpperCase();
+      var textVal = typeof v === "string" ? v : Array.isArray(v) ? v.join("\n") : null;
+      if (textVal !== null) {
+        return React.createElement("div", {key:k, style:{marginBottom:14,background:"rgba(8,8,14,.9)",border:"1px solid rgba(255,184,0,.18)",borderRadius:10,padding:14}},
+          React.createElement("div", {style:{fontSize:9,letterSpacing:2,textTransform:"uppercase",color:"var(--gold)",fontFamily:"JetBrains Mono,monospace",marginBottom:8}}, label),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.75,whiteSpace:"pre-wrap",marginBottom:10}}, textVal),
+          React.createElement("button", {
+            style:{background:"rgba(255,255,255,.04)",color:"var(--txt)",border:"1px solid rgba(255,255,255,.08)",padding:"5px 11px",borderRadius:8,fontSize:11,cursor:"pointer"},
+            onClick:function(e){e.stopPropagation();safeCopy(textVal);}
+          }, "Copy")
+        );
+      }
+      if (typeof v === "object" && !Array.isArray(v)) {
+        return React.createElement("div", {key:k, style:{marginBottom:18}},
+          React.createElement("div", {style:{fontSize:10,letterSpacing:3,textTransform:"uppercase",color:"var(--gold)",fontFamily:"JetBrains Mono,monospace",marginBottom:10,paddingBottom:6,borderBottom:"1px solid rgba(255,184,0,.1)"}}, "── " + label + " ──"),
+          renderKV(v)
+        );
+      }
+      return null;
+    });
+  };
+
+  // Use portal to render at document.body level - bypasses ALL stacking contexts
+  var modalEl = React.createElement("div", {
+    style:{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:99999,display:"flex",alignItems:"center",justifyContent:"center",padding:20},
+    onClick:onClose
+  },
+    React.createElement("div", {
+      style:{background:"#10101A",border:"1px solid rgba(255,184,0,.3)",borderRadius:13,width:"100%",maxWidth:720,maxHeight:"85vh",display:"flex",flexDirection:"column",overflow:"hidden"},
+      onClick:function(e){e.stopPropagation();}
+    },
+      React.createElement("div", {style:{padding:"15px 19px",borderBottom:"1px solid rgba(255,184,0,.12)",display:"flex",alignItems:"center",justifyContent:"space-between"}},
         React.createElement("div", null,
           React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:700,color:"var(--gold)"}}, item.icon + " " + item.title),
           React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:2}}, (item.sub||"") + " · " + item.date)
         ),
         React.createElement("div", {style:{display:"flex",gap:8}},
-          React.createElement("button", {className:"btn btn-gold btn-sm", onClick:()=>{ safeCopy(exportText()); setToastMsg({msg:"Full result copied!",icon:"✓"}); }}, "📋 Copy All"),
-          React.createElement("button", {className:"btn btn-ghost btn-sm", onClick:onClose}, "✕ Close")
+          React.createElement("button", {style:{background:"linear-gradient(135deg,#FFB800,#FF8C00)",color:"#08080E",border:"none",padding:"5px 11px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer"},
+            onClick:function(){safeCopy(exportText());}
+          }, "📋 Copy All"),
+          React.createElement("button", {style:{background:"rgba(255,255,255,.04)",color:"var(--txt)",border:"1px solid rgba(255,255,255,.08)",padding:"5px 11px",borderRadius:8,fontSize:11,cursor:"pointer"},
+            onClick:onClose
+          }, "✕ Close")
         )
       ),
-      React.createElement("div", {className:"modal-body"},
-        toastMsg && React.createElement(Toast, {msg:toastMsg.msg, icon:toastMsg.icon, onClose:()=>setToastMsg(null)}),
-        r ? renderKV(r, 0) : React.createElement("div", {style:{textAlign:"center",padding:"32px 0",color:"var(--muted)",fontSize:13}}, "⚠️ This entry was saved before full-result storage was added. Generate a new one and it will be fully expandable.")
+      React.createElement("div", {style:{flex:1,overflow:"auto",padding:19}},
+        r ? renderKV(r) : React.createElement("div", {style:{textAlign:"center",padding:"32px 0",color:"var(--muted)",fontSize:13}},
+          React.createElement("div", {style:{fontSize:32,marginBottom:12}}, "⚠️"),
+          React.createElement("div", null, "No result data for this entry."),
+          React.createElement("div", {style:{fontSize:12,marginTop:8}}, "Clear history and generate a fresh campaign — it will be fully expandable.")
+        )
       ),
-      React.createElement("div", {className:"modal-foot"},
-        React.createElement("button", {className:"btn btn-gold", onClick:()=>{ safeCopy(exportText()); setToastMsg({msg:"Full result copied! Paste into any text editor.",icon:"✓"}); }}, "📋 Copy Everything"),
-        React.createElement("button", {className:"btn btn-ghost btn-sm", onClick:onClose}, "Close")
+      React.createElement("div", {style:{padding:"11px 19px",borderTop:"1px solid rgba(255,184,0,.12)",display:"flex",gap:9}},
+        React.createElement("button", {style:{background:"linear-gradient(135deg,#FFB800,#FF8C00)",color:"#08080E",border:"none",padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"},
+          onClick:function(){safeCopy(exportText());}
+        }, "📋 Copy Everything"),
+        React.createElement("button", {style:{background:"rgba(255,255,255,.04)",color:"var(--txt)",border:"1px solid rgba(255,255,255,.08)",padding:"8px 16px",borderRadius:8,fontSize:13,cursor:"pointer"},
+          onClick:onClose
+        }, "Close")
       )
     )
   );
+
+  return ReactDOM.createPortal(modalEl, document.body);
 }
 
 function History(_ref52) {
