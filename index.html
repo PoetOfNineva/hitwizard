@@ -276,7 +276,7 @@ async function hwAI(sys, usr) {
       const res = await fetch("/api/claude", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,system:sys,messages:[{role:"user",content:usr}]}),
+        body: JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,system:sys,messages:[{role:"user",content:usr}]}),
         signal: ctrl.signal
       });;
       clearTimeout(t);
@@ -1608,21 +1608,16 @@ function CampaignForge(_ref10) {
   var _results$meta, _results$meta2, _results$meta3, _results$meta4, _results$meta5, _results$meta6, _results$meta7, _results$meta8, _results$tiktok, _results$tiktok2, _results$tiktok3, _results$tiktok4, _results$tiktok5, _results$tiktok6, _results$youtube, _results$youtube2, _results$youtube3, _results$youtube4, _results$youtube5, _results$strategy, _results$strategy2, _results$strategy3, _results$strategy4, _results$strategy5, _results$strategy6;
   let addHistory = _ref10.addHistory,
     st = _ref10.st;
-  const _useState31 = useState({
-      songTitle: "",
-      artist: "",
-      genre: "",
-      mood: "",
-      similar: "",
-      audience: "",
-      budget: "100",
-      goal: "More Spotify Streams",
-      lyrics: "",
-      story: ""
+  const _useState31 = useState(() => {
+      try { const s = localStorage.getItem("hw_cf"); return s ? JSON.parse(s) : {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
+      catch { return {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
     }),
     _useState32 = _slicedToArray(_useState31, 2),
     form = _useState32[0],
     setForm = _useState32[1];
+  useEffect(() => {
+    try { localStorage.setItem("hw_cf", JSON.stringify(form)); } catch {}
+  }, [form]);
   const _useState33 = useState(null),
     _useState34 = _slicedToArray(_useState33, 2),
     results = _useState34[0],
@@ -3739,10 +3734,16 @@ function HitWizard() {
     _useState100 = _slicedToArray(_useState99, 2),
     page = _useState100[0],
     setPage = _useState100[1];
-  const _useState101 = useState([]),
+  const _useState101 = useState(() => {
+      try { const s = localStorage.getItem("hw_history"); return s ? JSON.parse(s) : []; }
+      catch { return []; }
+    }),
     _useState102 = _slicedToArray(_useState101, 2),
     history = _useState102[0],
     setHistory = _useState102[1];
+  useEffect(() => {
+    try { localStorage.setItem("hw_history", JSON.stringify(history)); } catch {}
+  }, [history]);
   const _useState103 = useState(null),
     _useState104 = _slicedToArray(_useState103, 2),
     toast = _useState104[0],
