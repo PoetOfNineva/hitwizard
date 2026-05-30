@@ -10,25 +10,31 @@ export default async (request, context) => {
     return new Response("", { status: 200, headers });
   }
 
+  if (request.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Send a POST request with your song details." }),
+      { status: 405, headers }
+    );
+  }
+
   try {
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-
-    // Debug: check if key exists and its format
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "NO API KEY FOUND in environment" }),
+        JSON.stringify({ error: "API key not configured on server." }),
         { status: 500, headers }
       );
     }
 
-    if (!apiKey.startsWith("sk-ant-")) {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: `API key format wrong. Starts with: ${apiKey.substring(0, 10)}` }),
-        { status: 500, headers }
+        JSON.stringify({ error: "Invalid request format." }),
+        { status: 400, headers }
       );
     }
-
-    const body = await request.json();
 
     const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -39,26 +45,18 @@ export default async (request, context) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        system: body.system || "You are a helpful assistant.",
-        messages: body.messages || [{ role: "user", content: "Say hello" }]
+        max_tokens: 4000,
+        system: body.system || "",
+        messages: body.messages || []
       })
     });
 
     const responseText = await anthropicResponse.text();
-
-    // Return full response including status for debugging
-    return new Response(
-      JSON.stringify({
-        anthropicStatus: anthropicResponse.status,
-        anthropicResponse: responseText
-      }),
-      { status: 200, headers }
-    );
+    return new Response(responseText, { status: anthropicResponse.status, headers });
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "CAUGHT ERROR: " + err.message }),
+      JSON.stringify({ error: err.message || "Something went wrong. Please try again." }),
       { status: 500, headers }
     );
   }
