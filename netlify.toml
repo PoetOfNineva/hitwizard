@@ -1,8 +1,11 @@
 [build]
   publish = "."
   functions = "functions"
-  edge_functions = "netlify/edge-functions"
 
-[[edge_functions]]
-  path = "/api/claude"
-  function = "claude"
+[[redirects]]
+  from = "/api/claude"
+  to = "/.netlify/functions/claude"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
