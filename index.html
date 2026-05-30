@@ -3747,14 +3747,26 @@ function HitWizard() {
     page = _useState100[0],
     setPage = _useState100[1];
   const _useState101 = useState(() => {
-      try { const s = localStorage.getItem("hw_history"); return s ? JSON.parse(s) : []; }
+      try {
+        const s = localStorage.getItem("hw_history");
+        const meta = s ? JSON.parse(s) : [];
+        return meta.map(item => {
+          try {
+            const r = localStorage.getItem("hw_result_" + item.id);
+            return r ? Object.assign({}, item, {result: JSON.parse(r)}) : item;
+          } catch { return item; }
+        });
+      }
       catch { return []; }
     }),
     _useState102 = _slicedToArray(_useState101, 2),
     history = _useState102[0],
     setHistory = _useState102[1];
   useEffect(() => {
-    try { localStorage.setItem("hw_history", JSON.stringify(history)); } catch {}
+    try {
+      const meta = history.map(function(item) { var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest; });
+      localStorage.setItem("hw_history", JSON.stringify(meta));
+    } catch {}
   }, [history]);
   const _useState103 = useState(null),
     _useState104 = _slicedToArray(_useState103, 2),
@@ -3764,12 +3776,22 @@ function HitWizard() {
     _useState106 = _slicedToArray(_useState105, 2),
     open = _useState106[0],
     setOpen = _useState106[1];
-  const addHistory = useCallback(item => setHistory(h => [item, ...h.slice(0, 99)]), []);
+  const addHistory = useCallback(function(item) {
+    var id = "hw_" + Date.now();
+    var itemWithId = Object.assign({}, item, {id: id});
+    if (item.result) {
+      try { localStorage.setItem("hw_result_" + id, JSON.stringify(item.result)); } catch {}
+    }
+    setHistory(function(h) { return [itemWithId].concat(h.slice(0, 49)); });
+  }, []);
   const st = useCallback((msg, icon) => setToast({
     msg,
     icon
   }), []);
   const clearHistory = () => {
+    history.forEach(function(item) {
+      if (item.id) { try { localStorage.removeItem("hw_result_" + item.id); } catch {} }
+    });
     setHistory([]);
     st("History cleared", "✓");
   };
