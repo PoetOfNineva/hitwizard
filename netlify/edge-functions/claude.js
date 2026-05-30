@@ -15,14 +15,19 @@ export default async (request, context) => {
   }
 
   try {
-    const apiKey = Netlify.env.get("ANTHROPIC_API_KEY");
+    // Deno runtime - use Deno.env.get for environment variables
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "API key not configured." }), { status: 500, headers });
+      return new Response(
+        JSON.stringify({ error: "API key not configured on server." }),
+        { status: 500, headers }
+      );
     }
 
     const body = await request.json();
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,11 +42,18 @@ export default async (request, context) => {
       })
     });
 
-    const data = await response.json();
-    return new Response(JSON.stringify(data), { status: response.status, headers });
+    const responseText = await anthropicResponse.text();
+
+    return new Response(responseText, {
+      status: anthropicResponse.status,
+      headers
+    });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message || "Something went wrong." }), { status: 500, headers });
+    return new Response(
+      JSON.stringify({ error: err.message || "Something went wrong. Please try again." }),
+      { status: 500, headers }
+    );
   }
 };
 
