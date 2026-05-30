@@ -268,18 +268,27 @@ function DownloadModal(_ref3) {
 // ── AI CALL ──
 async function hwAI(sys, usr) {
   let retries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 2;
+  // Get API key from Netlify edge config
+  const API_KEY = await fetch("/api/key").then(r=>r.text()).catch(()=>null)
+    || window.__HW_KEY__;
   for (let i = 0; i <= retries; i++) {
     try {
       var _d$content;
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 55000);
-      const res = await fetch("/api/claude", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,system:sys,messages:[{role:"user",content:usr}]}),
-        signal: ctrl.signal
-      });;
-      clearTimeout(t);
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 4000,
+          system: sys,
+          messages: [{role: "user", content: usr}]
+        })
+      });
       if (!res.ok) {
         var _e$error;
         const e = await res.json().catch(() => ({}));
