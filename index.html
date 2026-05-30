@@ -3508,8 +3508,8 @@ function BudgetPlanner(_ref45) {
 // ── HISTORY RESULT VIEWER MODAL ──
 function HistoryResultModal(_ref_hrm) {
   let item = _ref_hrm.item, onClose = _ref_hrm.onClose;
-  const _useState_hrm = useState(null), _useState_hrm2 = _slicedToArray(_useState_hrm, 2), toast = _useState_hrm2[0], setToast = _useState_hrm2[1];
-  const st = (msg, icon) => setToast({msg, icon});
+  const _useState_hrm = useState(null), _useState_hrm2 = _slicedToArray(_useState_hrm, 2), toastMsg = _useState_hrm2[0], setToastMsg = _useState_hrm2[1];
+  const st = (msg, icon) => setToastMsg({msg, icon});
   if (!item) return null;
   const r = item.result;
   const renderKV = (obj, depth) => {
@@ -3556,16 +3556,16 @@ function HistoryResultModal(_ref_hrm) {
           React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:2}}, (item.sub||"") + " · " + item.date)
         ),
         React.createElement("div", {style:{display:"flex",gap:8}},
-          React.createElement("button", {className:"btn btn-gold btn-sm", onClick:()=>{ safeCopy(exportText()); setToast({msg:"Full result copied!",icon:"✓"}); }}, "📋 Copy All"),
+          React.createElement("button", {className:"btn btn-gold btn-sm", onClick:()=>{ safeCopy(exportText()); setToastMsg({msg:"Full result copied!",icon:"✓"}); }}, "📋 Copy All"),
           React.createElement("button", {className:"btn btn-ghost btn-sm", onClick:onClose}, "✕ Close")
         )
       ),
       React.createElement("div", {className:"modal-body"},
-        toast && React.createElement(Toast, {msg:toast.msg, icon:toast.icon, onClose:()=>setToast(null)}),
+        toastMsg && React.createElement(Toast, {msg:toastMsg.msg, icon:toastMsg.icon, onClose:()=>setToastMsg(null)}),
         r ? renderKV(r, 0) : React.createElement("div", {style:{textAlign:"center",padding:"32px 0",color:"var(--muted)",fontSize:13}}, "⚠️ This entry was saved before full-result storage was added. Generate a new one and it will be fully expandable.")
       ),
       React.createElement("div", {className:"modal-foot"},
-        React.createElement("button", {className:"btn btn-gold", onClick:()=>{ safeCopy(exportText()); setToast({msg:"Full result copied! Paste into any text editor.",icon:"✓"}); }}, "📋 Copy Everything"),
+        React.createElement("button", {className:"btn btn-gold", onClick:()=>{ safeCopy(exportText()); setToastMsg({msg:"Full result copied! Paste into any text editor.",icon:"✓"}); }}, "📋 Copy Everything"),
         React.createElement("button", {className:"btn btn-ghost btn-sm", onClick:onClose}, "Close")
       )
     )
