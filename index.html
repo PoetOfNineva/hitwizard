@@ -3634,7 +3634,7 @@ function History(_ref52) {
         : history.map((item, i) =>
             React.createElement("div", {
               key:i, className:"hi",
-              onClick:function(e){ e.stopPropagation(); setViewing(item); },
+              onClick:function(e){ e.stopPropagation(); console.log("HISTORY CLICK FIRED", item); setViewing(item); console.log("setViewing called"); },
               style:{cursor:"pointer"}
             },
               React.createElement("div", {style:{width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,background:item.color+"18",border:"1px solid "+item.color+"30"}}, item.icon),
