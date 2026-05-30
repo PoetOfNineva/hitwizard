@@ -10,10 +10,32 @@ export default async (request, context) => {
     return new Response("", { status: 200, headers });
   }
 
+  if (request.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "POST request required." }),
+      { status: 405, headers }
+    );
+  }
+
   try {
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: "API key not configured." }),
+        { status: 500, headers }
+      );
+    }
 
-    // Test with absolute minimum payload
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid request body." }),
+        { status: 400, headers }
+      );
+    }
+
     const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -23,28 +45,22 @@ export default async (request, context) => {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 10,
-        messages: [{ role: "user", content: "Hi" }]
+        max_tokens: 4000,
+        system: body.system || "",
+        messages: body.messages || []
       })
     });
 
     const responseText = await anthropicResponse.text();
-
-    // Return EVERYTHING so we can see what Anthropic says
-    return new Response(
-      JSON.stringify({
-        status: anthropicResponse.status,
-        statusText: anthropicResponse.statusText,
-        body: responseText,
-        keyPrefix: apiKey ? apiKey.substring(0, 20) + "..." : "NO KEY"
-      }),
-      { status: 200, headers }
-    );
+    return new Response(responseText, {
+      status: anthropicResponse.status,
+      headers
+    });
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ caught: err.message }),
-      { status: 200, headers }
+      JSON.stringify({ error: err.message || "Something went wrong." }),
+      { status: 500, headers }
     );
   }
 };
