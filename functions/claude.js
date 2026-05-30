@@ -1,7 +1,4 @@
 exports.handler = async function(event, context) {
-  // Extend timeout to 10 minutes for Sonnet
-  context.callbackWaitsForEmptyEventLoop = false;
-
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -34,7 +31,7 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 4000,
+        max_tokens: 1500,
         system: requestBody.system || "",
         messages: requestBody.messages || []
       })
