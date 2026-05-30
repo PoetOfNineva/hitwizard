@@ -1,48 +1,36 @@
 const https = require("https");
 
 exports.handler = async function(event, context) {
-  if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "POST, OPTIONS"
-      },
-      body: ""
-    };
-  }
-
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method not allowed" };
-  }
-
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json"
   };
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers, body: "" };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers, body: JSON.stringify({ error: "Method not allowed" }) };
+  }
 
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: "API key not configured." })
-      };
+      return { statusCode: 500, headers, body: JSON.stringify({ error: "API key not configured on server." }) };
     }
 
     const requestBody = JSON.parse(event.body);
 
     const payload = JSON.stringify({
-      model: requestBody.model || "claude-sonnet-4-5",
-      max_tokens: requestBody.max_tokens || 4000,
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
       system: requestBody.system || "",
       messages: requestBody.messages || []
     });
 
-    // Use Node's built-in https module — works in ALL Node versions
     const result = await new Promise((resolve, reject) => {
       const options = {
         hostname: "api.anthropic.com",
@@ -59,9 +47,7 @@ exports.handler = async function(event, context) {
       const req = https.request(options, (res) => {
         let data = "";
         res.on("data", (chunk) => { data += chunk; });
-        res.on("end", () => {
-          resolve({ statusCode: res.statusCode, body: data });
-        });
+        res.on("end", () => resolve({ statusCode: res.statusCode, body: data }));
       });
 
       req.on("error", (err) => reject(err));
@@ -70,11 +56,7 @@ exports.handler = async function(event, context) {
       req.end();
     });
 
-    return {
-      statusCode: result.statusCode,
-      headers,
-      body: result.body
-    };
+    return { statusCode: result.statusCode, headers, body: result.body };
 
   } catch (error) {
     return {
