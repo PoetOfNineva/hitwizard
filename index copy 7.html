@@ -1,0 +1,4008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="HitWizard — AI Music Marketing Platform. Generate ad campaigns, playlist pitches, content, EPKs and video scripts from your lyrics.">
+<title>HitWizard — AI Music Marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#08080E}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#FFB800,#7B2FBE);border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,184,0,0.2)}50%{box-shadow:0 0 40px rgba(255,184,0,0.5)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+:root{--gold:#FFB800;--purple:#7B2FBE;--pl:#9B4FDE;--bg:#08080E;--bg2:#16162A;--bdr:rgba(255,184,0,0.12);--bdrh:rgba(255,184,0,0.3);--txt:#F0F0F0;--muted:#7777AA;--ok:#00E599;--err:#FF4466}
+.hw{min-height:100vh;background:var(--bg)}
+.gbg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,184,0,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,184,0,0.025) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;z-index:0}
+.orb1{position:fixed;width:600px;height:600px;top:-150px;left:-150px;background:radial-gradient(circle,rgba(255,184,0,0.04),transparent 70%);pointer-events:none;z-index:0}
+.orb2{position:fixed;width:500px;height:500px;bottom:-100px;right:-100px;background:radial-gradient(circle,rgba(123,47,190,0.06),transparent 70%);pointer-events:none;z-index:0}
+.side{position:fixed;left:0;top:0;bottom:0;width:242px;background:rgba(8,8,14,.97);border-right:1px solid var(--bdr);z-index:100;display:flex;flex-direction:column;transition:transform .3s}
+.slogo{padding:22px 18px;border-bottom:1px solid var(--bdr)}
+.lmark{font-family:'Cinzel',serif;font-size:20px;font-weight:900;background:linear-gradient(135deg,#FFB800,#FF8C00,#FFD700);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;letter-spacing:3px;display:block}
+.lsub{font-size:9px;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-top:3px;font-family:'JetBrains Mono',monospace}
+.snav{flex:1;padding:10px;overflow-y:auto}
+.nlbl{font-size:8px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);padding:0 8px;margin:12px 0 4px;font-family:'JetBrains Mono',monospace}
+.nb{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;margin-bottom:2px;text-align:left}
+.nb:hover{background:rgba(255,184,0,.06);color:var(--txt);border-color:rgba(255,184,0,.1)}
+.nb.on{background:rgba(255,184,0,.1);color:var(--gold);border-color:rgba(255,184,0,.25)}
+.ni{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+.nbdg{margin-left:auto;background:rgba(255,184,0,.15);color:var(--gold);font-size:9px;padding:2px 6px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+.sfoot{padding:10px;border-top:1px solid var(--bdr)}
+.ucard{display:flex;align-items:center;gap:9px;padding:9px;background:rgba(255,184,0,.05);border:1px solid var(--bdr);border-radius:7px}
+.uav{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--purple));display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#08080E;flex-shrink:0}
+.main{margin-left:242px;min-height:100vh;position:relative}
+.topbar{position:sticky;top:0;background:rgba(8,8,14,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--bdr);padding:13px 26px;display:flex;align-items:center;justify-content:space-between;z-index:50}
+.pgt{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--txt)}
+.pgs{font-size:11px;color:var(--muted);margin-top:2px}
+.content{padding:26px;animation:fadeIn .3s ease}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,#FFB800,#FF8C00);color:#08080E;box-shadow:0 4px 14px rgba(255,184,0,.25)}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,184,0,.4)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-out{background:transparent;color:var(--gold);border:1px solid rgba(255,184,0,.35)}
+.btn-out:hover{background:rgba(255,184,0,.08)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--txt);border:1px solid rgba(255,255,255,.08)}
+.btn-ghost:hover{background:rgba(255,255,255,.09)}
+.btn-ok{background:linear-gradient(135deg,#00E599,#00B377);color:#08080E}
+.btn-ok:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,229,153,.3)}
+.btn-ok:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-pur{background:linear-gradient(135deg,#7B2FBE,#9B4FDE);color:#fff}
+.btn-pur:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(123,47,190,.4)}
+.btn-pur:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-sm{padding:5px 11px;font-size:11px}
+.btn-full{width:100%;justify-content:center;padding:12px}
+.btn-danger{background:rgba(255,68,102,.1);color:var(--err);border:1px solid rgba(255,68,102,.25)}
+.card{background:rgba(22,22,42,.8);border:1px solid var(--bdr);border-radius:12px;padding:20px;transition:border-color .2s}
+.card:hover{border-color:var(--bdrh)}
+.card-glow{animation:glow 4s ease-in-out infinite}
+.card-ok{border-color:rgba(0,229,153,.2);background:rgba(0,229,153,.03)}
+.card-pur{border-color:rgba(123,47,190,.25);background:rgba(123,47,190,.04)}
+.card-err{border-color:rgba(255,68,102,.2);background:rgba(255,68,102,.03)}
+.field{margin-bottom:15px}
+.lbl{display:block;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.lbl-n{font-size:10px;color:var(--gold);font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0;text-transform:none;margin-left:5px}
+.inp,.txa,.sel{width:100%;background:rgba(8,8,14,.8);border:1px solid rgba(255,184,0,.18);border-radius:8px;padding:10px 13px;color:var(--txt);font-size:13px;font-family:'DM Sans',sans-serif;transition:all .2s;outline:none}
+.inp:focus,.txa:focus,.sel:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,184,0,.08)}
+.inp::placeholder,.txa::placeholder{color:#44445A}
+.txa{resize:vertical;min-height:85px;line-height:1.7}
+.sel{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23FFB800' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.sel option{background:#16162A;color:var(--txt)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rbox{background:rgba(8,8,14,.9);border:1px solid rgba(255,184,0,.18);border-radius:10px;padding:16px;position:relative;animation:fadeUp .4s ease;margin-bottom:11px}
+.rbox-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-family:'JetBrains Mono',monospace;margin-bottom:9px}
+.rbox-txt{font-size:13px;color:var(--txt);line-height:1.75;white-space:pre-wrap;padding-right:70px}
+.rbox-cp{position:absolute;top:12px;right:12px}
+.rbox-warn{border-color:rgba(255,68,102,.25);background:rgba(255,68,102,.04)}
+.rbox-ok{border-color:rgba(0,229,153,.2);background:rgba(0,229,153,.03)}
+.tabs{display:flex;gap:3px;background:rgba(8,8,14,.7);border:1px solid var(--bdr);border-radius:9px;padding:4px;margin-bottom:18px;overflow-x:auto}
+.tab{flex:1;padding:7px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid transparent;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;white-space:nowrap}
+.tab.on{background:rgba(255,184,0,.1);color:var(--gold);border-color:rgba(255,184,0,.22)}
+.tab:hover:not(.on){color:var(--txt)}
+.stat{background:rgba(22,22,42,.8);border:1px solid var(--bdr);border-radius:11px;padding:16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--purple))}
+.sv{font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:var(--gold)}
+.sl{font-size:11px;color:var(--muted);margin-top:3px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.st{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:9px}
+.st::before{content:'';width:3px;height:14px;background:linear-gradient(180deg,var(--gold),var(--purple));border-radius:2px}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.b-gold{background:rgba(255,184,0,.1);color:var(--gold);border:1px solid rgba(255,184,0,.25)}
+.b-pur{background:rgba(123,47,190,.12);color:var(--pl);border:1px solid rgba(123,47,190,.25)}
+.b-ok{background:rgba(0,229,153,.08);color:var(--ok);border:1px solid rgba(0,229,153,.2)}
+.divider{height:1px;background:var(--bdr);margin:18px 0}
+.loader{width:16px;height:16px;border:2px solid rgba(255,184,0,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
+.toast{position:fixed;bottom:20px;right:20px;background:rgba(22,22,42,.98);border:1px solid rgba(255,184,0,.35);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--txt);z-index:9999;animation:fadeUp .3s ease;display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:320px}
+.hero{background:linear-gradient(135deg,rgba(255,184,0,.07),rgba(123,47,190,.07));border:1px solid rgba(255,184,0,.18);border-radius:13px;padding:26px;margin-bottom:22px;position:relative;overflow:hidden;animation:fadeUp .5s ease}
+.hero::after{content:'✦';position:absolute;right:26px;top:50%;transform:translateY(-50%);font-size:66px;color:rgba(255,184,0,.05);animation:float 5s ease-in-out infinite;pointer-events:none}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pill{padding:6px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--muted)}
+.pill.on{border-color:var(--gold);background:rgba(255,184,0,.1);color:var(--gold)}
+.hi{display:flex;align-items:center;gap:12px;padding:11px;background:rgba(8,8,14,.5);border:1px solid var(--bdr);border-radius:8px;margin-bottom:6px;transition:border-color .2s}
+.hi:hover{border-color:var(--bdrh)}
+.ebox{background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.25);border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:13px;color:var(--err)}
+.dl-bar{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--bdr)}
+.pc{background:rgba(22,22,42,.8);border:1px solid var(--bdr);border-radius:13px;padding:24px;text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.pc.feat{border-color:var(--gold);box-shadow:0 0 36px rgba(255,184,0,.12)}
+.pc:hover{transform:translateY(-3px);border-color:var(--bdrh)}
+.pc-pop{position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,var(--gold),#FF8C00);color:#08080E;font-size:10px;font-weight:700;padding:5px;letter-spacing:2px;font-family:'JetBrains Mono',monospace}
+.pc-val{font-family:'Cinzel',serif;font-size:36px;font-weight:900;color:var(--gold)}
+.pc-val span{font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400}
+.pc-list{list-style:none;text-align:left;margin:13px 0}
+.pc-list li{font-size:12px;color:var(--muted);padding:5px 0;border-bottom:1px solid rgba(255,184,0,.05);display:flex;align-items:center;gap:6px}
+.pc-list li::before{content:'✦';color:var(--gold);font-size:9px;flex-shrink:0}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#10101A;border:1px solid rgba(255,184,0,.3);border-radius:13px;width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{padding:15px 19px;border-bottom:1px solid rgba(255,184,0,.12);display:flex;align-items:center;justify-content:space-between}
+.modal-body{flex:1;overflow:auto;padding:19px}
+.modal-foot{padding:11px 19px;border-top:1px solid rgba(255,184,0,.12);display:flex;gap:9px}
+.sp-panel{background:rgba(255,184,0,.04);border:1px solid rgba(255,184,0,.2);border-radius:10px;padding:15px;margin-bottom:17px}
+.sp-preview{margin-top:13px;background:#08080E;border:1px solid rgba(0,229,153,.25);border-radius:8px;padding:13px}
+.vault-card{background:rgba(8,8,14,.6);border:1px solid var(--bdr);border-radius:10px;padding:14px;margin-bottom:10px;transition:border-color .2s}
+.vault-card:hover{border-color:var(--bdrh)}
+.script-clip{background:rgba(8,8,14,.7);border:1px solid var(--bdr);border-radius:9px;padding:14px;margin-bottom:10px;animation:fadeUp .3s ease}
+.script-clip.aroll{border-left:3px solid var(--gold)}
+.script-clip.broll{border-left:3px solid var(--pl)}
+.tog{display:none;position:fixed;top:13px;left:13px;z-index:200;background:rgba(22,22,42,.95);border:1px solid rgba(255,184,0,.3);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--gold);font-size:16px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;display:none}
+.ov.open{display:block}
+@media(max-width:860px){
+  .side{transform:translateX(-100%)}
+  .side.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .content{padding:15px}
+  .topbar{padding:12px 15px;padding-left:50px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .tog{display:flex}
+  .tabs{overflow-x:auto}
+  .tab{flex:none}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+const _React = React,
+  useState = _React.useState,
+  useEffect = _React.useEffect,
+  useCallback = _React.useCallback,
+  useRef = _React.useRef;
+
+// ── SAFE COPY ──
+function safeCopy(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).catch(() => fbCopy(text));
+  }
+  return fbCopy(text);
+}
+function fbCopy(text) {
+  return new Promise(res => {
+    const el = document.createElement("textarea");
+    el.value = text;
+    el.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+    res();
+  });
+}
+
+// ── EXPORT MODAL ──
+function toText(r, title) {
+  let o = "HITWIZARD \u2014 ".concat(title, "\nGenerated: ").concat(new Date().toLocaleString(), "\n").concat("=".repeat(60), "\n\n");
+  const walk = obj => {
+    for (const _ref of Object.entries(obj || {})) {
+      var _ref2 = _slicedToArray(_ref, 2);
+      const k = _ref2[0];
+      const v = _ref2[1];
+      if (typeof v === "string") o += "[".concat(k.toUpperCase(), "]\n").concat(v, "\n\n");else if (Array.isArray(v)) o += "[".concat(k.toUpperCase(), "]\n").concat(v.join("\n"), "\n\n");else if (v && typeof v === "object") {
+        o += "\n--- ".concat(k.toUpperCase(), " ---\n");
+        walk(v);
+      }
+    }
+  };
+  walk(r);
+  return o;
+}
+function DownloadModal(_ref3) {
+  let content = _ref3.content,
+    filename = _ref3.filename,
+    onClose = _ref3.onClose;
+  if (!content) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "modal-bg",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "modal-head"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 14,
+      fontWeight: 700,
+      color: "var(--gold)"
+    }
+  }, "\u2B07 ", filename), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)",
+      marginTop: 2
+    }
+  }, "Click inside the text box \u2192 press Cmd+A to select all \u2192 Cmd+C to copy \u2192 paste into any text editor and save")), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: onClose
+  }, "\u2715 Close")), /*#__PURE__*/React.createElement("div", {
+    className: "modal-body"
+  }, /*#__PURE__*/React.createElement("textarea", {
+    readOnly: true,
+    value: content,
+    onClick: e => e.target.select(),
+    style: {
+      width: "100%",
+      minHeight: 380,
+      background: "#08080E",
+      border: "1px solid rgba(255,184,0,.15)",
+      borderRadius: 7,
+      padding: 12,
+      color: "#F0F0F0",
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 11,
+      lineHeight: 1.8,
+      resize: "none",
+      outline: "none"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "modal-foot"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold",
+    onClick: () => safeCopy(content).then(() => alert("Copied! Now paste into Notepad or TextEdit and save as a .txt file."))
+  }, "\uD83D\uDCCB Copy Everything"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: onClose
+  }, "Close"))));
+}
+
+// ── AI CALL ──
+async function hwAI(sys, usr) {
+  let retries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 2;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      var _d$content;
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 55000);
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,system:sys,messages:[{role:"user",content:usr}]}),
+        signal: ctrl.signal
+      });;
+      clearTimeout(t);
+      if (!res.ok) {
+        var _e$error;
+        const e = await res.json().catch(() => ({}));
+        throw new Error((e === null || e === void 0 || (_e$error = e.error) === null || _e$error === void 0 ? void 0 : _e$error.message) || "Something went wrong (".concat(res.status, "). Please try again."));
+      }
+      const d = await res.json();
+      if (!((_d$content = d.content) !== null && _d$content !== void 0 && (_d$content = _d$content[0]) !== null && _d$content !== void 0 && _d$content.text)) throw new Error("No response received. Please try again.");
+      return d.content[0].text.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+    } catch (e) {
+      if (i === retries) throw e;
+      await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+    }
+  }
+}
+function parseJ(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch (_unused) {
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+    throw new Error("Could not read the AI response. Please try again.");
+  }
+}
+
+// ── SHARED COMPONENTS ──
+function Toast(_ref4) {
+  let msg = _ref4.msg,
+    icon = _ref4.icon,
+    onClose = _ref4.onClose;
+  useEffect(() => {
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "toast"
+  }, /*#__PURE__*/React.createElement("span", null, icon || "✦"), /*#__PURE__*/React.createElement("span", null, msg));
+}
+function CopyBtn(_ref5) {
+  let text = _ref5.text,
+    st = _ref5.st;
+  const _useState = useState(false),
+    _useState2 = _slicedToArray(_useState, 2),
+    done = _useState2[0],
+    setDone = _useState2[1];
+  const go = () => {
+    safeCopy(text).then(() => {
+      setDone(true);
+      st("Copied to clipboard!", "✓");
+      setTimeout(() => setDone(false), 2000);
+    }).catch(() => st("Please select and copy the text manually", "⚠️"));
+  };
+  return /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm rbox-cp",
+    onClick: go,
+    style: done ? {
+      color: "var(--ok)",
+      borderColor: "rgba(0,229,153,.3)"
+    } : {}
+  }, done ? "✓ Copied!" : "Copy");
+}
+function RBox(_ref6) {
+  let label = _ref6.label,
+    value = _ref6.value,
+    _ref6$icon = _ref6.icon,
+    icon = _ref6$icon === void 0 ? "" : _ref6$icon,
+    warn = _ref6.warn,
+    color = _ref6.color,
+    st = _ref6.st;
+  if (!value) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "rbox ".concat(warn ? "rbox-warn" : "")
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl",
+    style: color ? {
+      color
+    } : {}
+  }, icon, " ", label), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt"
+  }, value), /*#__PURE__*/React.createElement(CopyBtn, {
+    text: value,
+    st: st
+  }));
+}
+function ErrBox(_ref7) {
+  let msg = _ref7.msg;
+  if (!msg) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "ebox"
+  }, "\u26A0\uFE0F ", msg);
+}
+
+// ── SPOTIFY + AUDIO FETCH PANEL ──
+function LyricsPanel(_ref8) {
+  let onFetched = _ref8.onFetched,
+    st = _ref8.st;
+  const _useState3 = useState(""),
+    _useState4 = _slicedToArray(_useState3, 2),
+    url = _useState4[0],
+    setUrl = _useState4[1];
+  const _useState5 = useState(false),
+    _useState6 = _slicedToArray(_useState5, 2),
+    loading = _useState6[0],
+    setLoading = _useState6[1];
+  const _useState7 = useState(false),
+    _useState8 = _slicedToArray(_useState7, 2),
+    transcribing = _useState8[0],
+    setTranscribing = _useState8[1];
+  const _useState9 = useState(""),
+    _useState0 = _slicedToArray(_useState9, 2),
+    err = _useState0[0],
+    setErr = _useState0[1];
+  const _useState1 = useState(null),
+    _useState10 = _slicedToArray(_useState1, 2),
+    preview = _useState10[0],
+    setPreview = _useState10[1];
+  const fileRef = useRef();
+  const fetchSpotify = async () => {
+    if (!url.includes("spotify.com/track/")) {
+      setErr("Please paste a Spotify track link. Example: open.spotify.com/track/...");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setPreview(null);
+    try {
+      const match = url.match(/track\/([a-zA-Z0-9]+)/);
+      if (!match) throw new Error("Could not find the track ID in that link. Please check and try again.");
+      const trackId = match[1];
+      let songTitle = "",
+        artistName = "",
+        thumb = "";
+      try {
+        const r = await fetch("https://open.spotify.com/oembed?url=https://open.spotify.com/track/".concat(trackId));
+        if (r.ok) {
+          const d = await r.json();
+          const t = d.title || "";
+          if (t.includes(" · ")) {
+            var _t$split = t.split(" · ");
+            var _t$split2 = _slicedToArray(_t$split, 2);
+            songTitle = _t$split2[0];
+            artistName = _t$split2[1];
+          } else songTitle = t;
+          thumb = d.thumbnail_url || "";
+        }
+      } catch (_unused2) {}
+      st("Fetching lyrics from AI...", "🔍");
+      const lyrics = await hwAI("You are a music expert. Provide full song lyrics with section labels like [Verse 1], [Chorus], [Bridge]. If you are not sure about the exact lyrics, start your response with: ⚠️ APPROXIMATE — please check and correct these before using.", "Please provide the full lyrics for: \"".concat(songTitle || "Unknown", "\" by ").concat(artistName || "Unknown", "\nInclude proper section labels. Just the lyrics \u2014 no extra commentary."));
+      setPreview({
+        songTitle: songTitle || "Unknown Title",
+        artistName: artistName || "Unknown Artist",
+        lyrics,
+        thumb
+      });
+      st("Lyrics ready! Review them below before approving.", "✓");
+    } catch (e) {
+      setErr("Could not fetch: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  const handleAudioUpload = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const maxSize = 25 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setErr("File is too large for transcription. Maximum size is 25MB. WAV files are usually too large — please convert your WAV to MP3 first (free at cloudconvert.com or using GarageBand on Mac). A 5-minute MP3 is typically 5-8MB and works perfectly.");
+      return;
+    }
+    setErr("");
+    setTranscribing(true);
+    setPreview(null);
+    st("Listening to your audio and transcribing...", "🎵");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("model", "whisper-1");
+      const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer OPENAI_KEY_HERE"
+        },
+        body: formData
+      });
+      if (!res.ok) throw new Error("Audio transcription failed. Please try pasting your lyrics manually instead.");
+      const data = await res.json();
+      const lyrics = data.text || "";
+      setPreview({
+        songTitle: file.name.replace(/\.[^.]+$/, ""),
+        artistName: "",
+        lyrics: "[Transcribed from audio]\n\n".concat(lyrics),
+        thumb: ""
+      });
+      st("Audio transcribed! Review the lyrics below.", "✓");
+    } catch (e) {
+      setErr("Audio transcription failed: ".concat(e.message, ". Please paste your lyrics manually below."));
+    }
+    setTranscribing(false);
+  };
+  const approve = () => {
+    if (preview) {
+      onFetched(preview);
+      setPreview(null);
+      setUrl("");
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "sp-panel"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      letterSpacing: 2,
+      textTransform: "uppercase",
+      color: "var(--gold)",
+      fontFamily: "JetBrains Mono,monospace",
+      marginBottom: 10
+    }
+  }, "\uD83C\uDFB5 GET YOUR LYRICS AUTOMATICALLY ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--muted)",
+      fontFamily: "DM Sans,sans-serif",
+      fontWeight: 400,
+      letterSpacing: 0,
+      textTransform: "none",
+      fontSize: 11,
+      marginLeft: 5
+    }
+  }, "\u2014 or scroll down to paste them manually")), err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,68,102,.08)",
+      border: "1px solid rgba(255,68,102,.25)",
+      borderRadius: 6,
+      padding: "7px 11px",
+      marginBottom: 9,
+      fontSize: 12,
+      color: "var(--err)"
+    }
+  }, err), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    style: {
+      flex: 1
+    },
+    placeholder: "Paste your Spotify track link here...",
+    value: url,
+    onChange: e => setUrl(e.target.value),
+    onKeyDown: e => e.key === "Enter" && fetchSpotify()
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold",
+    onClick: fetchSpotify,
+    disabled: loading || transcribing,
+    style: {
+      flexShrink: 0
+    }
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Looking up...") : "🔍 Find Lyrics")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      height: 1,
+      background: "var(--bdr)"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)"
+    }
+  }, "or upload your audio file"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      height: 1,
+      background: "var(--bdr)"
+    }
+  })), /*#__PURE__*/React.createElement("input", {
+    ref: fileRef,
+    type: "file",
+    accept: ".mp3,.m4a,.flac,.ogg,.wav",
+    onChange: handleAudioUpload,
+    style: {
+      display: "none"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-full",
+    onClick: () => {
+      var _fileRef$current;
+      return (_fileRef$current = fileRef.current) === null || _fileRef$current === void 0 ? void 0 : _fileRef$current.click();
+    },
+    disabled: transcribing || loading
+  }, transcribing ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Listening to your audio...") : "🎤 Upload Audio File — MP3 recommended (WAV files are often too large)"), preview && /*#__PURE__*/React.createElement("div", {
+    className: "sp-preview"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 11,
+      alignItems: "center",
+      marginBottom: 11
+    }
+  }, preview.thumb && /*#__PURE__*/React.createElement("img", {
+    src: preview.thumb,
+    alt: "",
+    style: {
+      width: 44,
+      height: 44,
+      borderRadius: 5,
+      objectFit: "cover"
+    }
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: "var(--txt)"
+    }
+  }, preview.songTitle), preview.artistName && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--muted)"
+    }
+  }, preview.artistName)), /*#__PURE__*/React.createElement("span", {
+    className: "badge b-ok",
+    style: {
+      marginLeft: "auto"
+    }
+  }, "FETCHED")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--gold)",
+      letterSpacing: 2,
+      textTransform: "uppercase",
+      fontFamily: "JetBrains Mono,monospace",
+      marginBottom: 5
+    }
+  }, "Review and fix any errors before approving"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)",
+      marginBottom: 8
+    }
+  }, "AI-generated lyrics can have mistakes \u2014 especially for newer or independent songs. Always double-check."), /*#__PURE__*/React.createElement("textarea", {
+    value: preview.lyrics,
+    onChange: e => setPreview(p => _objectSpread(_objectSpread({}, p), {}, {
+      lyrics: e.target.value
+    })),
+    style: {
+      width: "100%",
+      minHeight: 160,
+      background: "rgba(255,255,255,.03)",
+      border: "1px solid rgba(255,184,0,.15)",
+      borderRadius: 6,
+      padding: 9,
+      color: "var(--txt)",
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 11,
+      lineHeight: 1.8,
+      resize: "vertical",
+      outline: "none"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 9
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ok",
+    onClick: approve
+  }, "\u2713 Looks Good \u2014 Fill My Form"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setPreview(null)
+  }, "Cancel"))));
+}
+
+// ── CHARACTER VAULT DATA ──
+const DEFAULT_CHARACTERS = [];
+
+// ── CHARACTER VAULT PAGE ──
+function CharacterVault(_ref9) {
+  let showToast = _ref9.showToast;
+  const _useState11 = useState(DEFAULT_CHARACTERS),
+    _useState12 = _slicedToArray(_useState11, 2),
+    chars = _useState12[0],
+    setChars = _useState12[1];
+  const _useState13 = useState(null),
+    _useState14 = _slicedToArray(_useState13, 2),
+    editing = _useState14[0],
+    setEditing = _useState14[1];
+  const _useState15 = useState({
+      name: "",
+      role: "",
+      emoji: "",
+      dna: "",
+      tag: "",
+      color: "#FFB800"
+    }),
+    _useState16 = _slicedToArray(_useState15, 2),
+    form = _useState16[0],
+    setForm = _useState16[1];
+  const _useState17 = useState(null),
+    _useState18 = _slicedToArray(_useState17, 2),
+    dlData = _useState18[0],
+    setDlData = _useState18[1];
+  const startEdit = c => {
+    setEditing(c.id);
+    setForm({
+      name: c.name,
+      role: c.role,
+      emoji: c.emoji,
+      dna: c.dna,
+      tag: c.tag,
+      color: c.color
+    });
+  };
+  const saveEdit = () => {
+    setChars(cs => cs.map(c => c.id === editing ? _objectSpread(_objectSpread({}, c), form) : c));
+    setEditing(null);
+    showToast("Character updated!", "✓");
+  };
+  const addNew = () => {
+    const id = "char_" + Date.now();
+    const nc = {
+      id,
+      name: "New Character",
+      role: "Supporting",
+      emoji: "🧑",
+      dna: "",
+      tag: "same character as before for consistency",
+      color: "#FFB800"
+    };
+    setChars(cs => [...cs, nc]);
+    setEditing(id);
+    setForm(nc);
+  };
+  const deleteChar = id => {
+    
+    setChars(cs => cs.filter(c => c.id !== id));
+    showToast("Character removed", "✓");
+  };
+  const buildSinglePrompt = c => "".concat(c.dna, ", ").concat(c.tag);
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,184,0,.04)",
+      border: "1px solid rgba(255,184,0,.15)",
+      borderRadius: 10,
+      padding: 14,
+      marginBottom: 20,
+      fontSize: 13,
+      color: "var(--muted)",
+      lineHeight: 1.7
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--gold)"
+    }
+  }, "How this works:"), " Every character here is automatically added to your video prompts when you use the Video Production Engine. You never have to type character descriptions manually. The full description is always included \u2014 not just the name \u2014 because Grok needs complete tags every time to render your characters correctly."), /*#__PURE__*/React.createElement("div", {
+    className: "sh"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st"
+  }, "Your Characters (", chars.length, ")"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold btn-sm",
+    onClick: addNew
+  }, "+ Add Character")), chars.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {textAlign:"center",padding:"44px 0",color:"var(--muted)"}
+  }, /*#__PURE__*/React.createElement("div", {style:{fontSize:38,marginBottom:11}}, "\uD83E\uDDEC"),
+  /*#__PURE__*/React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,marginBottom:8,color:"var(--txt)"}}, "Your Vault Is Empty"),
+  /*#__PURE__*/React.createElement("div", {style:{fontSize:12,marginBottom:16,lineHeight:1.7,maxWidth:360,margin:"0 auto 16px"}}, "Add your characters here. Give each one a name, role, and full physical description. Those tags get automatically added to every video prompt you generate — you never have to type them again."),
+  /*#__PURE__*/React.createElement("button", {className:"btn btn-gold",onClick:addNew}, "+ Add Your First Character")
+  ) : chars.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    className: "vault-card"
+  }, editing === c.id ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "g2",
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Name"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.name,
+    onChange: e => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+      name: e.target.value
+    }))
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Role"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.role,
+    onChange: e => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+      role: e.target.value
+    }))
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Full Description Tags ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 exactly what gets pasted into every Grok prompt")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    value: form.dna,
+    onChange: e => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+      dna: e.target.value
+    })),
+    style: {
+      minHeight: 100,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 11,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Consistency Tag ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 added at the end of every prompt")), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.tag,
+    onChange: e => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+      tag: e.target.value
+    }))
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold btn-sm",
+    onClick: saveEdit
+  }, "Save Changes"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setEditing(null)
+  }, "Cancel"))) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 40,
+      height: 40,
+      borderRadius: 10,
+      background: "".concat(c.color, "20"),
+      border: "1px solid ".concat(c.color, "40"),
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 20,
+      flexShrink: 0
+    }
+  }, c.emoji), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 9,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 14,
+      fontWeight: 700,
+      color: "var(--txt)"
+    }
+  }, c.name), /*#__PURE__*/React.createElement("span", {
+    className: "badge b-gold",
+    style: {
+      fontSize: 9
+    }
+  }, c.role)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)",
+      fontFamily: "JetBrains Mono,monospace",
+      lineHeight: 1.6,
+      marginBottom: 8
+    }
+  }, c.dna.substring(0, 120), "..."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => startEdit(c)
+  }, "\u270F\uFE0F Edit DNA"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => {
+      safeCopy(buildSinglePrompt(c));
+      showToast("".concat(c.name, "'s full prompt tags copied!"), "✓");
+    }
+  }, "\uD83D\uDCCB Copy Prompt Tags"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: buildSinglePrompt(c),
+      n: "".concat(c.name, "-prompt-tags.txt")
+    })
+  }, "\u2B07 Export"), !DEFAULT_CHARACTERS.find(d => d.id === c.id) && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-danger btn-sm",
+    onClick: () => deleteChar(c.id)
+  }, "\uD83D\uDDD1 Remove")))))));
+}
+
+// ── VIDEO PRODUCTION ENGINE ──
+function VideoEngine(_ref0) {
+  var _results$clips;
+  let showToast = _ref0.showToast;
+  const _useState19 = useState(DEFAULT_CHARACTERS),
+    _useState20 = _slicedToArray(_useState19, 2),
+    chars = _useState20[0],
+    setChars = _useState20[1];
+  const _useState21 = useState({
+      songTitle: "",
+      duration: "210",
+      lyrics: "",
+      videoType: "60s-ad",
+      selectedChars: [],
+      clipLength: "10"
+    }),
+    _useState22 = _slicedToArray(_useState21, 2),
+    form = _useState22[0],
+    setForm = _useState22[1];
+  const _useState23 = useState(null),
+    _useState24 = _slicedToArray(_useState23, 2),
+    results = _useState24[0],
+    setResults = _useState24[1];
+  const _useState25 = useState(false),
+    _useState26 = _slicedToArray(_useState25, 2),
+    loading = _useState26[0],
+    setLoading = _useState26[1];
+  const _useState27 = useState(""),
+    _useState28 = _slicedToArray(_useState27, 2),
+    err = _useState28[0],
+    setErr = _useState28[1];
+  const _useState29 = useState(null),
+    _useState30 = _slicedToArray(_useState29, 2),
+    dlData = _useState30[0],
+    setDlData = _useState30[1];
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const toggleChar = id => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    selectedChars: p.selectedChars.includes(id) ? p.selectedChars.filter(x => x !== id) : [...p.selectedChars, id]
+  }));
+  const videoTypes = [{
+    id: "15s-ad",
+    label: "15-Second Ad",
+    desc: "Instagram / TikTok",
+    secs: 15
+  }, {
+    id: "30s-ad",
+    label: "30-Second Ad",
+    desc: "TikTok / YouTube",
+    secs: 30
+  }, {
+    id: "60s-ad",
+    label: "60-Second Ad",
+    desc: "YouTube / Facebook",
+    secs: 60
+  }, {
+    id: "90s-teaser",
+    label: "90-Second Teaser",
+    desc: "Full preview",
+    secs: 90
+  }, {
+    id: "full-mv",
+    label: "Full Music Video",
+    desc: "Uses song duration",
+    secs: null
+  }];
+  const getSeconds = () => {
+    const vt = videoTypes.find(v => v.id === form.videoType);
+    return (vt === null || vt === void 0 ? void 0 : vt.secs) || parseInt(form.duration) || 210;
+  };
+  const getClipCount = () => Math.ceil(getSeconds() / parseInt(form.clipLength || 10));
+  const selectedCharData = DEFAULT_CHARACTERS.filter(c => form.selectedChars.includes(c.id));
+  const buildCharBlock = charIds => {
+    const selected = DEFAULT_CHARACTERS.filter(c => charIds.includes(c.id));
+    if (!selected.length) return "";
+    const count = selected.length;
+    const charDescs = selected.map(c => "".concat(c.dna)).join(",\n");
+    const tags = selected.map(c => c.tag).join(", ");
+    return "EXACTLY ".concat(count, " ").concat(count === 1 ? "PERSON" : "PEOPLE", " in this scene,\n").concat(charDescs, ",\n...[scene details, camera, lighting]...\n").concat(tags, ",\n9:16 vertical format, photorealistic cinematic quality");
+  };
+  const generate = async () => {
+    if (!form.lyrics) {
+      setErr("Please paste your lyrics first — the AI needs them to plan your video.");
+      return;
+    }
+    if (!form.selectedChars.length) {
+      setErr("Please select at least one character for this video.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const totalSecs = getSeconds();
+      const clipLen = parseInt(form.clipLength || 10);
+      const totalClips = Math.ceil(totalSecs / clipLen);
+      const arollCount = Math.ceil(totalClips * 0.65);
+      const brollCount = totalClips - arollCount;
+      const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
+      const raw = await hwAI("You are an expert AI music video director. You understand that Grok AI generates ".concat(clipLen, "-second video clips. You must plan the exact number of clips needed and write complete ready-to-use Grok prompts for each one. Always use FULL character description tags \u2014 never just a name. Always include warm golden lighting. Always use TRACKING CAMERA that moves, never static. Always include micro-movements. Always start multi-character prompts with EXACTLY N PEOPLE in this scene. Describe the lead artist character first always. Include all consistency tags at the end. Respond ONLY with valid JSON."), "Create a complete video shooting script.\n\nSong: \"".concat(form.songTitle || "My Song", "\"\nVideo type: ").concat(form.videoType, " (").concat(totalSecs, " seconds)\nClip length: ").concat(clipLen, " seconds each\nTotal clips needed: ").concat(totalClips, " (").concat(arollCount, " A-roll performance clips, ").concat(brollCount, " B-roll story clips)\n\nCHARACTER DNA TO USE IN EVERY PROMPT:\n").concat(charDNA, "\n\nLYRICS:\n").concat(form.lyrics, "\n\nRULES FOR EVERY PROMPT:\n- Full character DNA tags every time \u2014 never just use the name\n- TRACKING CAMERA always moving \u2014 never static\n- Warm golden lighting every clip\n- Micro-movements: head tilts, eye shifts, breathing visible\n- EXACTLY N PEOPLE declaration for multi-character scenes\n- Celinenya always described first\n- All consistency tags at end of every prompt\n- 9:16 vertical format\n- 250-300 words per prompt maximum\n\nDetect A-roll vs B-roll automatically:\n- A-roll = artist performing/singing to camera\n- B-roll = story scene acting out lyric narrative (third person language, action events, location references)\n\nReturn ONLY this JSON:\n{\n  \"songTitle\": \"title\",\n  \"totalClips\": ").concat(totalClips, ",\n  \"arollCount\": ").concat(arollCount, ",\n  \"brollCount\": ").concat(brollCount, ",\n  \"totalSeconds\": ").concat(totalSecs, ",\n  \"clipLength\": ").concat(clipLen, ",\n  \"grokInstructions\": \"plain English instructions for the artist about how to use these prompts in Grok\",\n  \"capCutGuide\": \"plain English CapCut assembly instructions\",\n  \"clips\": [\n    {\n      \"number\": 1,\n      \"timestamp\": \"0:00 - 0:").concat(clipLen, "\",\n      \"type\": \"A-ROLL\",\n      \"characters\": [\"Lead Artist\"],\n      \"lyricMoment\": \"the lyric line this clip covers\",\n      \"sceneDescription\": \"what happens visually\",\n      \"grokPrompt\": \"the complete ready-to-paste Grok prompt with full character DNA\"\n    }\n  ]\n}"));
+      const p = parseJ(raw);
+      setResults(p);
+      showToast("Shooting script ready! ".concat(p.totalClips, " clips generated."), "🎬");
+    } catch (e) {
+      setErr("Script generation failed: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,184,0,.04)",
+      border: "1px solid rgba(255,184,0,.15)",
+      borderRadius: 10,
+      padding: 14,
+      marginBottom: 20,
+      fontSize: 13,
+      color: "var(--muted)",
+      lineHeight: 1.7
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--gold)"
+    }
+  }, "How this works:"), " Paste your lyrics, choose your characters and video length. HitWizard reads the lyrics, figures out which lines need performance shots and which need story scenes, calculates exactly how many clips you need, and writes every single Grok prompt for you \u2014 with your characters' full descriptions already included. Then paste all prompts into one Grok chat session."), /*#__PURE__*/React.createElement("div", {
+    className: "card card-glow",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 16
+    }
+  }, "Video Setup"), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Title"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Heaven In Your Eyes",
+    value: form.songTitle,
+    onChange: e => f("songTitle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Video Type"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+      gap: 8
+    }
+  }, videoTypes.map(vt => /*#__PURE__*/React.createElement("div", {
+    key: vt.id,
+    onClick: () => f("videoType", vt.id),
+    style: {
+      padding: "10px 12px",
+      borderRadius: 8,
+      border: "1px solid ".concat(form.videoType === vt.id ? "var(--gold)" : "rgba(255,184,0,.15)"),
+      background: form.videoType === vt.id ? "rgba(255,184,0,.1)" : "rgba(8,8,14,.5)",
+      cursor: "pointer",
+      transition: "all .2s"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: form.videoType === vt.id ? "var(--gold)" : "var(--txt)"
+    }
+  }, vt.label), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--muted)",
+      marginTop: 2
+    }
+  }, vt.desc))))), form.videoType === "full-mv" && /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Duration (seconds) ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 e.g. 210 for a 3:30 song")), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    type: "number",
+    value: form.duration,
+    onChange: e => f("duration", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Clip Length"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, ["5", "10"].map(l => /*#__PURE__*/React.createElement("div", {
+    key: l,
+    onClick: () => f("clipLength", l),
+    style: {
+      padding: "9px 20px",
+      borderRadius: 8,
+      border: "1px solid ".concat(form.clipLength === l ? "var(--gold)" : "rgba(255,184,0,.15)"),
+      background: form.clipLength === l ? "rgba(255,184,0,.1)" : "rgba(8,8,14,.5)",
+      cursor: "pointer",
+      fontSize: 13,
+      fontWeight: 600,
+      color: form.clipLength === l ? "var(--gold)" : "var(--muted)"
+    }
+  }, l, " seconds"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)",
+      marginTop: 6
+    }
+  }, "At ", form.clipLength, "s per clip your ", getSeconds(), "-second video needs ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--gold)"
+    }
+  }, getClipCount(), " clips"), " (", Math.ceil(getClipCount() * 0.65), " performance + ", getClipCount() - Math.ceil(getClipCount() * 0.65), " story)")), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Characters in This Video ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 select all who appear")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
+      gap: 8
+    }
+  }, DEFAULT_CHARACTERS.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    onClick: () => toggleChar(c.id),
+    style: {
+      padding: "10px 12px",
+      borderRadius: 8,
+      border: "1px solid ".concat(form.selectedChars.includes(c.id) ? c.color + "60" : "rgba(255,255,255,.08)"),
+      background: form.selectedChars.includes(c.id) ? c.color + "15" : "rgba(8,8,14,.5)",
+      cursor: "pointer",
+      transition: "all .2s",
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, c.emoji), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: form.selectedChars.includes(c.id) ? "var(--txt)" : "var(--muted)"
+    }
+  }, c.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--muted)"
+    }
+  }, c.role)))))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Lyrics ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 required. The AI reads these to plan your video.")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Paste your full lyrics here. Include section labels like [Verse 1], [Chorus], [Bridge] if you have them.",
+    value: form.lyrics,
+    onChange: e => f("lyrics", e.target.value),
+    style: {
+      minHeight: 160,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-pur btn-full",
+    onClick: generate,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Reading lyrics and writing your shooting script...") : "🎬 Generate My Shooting Script")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(4,1fr)",
+      gap: 12,
+      marginBottom: 20
+    }
+  }, [{
+    v: results.totalClips,
+    l: "Total Clips",
+    ic: "🎬"
+  }, {
+    v: results.arollCount,
+    l: "Performance",
+    ic: "🎤"
+  }, {
+    v: results.brollCount,
+    l: "Story Scenes",
+    ic: "🎭"
+  }, {
+    v: "".concat(results.totalSeconds, "s"),
+    l: "Video Length",
+    ic: "⏱"
+  }].map((s, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "stat"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sv",
+    style: {
+      fontSize: 20
+    }
+  }, s.v), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, s.ic)), /*#__PURE__*/React.createElement("div", {
+    className: "sl"
+  }, s.l)))), results.grokInstructions && /*#__PURE__*/React.createElement("div", {
+    className: "rbox rbox-ok",
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl",
+    style: {
+      color: "var(--ok)"
+    }
+  }, "\uD83D\uDCCB HOW TO USE THESE PROMPTS IN GROK"), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt",
+    style: {
+      paddingRight: 0
+    }
+  }, results.grokInstructions)), /*#__PURE__*/React.createElement("div", {
+    className: "sh"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st"
+  }, "Your Shooting Script")), (_results$clips = results.clips) === null || _results$clips === void 0 ? void 0 : _results$clips.map((clip, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "script-clip ".concat(clip.type === "A-ROLL" ? "aroll" : "broll")
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "rgba(255,184,0,.15)",
+      color: "var(--gold)",
+      padding: "3px 10px",
+      borderRadius: 5,
+      fontSize: 11,
+      fontWeight: 700,
+      fontFamily: "JetBrains Mono,monospace"
+    }
+  }, "CLIP ", clip.number), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)",
+      fontFamily: "JetBrains Mono,monospace"
+    }
+  }, clip.timestamp), /*#__PURE__*/React.createElement("span", {
+    className: "badge ".concat(clip.type === "A-ROLL" ? "b-gold" : "b-pur")
+  }, clip.type)), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => {
+      safeCopy(clip.grokPrompt);
+      showToast("Clip ".concat(clip.number, " prompt copied!"), "✓");
+    }
+  }, "Copy Prompt")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--muted)",
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--txt)"
+    }
+  }, "Lyric moment:"), " ", clip.lyricMoment), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--muted)",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--txt)"
+    }
+  }, "Scene:"), " ", clip.sceneDescription), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(0,0,0,.4)",
+      borderRadius: 7,
+      padding: 12,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 11,
+      color: "var(--txt)",
+      lineHeight: 1.8,
+      whiteSpace: "pre-wrap"
+    }
+  }, clip.grokPrompt))), results.capCutGuide && /*#__PURE__*/React.createElement("div", {
+    className: "rbox",
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl"
+  }, "\u2702\uFE0F HOW TO ASSEMBLE IN CAPCUT"), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt",
+    style: {
+      paddingRight: 0
+    }
+  }, results.capCutGuide)), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "Shooting Script - ".concat(results.songTitle)),
+      n: "shooting-script-".concat((results.songTitle || "video").replace(/\s+/g, "-").toLowerCase(), ".txt")
+    })
+  }, "\u2B07 Download Full Shooting Script"))));
+}
+
+// ── DASHBOARD ──
+function Dashboard(_ref1) {
+  let onNav = _ref1.onNav,
+    history = _ref1.history;
+  const weapons = [{
+    id: "campaigns",
+    icon: "⚡",
+    title: "Ad Campaign Forge",
+    desc: "Generate complete Meta, TikTok and YouTube ad campaigns from your lyrics.",
+    badge: "Most Powerful",
+    bc: "b-gold"
+  }, {
+    id: "pitches",
+    icon: "🎯",
+    title: "Playlist Strike",
+    desc: "3 personalized curator pitch emails, follow-ups, send timing and where to find curators.",
+    badge: "Highest ROI",
+    bc: "b-ok"
+  }, {
+    id: "content",
+    icon: "✦",
+    title: "Content Arsenal",
+    desc: "Social media captions, hooks and hashtags for TikTok, Instagram, YouTube and X.",
+    badge: "Multi-Platform",
+    bc: "b-pur"
+  }, {
+    id: "epk",
+    icon: "📄",
+    title: "EPK Generator",
+    desc: "Professional bios, press releases and pitch emails for media and blogs.",
+    badge: "Press Ready",
+    bc: "b-gold"
+  }, {
+    id: "hooklab",
+    icon: "🎣",
+    title: "Hook Lab",
+    desc: "8 different viral video hooks written from your actual lyrics.",
+    badge: "Go Viral",
+    bc: "b-pur"
+  }, {
+    id: "budget",
+    icon: "💰",
+    title: "Budget Planner",
+    desc: "Smart spending plan. Know exactly where every dollar goes.",
+    badge: "Save Money",
+    bc: "b-ok"
+  }, {
+    id: "video",
+    icon: "🎬",
+    title: "Video Engine",
+    desc: "Complete Grok shooting scripts with your characters automatically included.",
+    badge: "Exclusive",
+    bc: "b-gold"
+  }, {
+    id: "vault",
+    icon: "🧬",
+    title: "Character Vault",
+    desc: "Store your characters. DNA auto-injects into every video prompt.",
+    badge: "Your Characters",
+    bc: "b-pur"
+  }];
+  const done = t => history.some(h => h.type === t);
+  const cl = [{
+    label: "Forge your first ad campaign",
+    done: done("campaign")
+  }, {
+    label: "Strike playlist curators",
+    done: done("pitch")
+  }, {
+    label: "Generate your content arsenal",
+    done: done("content")
+  }, {
+    label: "Build your EPK",
+    done: done("epk")
+  }, {
+    label: "Find your viral hook",
+    done: done("hook")
+  }, {
+    label: "Plan your ad budget",
+    done: done("budget")
+  }, {
+    label: "Generate a video shooting script",
+    done: done("video")
+  }];
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "hero"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 21,
+      fontWeight: 900,
+      color: "var(--txt)",
+      marginBottom: 5
+    }
+  }, "Welcome to ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "linear-gradient(135deg,#FFB800,#FF8C00)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      backgroundClip: "text"
+    }
+  }, "HitWizard")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--muted)",
+      fontSize: 13,
+      maxWidth: 480,
+      lineHeight: 1.65,
+      marginBottom: 16
+    }
+  }, "Your AI music marketing war room. Every weapon powered by your actual lyrics. Built for artists who refuse to be ordinary."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 9,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold",
+    onClick: () => onNav("campaigns")
+  }, "\u26A1 Forge a Campaign"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-out",
+    onClick: () => onNav("pitches")
+  }, "\uD83C\uDFAF Pitch Curators"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: () => onNav("video")
+  }, "\uD83C\uDFAC Make a Video"))), /*#__PURE__*/React.createElement("div", {
+    className: "g4",
+    style: {
+      marginBottom: 22
+    }
+  }, [{
+    v: history.filter(h => h.type === "campaign").length,
+    l: "Campaigns",
+    ic: "⚡"
+  }, {
+    v: history.filter(h => h.type === "pitch").length,
+    l: "Pitches",
+    ic: "🎯"
+  }, {
+    v: history.filter(h => h.type === "content").length,
+    l: "Content Sets",
+    ic: "✦"
+  }, {
+    v: history.length,
+    l: "Total",
+    ic: "🏴‍☠️"
+  }].map((s, i) => /*#__PURE__*/React.createElement("div", {
+    className: "stat",
+    key: i
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sv"
+  }, s.v || "0"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 19
+    }
+  }, s.ic)), /*#__PURE__*/React.createElement("div", {
+    className: "sl"
+  }, s.l)))), /*#__PURE__*/React.createElement("div", {
+    className: "sh"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st"
+  }, "All Eight Weapons")), /*#__PURE__*/React.createElement("div", {
+    className: "g3",
+    style: {
+      marginBottom: 22
+    }
+  }, weapons.map(w => /*#__PURE__*/React.createElement("div", {
+    key: w.id,
+    className: "card",
+    style: {
+      cursor: "pointer"
+    },
+    onClick: () => onNav(w.id)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26,
+      marginBottom: 9
+    }
+  }, w.icon), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--txt)",
+      marginBottom: 5
+    }
+  }, w.title), /*#__PURE__*/React.createElement("span", {
+    className: "badge ".concat(w.bc),
+    style: {
+      marginBottom: 9,
+      display: "inline-flex"
+    }
+  }, w.badge), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: "var(--muted)",
+      lineHeight: 1.6,
+      marginBottom: 12
+    }
+  }, w.desc), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-out btn-sm"
+  }, "Open \u2192")))), /*#__PURE__*/React.createElement("div", {
+    className: "sh"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st"
+  }, "Maximum Readiness Checklist"), /*#__PURE__*/React.createElement("span", {
+    className: "badge b-gold"
+  }, cl.filter(c => c.done).length, "/", cl.length)), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, cl.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      gap: 12,
+      padding: "11px 0",
+      borderBottom: i < cl.length - 1 ? "1px solid rgba(255,184,0,.06)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 28,
+      height: 28,
+      borderRadius: "50%",
+      flexShrink: 0,
+      background: item.done ? "rgba(0,229,153,.1)" : "rgba(255,184,0,.08)",
+      border: "1px solid ".concat(item.done ? "rgba(0,229,153,.35)" : "rgba(255,184,0,.25)"),
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 11,
+      fontWeight: 700,
+      fontFamily: "JetBrains Mono,monospace",
+      color: item.done ? "var(--ok)" : "var(--gold)"
+    }
+  }, item.done ? "✓" : String(i + 1).padStart(2, "0")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      fontSize: 13,
+      color: item.done ? "var(--muted)" : "var(--txt)",
+      textDecoration: item.done ? "line-through" : "none"
+    }
+  }, item.label)))));
+}
+
+// ── CAMPAIGN FORGE ──
+function CampaignForge(_ref10) {
+  var _results$meta, _results$meta2, _results$meta3, _results$meta4, _results$meta5, _results$meta6, _results$meta7, _results$meta8, _results$tiktok, _results$tiktok2, _results$tiktok3, _results$tiktok4, _results$tiktok5, _results$tiktok6, _results$youtube, _results$youtube2, _results$youtube3, _results$youtube4, _results$youtube5, _results$strategy, _results$strategy2, _results$strategy3, _results$strategy4, _results$strategy5, _results$strategy6;
+  let addHistory = _ref10.addHistory,
+    st = _ref10.st;
+  const _useState31 = useState(() => {
+      try { const s = localStorage.getItem("hw_cf"); return s ? JSON.parse(s) : {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
+      catch { return {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
+    }),
+    _useState32 = _slicedToArray(_useState31, 2),
+    form = _useState32[0],
+    setForm = _useState32[1];
+  useEffect(() => {
+    try { localStorage.setItem("hw_cf", JSON.stringify(form)); } catch {}
+  }, [form]);
+  const _useState33 = useState(null),
+    _useState34 = _slicedToArray(_useState33, 2),
+    results = _useState34[0],
+    setResults = _useState34[1];
+  const _useState35 = useState(false),
+    _useState36 = _slicedToArray(_useState35, 2),
+    loading = _useState36[0],
+    setLoading = _useState36[1];
+  const _useState37 = useState("meta"),
+    _useState38 = _slicedToArray(_useState37, 2),
+    tab = _useState38[0],
+    setTab = _useState38[1];
+  const _useState39 = useState(""),
+    _useState40 = _slicedToArray(_useState39, 2),
+    err = _useState40[0],
+    setErr = _useState40[1];
+  const _useState41 = useState(null),
+    _useState42 = _slicedToArray(_useState41, 2),
+    dlData = _useState42[0],
+    setDlData = _useState42[1];
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const genres = ["Pop", "Hip-Hop/Rap", "R&B/Soul", "Rock", "Electronic/EDM", "Country", "Latin", "Afrobeats", "Jazz", "Indie", "Gospel", "Other"];
+  const moods = ["Energetic / Upbeat", "Romantic / Love", "Sad / Melancholic", "Motivational", "Party / Club", "Chill / Relaxed", "Intense / Aggressive", "Spiritual", "Nostalgic"];
+  const forge = async () => {
+    if (!form.songTitle || !form.artist || !form.genre) {
+      setErr("Please fill in Song Title, Artist Name and Genre before continuing.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const lb = form.lyrics ? "\n\nLYRICS \u2014 pull actual phrases from these into ALL ad copy:\n".concat(form.lyrics) : "";
+      const sb = form.story ? "\n\nSONG STORY: ".concat(form.story) : "";
+      const raw = await hwAI("You are an expert music marketing strategist. Generate complete ad campaigns powered by the song's actual lyrics. Write in plain English that any artist understands. Respond ONLY with valid JSON.", "Create a complete ad campaign for:\nSong: \"".concat(form.songTitle, "\" by ").concat(form.artist, "\nGenre: ").concat(form.genre, " | Mood: ").concat(form.mood || "Not specified", "\nSimilar Artists: ").concat(form.similar || "Not specified", "\nTarget Audience: ").concat(form.audience || "General music fans", "\nBudget: $").concat(form.budget, " | Goal: ").concat(form.goal).concat(lb).concat(sb, "\n").concat(form.lyrics ? "CRITICAL: Use actual lyric lines and phrases in the ad copy — not generic music promotion language." : "", "\nReturn ONLY this JSON:\n{\"meta\":{\"headline\":\"punchy ad headline under 40 characters\",\"primaryText\":\"2-3 sentence Facebook Instagram ad copy that makes someone stop scrolling\",\"cta\":\"call to action button text\",\"targeting\":\"specific audience targeting recommendation\",\"adFormat\":\"best ad format with reason why\",\"hook\":\"what to show in the first 3 seconds of a video ad\",\"budgetSplit\":\"how to divide $").concat(form.budget, " across Meta placements\",\"estimatedReach\":\"realistic reach estimate for this budget\"},\"tiktok\":{\"hook\":\"first 3 seconds \u2014 must stop the scroll\",\"caption\":\"TikTok caption with hashtags under 150 characters\",\"hashtags\":\"12 hashtags mixing trending and niche\",\"trend\":\"specific trend or format to attach this song to\",\"videoIdea\":\"detailed video concept that would perform well\",\"targetingTip\":\"TikTok-specific targeting recommendation\"},\"youtube\":{\"adTitle\":\"YouTube pre-roll title\",\"adScript\":\"complete 15-second ad script with timing\",\"targeting\":\"YouTube audience targeting \u2014 channels keywords demographics\",\"keywords\":\"7 keyword targets\",\"budgetNote\":\"YouTube budget recommendation\"},\"strategy\":{\"week1\":\"what to do in week 1\",\"week2\":\"what to do in week 2\",\"week3\":\"what to do in week 3\",\"week4\":\"what to do in week 4\",\"kpi\":\"specific numbers to track and targets\",\"warning\":\"the single most important mistake to avoid\"}}"));
+      const p = parseJ(raw);
+      setResults(p);
+      setTab("meta");
+      addHistory({
+        type: "campaign",
+        icon: "⚡",
+        title: "\"".concat(form.songTitle, "\""),
+        sub: "".concat(form.genre, " \xB7 $").concat(form.budget),
+        date: new Date().toLocaleDateString(),
+        color: "var(--gold)",
+        result: p
+      });
+      st("Campaign ready!", "⚡");
+    } catch (e) {
+      setErr("Something went wrong: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card card-glow",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 16
+    }
+  }, "Tell Us About Your Song"), /*#__PURE__*/React.createElement(LyricsPanel, {
+    onFetched: d => {
+      f("songTitle", d.songTitle);
+      f("artist", d.artistName);
+      f("lyrics", d.lyrics);
+      st("Form filled automatically!", "⚡");
+    },
+    st: st
+  }), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Title *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Heaven In Your Eyes",
+    value: form.songTitle,
+    onChange: e => f("songTitle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Artist Name *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "Your artist name",
+    value: form.artist,
+    onChange: e => f("artist", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Genre *"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.genre,
+    onChange: e => f("genre", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Choose a genre..."), genres.map(g => /*#__PURE__*/React.createElement("option", {
+    key: g
+  }, g)))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Mood"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.mood,
+    onChange: e => f("mood", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Choose a mood..."), moods.map(m => /*#__PURE__*/React.createElement("option", {
+    key: m
+  }, m))))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Similar Artists"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Celine Dion, Adele, Whitney Houston",
+    value: form.similar,
+    onChange: e => f("similar", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Who Should Hear This Song"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Women 25-50 who love emotional ballads",
+    value: form.audience,
+    onChange: e => f("audience", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Ad Budget (USD)"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    type: "number",
+    min: "10",
+    value: form.budget,
+    onChange: e => f("budget", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "What Do You Want Most"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.goal,
+    onChange: e => f("goal", e.target.value)
+  }, ["More Spotify Streams", "More YouTube Views", "Grow Instagram Followers", "Sell Concert Tickets", "Launch an Album or EP", "Build Brand Awareness"].map(g => /*#__PURE__*/React.createElement("option", {
+    key: g
+  }, g))))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Lyrics ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 paste these and every ad will be written from inside your song")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Paste your full or partial lyrics here. This is what makes HitWizard different \u2014 your ad copy comes directly from your actual words.",
+    value: form.lyrics,
+    onChange: e => f("lyrics", e.target.value),
+    style: {
+      minHeight: 120,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "What Is This Song About ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 optional but helps")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "What inspired this song? What should a listener feel?",
+    value: form.story,
+    onChange: e => f("story", e.target.value),
+    style: {
+      minHeight: 60
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold btn-full",
+    onClick: forge,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Building your campaign...") : "⚡ Build My Campaign")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tabs"
+  }, ["meta", "tiktok", "youtube", "strategy"].map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    className: "tab ".concat(tab === t ? "on" : ""),
+    onClick: () => setTab(t)
+  }, t === "meta" ? "📘 Facebook & Instagram" : t === "tiktok" ? "🎵 TikTok" : t === "youtube" ? "▶️ YouTube" : "📋 4-Week Plan"))), tab === "meta" && [["Ad Headline", (_results$meta = results.meta) === null || _results$meta === void 0 ? void 0 : _results$meta.headline], ["Ad Copy", (_results$meta2 = results.meta) === null || _results$meta2 === void 0 ? void 0 : _results$meta2.primaryText], ["Call to Action Button", (_results$meta3 = results.meta) === null || _results$meta3 === void 0 ? void 0 : _results$meta3.cta], ["Who to Target", (_results$meta4 = results.meta) === null || _results$meta4 === void 0 ? void 0 : _results$meta4.targeting], ["Best Ad Format", (_results$meta5 = results.meta) === null || _results$meta5 === void 0 ? void 0 : _results$meta5.adFormat], ["First 3 Seconds of Video", (_results$meta6 = results.meta) === null || _results$meta6 === void 0 ? void 0 : _results$meta6.hook], ["How to Split Your Budget", (_results$meta7 = results.meta) === null || _results$meta7 === void 0 ? void 0 : _results$meta7.budgetSplit], ["Expected Reach", (_results$meta8 = results.meta) === null || _results$meta8 === void 0 ? void 0 : _results$meta8.estimatedReach]].map(_ref11 => {
+    let _ref12 = _slicedToArray(_ref11, 2),
+      l = _ref12[0],
+      v = _ref12[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCD8",
+      st: st
+    });
+  }), tab === "tiktok" && [["First 3 Seconds", (_results$tiktok = results.tiktok) === null || _results$tiktok === void 0 ? void 0 : _results$tiktok.hook], ["Caption", (_results$tiktok2 = results.tiktok) === null || _results$tiktok2 === void 0 ? void 0 : _results$tiktok2.caption], ["Hashtags", (_results$tiktok3 = results.tiktok) === null || _results$tiktok3 === void 0 ? void 0 : _results$tiktok3.hashtags], ["Trend to Attach To", (_results$tiktok4 = results.tiktok) === null || _results$tiktok4 === void 0 ? void 0 : _results$tiktok4.trend], ["Video Concept", (_results$tiktok5 = results.tiktok) === null || _results$tiktok5 === void 0 ? void 0 : _results$tiktok5.videoIdea], ["Targeting Tip", (_results$tiktok6 = results.tiktok) === null || _results$tiktok6 === void 0 ? void 0 : _results$tiktok6.targetingTip]].map(_ref13 => {
+    let _ref14 = _slicedToArray(_ref13, 2),
+      l = _ref14[0],
+      v = _ref14[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83C\uDFB5",
+      st: st
+    });
+  }), tab === "youtube" && [["Ad Title", (_results$youtube = results.youtube) === null || _results$youtube === void 0 ? void 0 : _results$youtube.adTitle], ["15-Second Script", (_results$youtube2 = results.youtube) === null || _results$youtube2 === void 0 ? void 0 : _results$youtube2.adScript], ["Who to Target", (_results$youtube3 = results.youtube) === null || _results$youtube3 === void 0 ? void 0 : _results$youtube3.targeting], ["Keywords", (_results$youtube4 = results.youtube) === null || _results$youtube4 === void 0 ? void 0 : _results$youtube4.keywords], ["Budget Note", (_results$youtube5 = results.youtube) === null || _results$youtube5 === void 0 ? void 0 : _results$youtube5.budgetNote]].map(_ref15 => {
+    let _ref16 = _slicedToArray(_ref15, 2),
+      l = _ref16[0],
+      v = _ref16[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\u25B6\uFE0F",
+      st: st
+    });
+  }), tab === "strategy" && [["Week 1 — Launch", (_results$strategy = results.strategy) === null || _results$strategy === void 0 ? void 0 : _results$strategy.week1, false], ["Week 2 — Improve", (_results$strategy2 = results.strategy) === null || _results$strategy2 === void 0 ? void 0 : _results$strategy2.week2, false], ["Week 3 — Scale Up", (_results$strategy3 = results.strategy) === null || _results$strategy3 === void 0 ? void 0 : _results$strategy3.week3, false], ["Week 4 — Maximize", (_results$strategy4 = results.strategy) === null || _results$strategy4 === void 0 ? void 0 : _results$strategy4.week4, false], ["Numbers to Track", (_results$strategy5 = results.strategy) === null || _results$strategy5 === void 0 ? void 0 : _results$strategy5.kpi, false], ["⚠️ Most Important Warning", (_results$strategy6 = results.strategy) === null || _results$strategy6 === void 0 ? void 0 : _results$strategy6.warning, true]].map(_ref17 => {
+    let _ref18 = _slicedToArray(_ref17, 3),
+      l = _ref18[0],
+      v = _ref18[1],
+      w = _ref18[2];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      warn: w,
+      st: st
+    });
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "Campaign - ".concat(form.songTitle)),
+      n: "hitwizard-campaign.txt"
+    })
+  }, "\u2B07 Save Campaign"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => {
+      setResults(null);
+      st("Ready for your next campaign", "✓");
+    }
+  }, "\u21BA Start Over"))));
+}
+
+// ── PLAYLIST STRIKE ──
+function PlaylistStrike(_ref19) {
+  var _results$pitches, _results$pitches2, _results$curatorSourc;
+  let addHistory = _ref19.addHistory,
+    st = _ref19.st;
+  const _useState43 = useState({
+      songTitle: "",
+      artist: "",
+      genre: "",
+      mood: "",
+      spotifyLink: "",
+      releaseDate: "",
+      artistBio: "",
+      curatorType: "independent",
+      pitchTone: "story",
+      lyrics: "",
+      story: ""
+    }),
+    _useState44 = _slicedToArray(_useState43, 2),
+    form = _useState44[0],
+    setForm = _useState44[1];
+  const _useState45 = useState(null),
+    _useState46 = _slicedToArray(_useState45, 2),
+    results = _useState46[0],
+    setResults = _useState46[1];
+  const _useState47 = useState(false),
+    _useState48 = _slicedToArray(_useState47, 2),
+    loading = _useState48[0],
+    setLoading = _useState48[1];
+  const _useState49 = useState(0),
+    _useState50 = _slicedToArray(_useState49, 2),
+    sel = _useState50[0],
+    setSel = _useState50[1];
+  const _useState51 = useState(""),
+    _useState52 = _slicedToArray(_useState51, 2),
+    err = _useState52[0],
+    setErr = _useState52[1];
+  const _useState53 = useState(null),
+    _useState54 = _slicedToArray(_useState53, 2),
+    dlData = _useState54[0],
+    setDlData = _useState54[1];
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const strike = async () => {
+    if (!form.songTitle || !form.artist || !form.genre) {
+      setErr("Please fill in Song Title, Artist Name and Genre.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const lb = form.lyrics ? "\n\nLYRICS \u2014 quote actual lines in the pitches:\n".concat(form.lyrics) : "";
+      const raw = await hwAI("You are an expert music pitch writer. Write personal compelling pitch emails that get curators to actually listen. Use plain conversational English. Respond ONLY with valid JSON.", "Write 3 playlist pitch emails for:\nSong: \"".concat(form.songTitle, "\" by ").concat(form.artist, "\nGenre: ").concat(form.genre, " | Mood: ").concat(form.mood || "Not specified", "\nSpotify: ").concat(form.spotifyLink || "[LINK]", " | Release: ").concat(form.releaseDate || "Recently released", "\nBio: ").concat(form.artistBio || "Independent artist", " | Curator type: ").concat(form.curatorType, " | Tone: ").concat(form.pitchTone).concat(lb, "\n").concat(form.lyrics ? "CRITICAL: Quote specific lyric lines in the pitch emails — make the curator feel the song before they press play." : "", "\nReturn ONLY this JSON:\n{\"pitches\":[{\"name\":\"pitch name\",\"subject\":\"email subject line\",\"body\":\"complete email 150-200 words\",\"strategy\":\"why this approach works\",\"bestFor\":\"what type of curator this is best for\"},{\"name\":\"pitch name\",\"subject\":\"subject\",\"body\":\"email body\",\"strategy\":\"why\",\"bestFor\":\"curator type\"},{\"name\":\"pitch name\",\"subject\":\"subject\",\"body\":\"email body\",\"strategy\":\"why\",\"bestFor\":\"curator type\"}],\"followUp\":\"complete follow-up email to send on day 5\",\"timing\":\"best day and time to send with reasoning\",\"subjectTips\":\"3 specific subject line tips that increase open rates\",\"curatorSources\":[\"source 1 with details\",\"source 2\",\"source 3\",\"source 4\",\"source 5\"]}"));
+      const p = parseJ(raw);
+      setResults(p);
+      setSel(0);
+      addHistory({
+        type: "pitch",
+        icon: "🎯",
+        title: "\"".concat(form.songTitle, "\""),
+        sub: "".concat(form.curatorType, " \xB7 ").concat(form.genre),
+        date: new Date().toLocaleDateString(),
+        color: "var(--ok)",
+        result: p
+      });
+      st("3 pitches ready!", "🎯");
+    } catch (e) {
+      setErr("Something went wrong: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  const p = results === null || results === void 0 || (_results$pitches = results.pitches) === null || _results$pitches === void 0 ? void 0 : _results$pitches[sel];
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card card-ok",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 16
+    }
+  }, "Your Song Details"), /*#__PURE__*/React.createElement(LyricsPanel, {
+    onFetched: d => {
+      f("songTitle", d.songTitle);
+      f("artist", d.artistName);
+      f("lyrics", d.lyrics);
+      f("spotifyLink", "https://open.spotify.com/track/");
+      st("Form filled!", "🎯");
+    },
+    st: st
+  }), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Title *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Heaven In Your Eyes",
+    value: form.songTitle,
+    onChange: e => f("songTitle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Artist Name *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.artist,
+    onChange: e => f("artist", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Genre *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Pop, R&B",
+    value: form.genre,
+    onChange: e => f("genre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Mood"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Romantic, Emotional",
+    value: form.mood,
+    onChange: e => f("mood", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Spotify Link"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "https://open.spotify.com/track/...",
+    value: form.spotifyLink,
+    onChange: e => f("spotifyLink", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Release Date"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    type: "date",
+    value: form.releaseDate,
+    onChange: e => f("releaseDate", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "A Little About You"), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Brief artist background \u2014 achievements, your story, what makes you different...",
+    value: form.artistBio,
+    onChange: e => f("artistBio", e.target.value),
+    style: {
+      minHeight: 60
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Who Are You Pitching To"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.curatorType,
+    onChange: e => f("curatorType", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "independent"
+  }, "Independent Playlist Curator"), /*#__PURE__*/React.createElement("option", {
+    value: "editorial"
+  }, "Spotify Editorial Team"), /*#__PURE__*/React.createElement("option", {
+    value: "blog"
+  }, "Music Blog or Press"), /*#__PURE__*/React.createElement("option", {
+    value: "radio"
+  }, "Radio or Podcast"), /*#__PURE__*/React.createElement("option", {
+    value: "influencer"
+  }, "Influencer or Creator"))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Email Tone"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.pitchTone,
+    onChange: e => f("pitchTone", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "story"
+  }, "Story-Driven"), /*#__PURE__*/React.createElement("option", {
+    value: "professional"
+  }, "Professional and Polished"), /*#__PURE__*/React.createElement("option", {
+    value: "casual"
+  }, "Casual and Friendly"), /*#__PURE__*/React.createElement("option", {
+    value: "bold"
+  }, "Bold and Confident")))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Lyrics ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 real lyric lines in pitches increase response rates dramatically")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Paste your lyrics. The pitch will quote actual lines \u2014 nothing stops a curator faster than reading a line that genuinely moves them.",
+    value: form.lyrics,
+    onChange: e => f("lyrics", e.target.value),
+    style: {
+      minHeight: 110,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ok btn-full",
+    onClick: strike,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Writing your pitches...") : "🎯 Write My Pitches")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tabs"
+  }, (_results$pitches2 = results.pitches) === null || _results$pitches2 === void 0 ? void 0 : _results$pitches2.map((pt, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    className: "tab ".concat(sel === i ? "on" : ""),
+    onClick: () => setSel(i),
+    style: {
+      flex: "none",
+      padding: "7px 15px"
+    }
+  }, pt.name))), p && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(RBox, {
+    label: "Email Subject Line",
+    value: p.subject,
+    icon: "\uD83D\uDCE7",
+    color: "var(--ok)",
+    st: st
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "rbox rbox-ok"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl",
+    style: {
+      color: "var(--ok)"
+    }
+  }, "\uD83D\uDCDD Email Body"), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt"
+  }, p.body), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm rbox-cp",
+    onClick: () => safeCopy("Subject: ".concat(p.subject, "\n\n").concat(p.body)).then(() => st("Full email copied!", "📧"))
+  }, "Copy Email")), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement(RBox, {
+    label: "Why This Approach Works",
+    value: p.strategy,
+    icon: "\uD83D\uDCA1",
+    st: st
+  }), /*#__PURE__*/React.createElement(RBox, {
+    label: "Best Used For",
+    value: p.bestFor,
+    icon: "\uD83C\uDFAF",
+    st: st
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "divider"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement(RBox, {
+    label: "Best Time to Send",
+    value: results.timing,
+    icon: "\u23F0",
+    st: st
+  }), /*#__PURE__*/React.createElement(RBox, {
+    label: "Subject Line Tips",
+    value: results.subjectTips,
+    icon: "\uD83D\uDD11",
+    st: st
+  })), /*#__PURE__*/React.createElement(RBox, {
+    label: "Follow-Up Email (Send on Day 5)",
+    value: results.followUp,
+    icon: "\uD83D\uDD04",
+    st: st
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 12,
+      fontSize: 13
+    }
+  }, "Where to Find Curators"), (_results$curatorSourc = results.curatorSources) === null || _results$curatorSourc === void 0 ? void 0 : _results$curatorSourc.map((src, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 11,
+      padding: "9px 0",
+      borderBottom: i < results.curatorSources.length - 1 ? "1px solid rgba(0,229,153,.08)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 22,
+      height: 22,
+      borderRadius: "50%",
+      background: "rgba(0,229,153,.1)",
+      border: "1px solid rgba(0,229,153,.25)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 10,
+      fontWeight: 700,
+      color: "var(--ok)",
+      fontFamily: "JetBrains Mono,monospace",
+      flexShrink: 0
+    }
+  }, i + 1), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--txt)"
+    }
+  }, src)))), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "Pitches - ".concat(form.songTitle)),
+      n: "hitwizard-pitches.txt"
+    })
+  }, "\u2B07 Save All Pitches"))));
+}
+
+// ── CONTENT ARSENAL ──
+function ContentArsenal(_ref20) {
+  let addHistory = _ref20.addHistory,
+    st = _ref20.st;
+  const _useState55 = useState({
+      songTitle: "",
+      artist: "",
+      genre: "",
+      mood: "",
+      theme: "",
+      releaseStatus: "new",
+      platforms: ["tiktok", "instagram", "youtube", "twitter"],
+      lyrics: ""
+    }),
+    _useState56 = _slicedToArray(_useState55, 2),
+    form = _useState56[0],
+    setForm = _useState56[1];
+  const _useState57 = useState(null),
+    _useState58 = _slicedToArray(_useState57, 2),
+    results = _useState58[0],
+    setResults = _useState58[1];
+  const _useState59 = useState(false),
+    _useState60 = _slicedToArray(_useState59, 2),
+    loading = _useState60[0],
+    setLoading = _useState60[1];
+  const _useState61 = useState("tiktok"),
+    _useState62 = _slicedToArray(_useState61, 2),
+    tab = _useState62[0],
+    setTab = _useState62[1];
+  const _useState63 = useState(""),
+    _useState64 = _slicedToArray(_useState63, 2),
+    err = _useState64[0],
+    setErr = _useState64[1];
+  const _useState65 = useState(null),
+    _useState66 = _slicedToArray(_useState65, 2),
+    dlData = _useState66[0],
+    setDlData = _useState66[1];
+  const plats = {
+    tiktok: "🎵 TikTok",
+    instagram: "📸 Instagram",
+    youtube: "▶️ YouTube",
+    twitter: "𝕏 Twitter/X"
+  };
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const toggleP = p => setForm(f => _objectSpread(_objectSpread({}, f), {}, {
+    platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p]
+  }));
+  const generate = async () => {
+    if (!form.songTitle || !form.artist) {
+      setErr("Please fill in Song Title and Artist Name.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const lb = form.lyrics ? "\n\nLYRICS \u2014 use actual phrases as captions and hooks:\n".concat(form.lyrics) : "";
+      const raw = await hwAI("You are a social media content expert for musicians. Write viral platform-optimized content. Use plain language. Respond ONLY with valid JSON.", "Create social media content for:\nSong: \"".concat(form.songTitle, "\" by ").concat(form.artist, "\nGenre: ").concat(form.genre || "Not specified", " | Mood: ").concat(form.mood || "Not specified", "\nTheme: ").concat(form.theme || "Not specified", " | Status: ").concat(form.releaseStatus).concat(lb, "\nReturn ONLY this JSON:\n{\"universal\":\"one line that works on every platform\",\"tiktok\":{\"caption1\":\"option 1 with hashtags under 150 chars\",\"caption2\":\"option 2 emotional angle\",\"caption3\":\"option 3 curiosity angle\",\"hashtags\":\"20 hashtags\",\"hook1\":\"first 3 seconds concept 1\",\"hook2\":\"first 3 seconds concept 2\",\"duet\":\"duet or stitch idea\",\"trend\":\"specific trend to attach to\"},\"instagram\":{\"reelsCaption\":\"Reels caption with hashtags\",\"feedCaption\":\"longer feed post 100-120 words\",\"story\":\"Story text overlay\",\"hashtags\":\"15 hashtags\",\"cta\":\"call to action\",\"bioLink\":\"link in bio suggestion\"},\"youtube\":{\"title1\":\"SEO title\",\"title2\":\"curiosity title\",\"description\":\"full description 150-200 words\",\"tags\":\"15 tags\",\"thumbnail\":\"thumbnail concept\",\"endScreen\":\"end screen suggestion\"},\"twitter\":{\"tweet1\":\"announcement tweet under 280 chars\",\"tweet2\":\"behind the scenes tweet\",\"tweet3\":\"fan engagement tweet\",\"thread\":\"5-tweet thread\",\"hashtags\":\"5 hashtags\"},\"press\":{\"subject\":\"press email subject\",\"opening\":\"50-word opening paragraph\",\"emailSubject\":\"newsletter subject line\"}}"));
+      const p = parseJ(raw);
+      setResults(p);
+      if (form.platforms[0]) setTab(form.platforms[0]);
+      addHistory({
+        type: "content",
+        icon: "✦",
+        title: "\"".concat(form.songTitle, "\""),
+        sub: form.platforms.join(", "),
+        date: new Date().toLocaleDateString(),
+        color: "var(--pl)",
+        result: p
+      });
+      st("Content ready!", "✦");
+    } catch (e) {
+      setErr("Something went wrong: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card card-pur",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 16
+    }
+  }, "Your Song Details"), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Title *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.songTitle,
+    onChange: e => f("songTitle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Artist Name *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.artist,
+    onChange: e => f("artist", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Genre"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Pop, R&B",
+    value: form.genre,
+    onChange: e => f("genre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Mood"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Romantic, Hype",
+    value: form.mood,
+    onChange: e => f("mood", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "What Is This Song About"), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Theme, story, message...",
+    value: form.theme,
+    onChange: e => f("theme", e.target.value),
+    style: {
+      minHeight: 55
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Platforms to Create Content For"), /*#__PURE__*/React.createElement("div", {
+    className: "pill-row"
+  }, Object.entries(plats).map(_ref21 => {
+    let _ref22 = _slicedToArray(_ref21, 2),
+      k = _ref22[0],
+      v = _ref22[1];
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      className: "pill ".concat(form.platforms.includes(k) ? "on" : ""),
+      onClick: () => toggleP(k)
+    }, v);
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Release Status"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.releaseStatus,
+    onChange: e => f("releaseStatus", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "new"
+  }, "New Release \u2014 Out Now"), /*#__PURE__*/React.createElement("option", {
+    value: "upcoming"
+  }, "Coming Soon"), /*#__PURE__*/React.createElement("option", {
+    value: "catalog"
+  }, "Older Song \u2014 Pushing Again"), /*#__PURE__*/React.createElement("option", {
+    value: "single"
+  }, "Lead Single"))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Lyrics ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 real lyric lines as captions stop people mid-scroll")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Paste lyrics here. Even a single powerful line used as a caption is more effective than any generic music promo text.",
+    value: form.lyrics,
+    onChange: e => f("lyrics", e.target.value),
+    style: {
+      minHeight: 110,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-pur btn-full",
+    onClick: generate,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Creating your content...") : "✦ Create My Content")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, results.universal && /*#__PURE__*/React.createElement("div", {
+    className: "rbox",
+    style: {
+      borderColor: "rgba(123,47,190,.3)",
+      background: "rgba(123,47,190,.05)",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl",
+    style: {
+      color: "var(--pl)"
+    }
+  }, "\uD83C\uDFAF Universal Hook \u2014 Works Everywhere"), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt",
+    style: {
+      fontSize: 15,
+      fontWeight: 600,
+      paddingRight: 70
+    }
+  }, results.universal), /*#__PURE__*/React.createElement(CopyBtn, {
+    text: results.universal,
+    st: st
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "tabs"
+  }, form.platforms.map(p => /*#__PURE__*/React.createElement("button", {
+    key: p,
+    className: "tab ".concat(tab === p ? "on" : ""),
+    onClick: () => setTab(p)
+  }, plats[p])), /*#__PURE__*/React.createElement("button", {
+    className: "tab ".concat(tab === "press" ? "on" : ""),
+    onClick: () => setTab("press")
+  }, "\uD83D\uDCF0 Press")), tab === "tiktok" && results.tiktok && [["Caption Option 1", results.tiktok.caption1], ["Caption Option 2", results.tiktok.caption2], ["Caption Option 3", results.tiktok.caption3], ["Hashtags (20)", results.tiktok.hashtags], ["Video Hook — Option 1", results.tiktok.hook1], ["Video Hook — Option 2", results.tiktok.hook2], ["Duet or Stitch Idea", results.tiktok.duet], ["Trend to Jump On", results.tiktok.trend]].map(_ref23 => {
+    let _ref24 = _slicedToArray(_ref23, 2),
+      l = _ref24[0],
+      v = _ref24[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83C\uDFB5",
+      st: st
+    });
+  }), tab === "instagram" && results.instagram && [["Reels Caption", results.instagram.reelsCaption], ["Feed Post Caption", results.instagram.feedCaption], ["Story Text Overlay", results.instagram.story], ["Hashtags (15)", results.instagram.hashtags], ["Call to Action", results.instagram.cta], ["Link in Bio Text", results.instagram.bioLink]].map(_ref25 => {
+    let _ref26 = _slicedToArray(_ref25, 2),
+      l = _ref26[0],
+      v = _ref26[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCF8",
+      st: st
+    });
+  }), tab === "youtube" && results.youtube && [["Title — SEO", results.youtube.title1], ["Title — Curiosity", results.youtube.title2], ["Full Description", results.youtube.description], ["Tags (15)", results.youtube.tags], ["Thumbnail Idea", results.youtube.thumbnail], ["End Screen", results.youtube.endScreen]].map(_ref27 => {
+    let _ref28 = _slicedToArray(_ref27, 2),
+      l = _ref28[0],
+      v = _ref28[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\u25B6\uFE0F",
+      st: st
+    });
+  }), tab === "twitter" && results.twitter && [["Announcement Tweet", results.twitter.tweet1], ["Behind the Scenes", results.twitter.tweet2], ["Fan Engagement", results.twitter.tweet3], ["5-Tweet Thread", results.twitter.thread], ["Hashtags", results.twitter.hashtags]].map(_ref29 => {
+    let _ref30 = _slicedToArray(_ref29, 2),
+      l = _ref30[0],
+      v = _ref30[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD835\uDD4F",
+      st: st
+    });
+  }), tab === "press" && results.press && [["Press Email Subject", results.press.subject], ["Press Release Opening", results.press.opening], ["Newsletter Subject", results.press.emailSubject]].map(_ref31 => {
+    let _ref32 = _slicedToArray(_ref31, 2),
+      l = _ref32[0],
+      v = _ref32[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCF0",
+      st: st
+    });
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "Content - ".concat(form.songTitle)),
+      n: "hitwizard-content.txt"
+    })
+  }, "\u2B07 Save All Content"))));
+}
+
+// ── EPK GENERATOR ──
+function EPKGenerator(_ref33) {
+  let addHistory = _ref33.addHistory,
+    st = _ref33.st;
+  const _useState67 = useState({
+      artistName: "",
+      genre: "",
+      hometown: "",
+      influences: "",
+      achievements: "",
+      songHighlight: "",
+      songStory: "",
+      pressAngle: "",
+      website: "",
+      socialLinks: "",
+      lyrics: ""
+    }),
+    _useState68 = _slicedToArray(_useState67, 2),
+    form = _useState68[0],
+    setForm = _useState68[1];
+  const _useState69 = useState(null),
+    _useState70 = _slicedToArray(_useState69, 2),
+    results = _useState70[0],
+    setResults = _useState70[1];
+  const _useState71 = useState(false),
+    _useState72 = _slicedToArray(_useState71, 2),
+    loading = _useState72[0],
+    setLoading = _useState72[1];
+  const _useState73 = useState("bio"),
+    _useState74 = _slicedToArray(_useState73, 2),
+    tab = _useState74[0],
+    setTab = _useState74[1];
+  const _useState75 = useState(""),
+    _useState76 = _slicedToArray(_useState75, 2),
+    err = _useState76[0],
+    setErr = _useState76[1];
+  const _useState77 = useState(null),
+    _useState78 = _slicedToArray(_useState77, 2),
+    dlData = _useState78[0],
+    setDlData = _useState78[1];
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const generate = async () => {
+    if (!form.artistName || !form.genre) {
+      setErr("Please fill in Artist Name and Genre.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const lb = form.lyrics ? "\n\nSAMPLE LYRICS to match the writing voice:\n".concat(form.lyrics) : "";
+      const raw = await hwAI("You are a professional music publicist. Create compelling Electronic Press Kits. Write in plain conversational English that sounds human. Respond ONLY with valid JSON.", "Build a complete EPK for:\nArtist: ".concat(form.artistName, " | Genre: ").concat(form.genre, "\nHometown: ").concat(form.hometown || "Not specified", " | Influences: ").concat(form.influences || "Not specified", "\nAchievements: ").concat(form.achievements || "Independent artist", " | Featured Song: ").concat(form.songHighlight || "Not specified", "\nSong Story: ").concat(form.songStory || "Not specified", " | Press Angle: ").concat(form.pressAngle || "Not specified", "\nWebsite: ").concat(form.website || "Not specified", " | Socials: ").concat(form.socialLinks || "Not specified").concat(lb, "\nReturn ONLY this JSON:\n{\"bio\":{\"short\":\"50-word punchy bio\",\"medium\":\"150-word press bio\",\"long\":\"300-word full narrative bio\",\"firstPerson\":\"100-word first-person artist statement\"},\"press\":{\"release\":\"complete 300-word press release\",\"headline\":\"press release headline\",\"quote\":\"compelling artist quote\",\"angle\":\"unique newsworthy angle\"},\"pitch\":{\"blog\":\"100-word music blog pitch\",\"magazine\":\"100-word magazine pitch\",\"podcast\":\"100-word podcast pitch\",\"sync\":\"100-word sync licensing pitch\"},\"social\":{\"instagram\":\"Instagram bio under 150 chars\",\"twitter\":\"Twitter bio under 160 chars\",\"youtube\":\"YouTube channel description 200 words\",\"tiktok\":\"TikTok bio under 80 chars\"},\"assets\":{\"oneliner\":\"one sentence that defines this artist forever\",\"streamingBio\":\"Spotify and Apple Music bio 200 words\",\"photoCaption\":\"press photo caption\"}}"));
+      const p = parseJ(raw);
+      setResults(p);
+      setTab("bio");
+      addHistory({
+        type: "epk",
+        icon: "📄",
+        title: form.artistName,
+        sub: form.genre,
+        date: new Date().toLocaleDateString(),
+        color: "var(--gold)",
+        result: p
+      });
+      st("EPK ready!", "📄");
+    } catch (e) {
+      setErr("Something went wrong: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 16
+    }
+  }, "Your Artist Information"), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Artist / Stage Name *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "Your artist name",
+    value: form.artistName,
+    onChange: e => f("artistName", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Genre *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Pop, R&B, Soul",
+    value: form.genre,
+    onChange: e => f("genre", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Where You Are Based"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Novato, CA",
+    value: form.hometown,
+    onChange: e => f("hometown", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Musical Influences"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Celine Dion, Whitney Houston, Adele",
+    value: form.influences,
+    onChange: e => f("influences", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Story and Achievements"), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Releases, achievements, anything that makes your story interesting...",
+    value: form.achievements,
+    onChange: e => f("achievements", e.target.value),
+    style: {
+      minHeight: 60
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song to Feature in EPK"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "Your best or latest song",
+    value: form.songHighlight,
+    onChange: e => f("songHighlight", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Unique Press Angle"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "What makes your story newsworthy?",
+    value: form.pressAngle,
+    onChange: e => f("pressAngle", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Story Behind the Song"), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "What inspired this song?",
+    value: form.songStory,
+    onChange: e => f("songStory", e.target.value),
+    style: {
+      minHeight: 55
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Website"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "https://yourwebsite.com",
+    value: form.website,
+    onChange: e => f("website", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Social Handles"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "@instagram @tiktok @youtube",
+    value: form.socialLinks,
+    onChange: e => f("socialLinks", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Sample Lyrics ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 helps write in your voice")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Paste a verse or chorus...",
+    value: form.lyrics,
+    onChange: e => f("lyrics", e.target.value),
+    style: {
+      minHeight: 85,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold btn-full",
+    onClick: generate,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Building your EPK...") : "📄 Build My EPK")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "tabs"
+  }, ["bio", "press", "pitch", "social", "assets"].map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    className: "tab ".concat(tab === t ? "on" : ""),
+    onClick: () => setTab(t)
+  }, t === "bio" ? "📝 Bios" : t === "press" ? "📰 Press" : t === "pitch" ? "📧 Pitch Emails" : t === "social" ? "📱 Social Bios" : "📦 Assets"))), tab === "bio" && results.bio && [["50-Word Bio", results.bio.short], ["150-Word Press Bio", results.bio.medium], ["300-Word Full Bio", results.bio.long], ["In Your Own Words", results.bio.firstPerson]].map(_ref34 => {
+    let _ref35 = _slicedToArray(_ref34, 2),
+      l = _ref35[0],
+      v = _ref35[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCDD",
+      st: st
+    });
+  }), tab === "press" && results.press && [["Press Release Headline", results.press.headline], ["Full Press Release", results.press.release], ["Your Quote", results.press.quote], ["Your Newsworthy Angle", results.press.angle]].map(_ref36 => {
+    let _ref37 = _slicedToArray(_ref36, 2),
+      l = _ref37[0],
+      v = _ref37[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCF0",
+      st: st
+    });
+  }), tab === "pitch" && results.pitch && [["Music Blog Pitch", results.pitch.blog], ["Magazine Pitch", results.pitch.magazine], ["Podcast Pitch", results.pitch.podcast], ["Sync Licensing Pitch", results.pitch.sync]].map(_ref38 => {
+    let _ref39 = _slicedToArray(_ref38, 2),
+      l = _ref39[0],
+      v = _ref39[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCE7",
+      st: st
+    });
+  }), tab === "social" && results.social && [["Instagram Bio", results.social.instagram], ["Twitter/X Bio", results.social.twitter], ["YouTube About Section", results.social.youtube], ["TikTok Bio", results.social.tiktok]].map(_ref40 => {
+    let _ref41 = _slicedToArray(_ref40, 2),
+      l = _ref41[0],
+      v = _ref41[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCF1",
+      st: st
+    });
+  }), tab === "assets" && results.assets && [["Your One-Liner", results.assets.oneliner], ["Spotify and Apple Music Bio", results.assets.streamingBio], ["Press Photo Caption", results.assets.photoCaption]].map(_ref42 => {
+    let _ref43 = _slicedToArray(_ref42, 2),
+      l = _ref43[0],
+      v = _ref43[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCE6",
+      st: st
+    });
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "EPK - ".concat(form.artistName)),
+      n: "hitwizard-epk.txt"
+    })
+  }, "\u2B07 Save Full EPK"))));
+}
+
+// ── HOOK LAB ──
+function HookLab(_ref44) {
+  var _results$hooks;
+  let addHistory = _ref44.addHistory,
+    st = _ref44.st;
+  const _useState79 = useState({
+      songTitle: "",
+      artist: "",
+      genre: "",
+      platform: "tiktok",
+      lyrics: "",
+      story: ""
+    }),
+    _useState80 = _slicedToArray(_useState79, 2),
+    form = _useState80[0],
+    setForm = _useState80[1];
+  const _useState81 = useState(null),
+    _useState82 = _slicedToArray(_useState81, 2),
+    results = _useState82[0],
+    setResults = _useState82[1];
+  const _useState83 = useState(false),
+    _useState84 = _slicedToArray(_useState83, 2),
+    loading = _useState84[0],
+    setLoading = _useState84[1];
+  const _useState85 = useState(""),
+    _useState86 = _slicedToArray(_useState85, 2),
+    err = _useState86[0],
+    setErr = _useState86[1];
+  const _useState87 = useState(null),
+    _useState88 = _slicedToArray(_useState87, 2),
+    dlData = _useState88[0],
+    setDlData = _useState88[1];
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const generate = async () => {
+    if (!form.songTitle || !form.lyrics) {
+      setErr("Song Title and Lyrics are both required for Hook Lab.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const raw = await hwAI("You are a viral video hook specialist. Write the perfect first 3 seconds for music videos. Read the actual lyrics and pull the most emotionally powerful phrases. Respond ONLY with valid JSON.", "Write 8 different video hooks for: \"".concat(form.songTitle, "\" by ").concat(form.artist || "The Artist", "\nGenre: ").concat(form.genre || "Pop", " | Platform: ").concat(form.platform, "\nLyrics:\n").concat(form.lyrics, "\n").concat(form.story ? "Song meaning: ".concat(form.story) : "", "\nUse actual lyric phrases in at least 4 hooks. Make each hook completely different from the others.\nReturn ONLY this JSON:\n{\"hooks\":[{\"style\":\"POV\",\"hook\":\"the complete hook script\",\"why\":\"why this stops the scroll\",\"lyricUsed\":true},{\"style\":\"Emotional Statement\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":false},{\"style\":\"Direct Lyric Quote\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":true},{\"style\":\"Question\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":false},{\"style\":\"Controversial Take\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":false},{\"style\":\"Story Opening\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":true},{\"style\":\"Text Overlay\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":true},{\"style\":\"Trend Format\",\"hook\":\"hook script\",\"why\":\"why it works\",\"lyricUsed\":false}],\"topPick\":\"which hook number wins and exactly why\",\"visualTip\":\"specific visual direction to pair with the top hook\",\"platformTip\":\"specific delivery advice for ").concat(form.platform, "\",\"timing\":\"exact second-by-second breakdown of those 3 seconds\"}"));
+      const p = parseJ(raw);
+      setResults(p);
+      addHistory({
+        type: "hook",
+        icon: "🎣",
+        title: "\"".concat(form.songTitle, "\""),
+        sub: "".concat(form.platform, " \xB7 8 hooks"),
+        date: new Date().toLocaleDateString(),
+        color: "var(--pl)",
+        result: p
+      });
+      st("8 hooks ready!", "🎣");
+    } catch (e) {
+      setErr("Something went wrong: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card card-pur",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 8
+    }
+  }, "Hook Lab"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--muted)",
+      marginBottom: 16,
+      lineHeight: 1.6
+    }
+  }, "The first 3 seconds decide everything. Paste your lyrics and get 8 completely different hooks \u2014 written from your actual words. The one that makes someone stop their thumb at 2am is in here."), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Song Title *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.songTitle,
+    onChange: e => f("songTitle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Artist Name"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.artist,
+    onChange: e => f("artist", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Genre"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: form.genre,
+    onChange: e => f("genre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Platform"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.platform,
+    onChange: e => f("platform", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "tiktok"
+  }, "TikTok"), /*#__PURE__*/React.createElement("option", {
+    value: "instagram"
+  }, "Instagram Reels"), /*#__PURE__*/React.createElement("option", {
+    value: "youtube"
+  }, "YouTube Shorts"), /*#__PURE__*/React.createElement("option", {
+    value: "all"
+  }, "All Platforms")))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Lyrics * ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 the AI reads every line for the most powerful phrases")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Paste your full lyrics here. Hook Lab reads every line looking for the phrases that will make someone stop scrolling.",
+    value: form.lyrics,
+    onChange: e => f("lyrics", e.target.value),
+    style: {
+      minHeight: 140,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "What This Song Means ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 optional")), /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "Context helps create better hooks...",
+    value: form.story,
+    onChange: e => f("story", e.target.value),
+    style: {
+      minHeight: 50
+    }
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-pur btn-full",
+    onClick: generate,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Finding your 8 hooks...") : "🎣 Find My Viral Hooks")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, results.topPick && /*#__PURE__*/React.createElement("div", {
+    className: "rbox",
+    style: {
+      borderColor: "rgba(255,184,0,.35)",
+      background: "rgba(255,184,0,.05)",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl"
+  }, "\uD83C\uDFC6 Top Pick"), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt",
+    style: {
+      fontWeight: 600,
+      paddingRight: 0
+    }
+  }, results.topPick)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gap: 9,
+      marginBottom: 14
+    }
+  }, (_results$hooks = results.hooks) === null || _results$hooks === void 0 ? void 0 : _results$hooks.map((h, i) => {
+    var _h$style;
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "rbox",
+      style: {
+        borderColor: h.lyricUsed ? "rgba(255,184,0,.2)" : "rgba(123,47,190,.2)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 9
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "rbox-lbl",
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: "rgba(255,184,0,.12)",
+        color: "var(--gold)",
+        padding: "2px 7px",
+        borderRadius: 4,
+        fontSize: 9,
+        marginRight: 7
+      }
+    }, "#", i + 1), (_h$style = h.style) === null || _h$style === void 0 ? void 0 : _h$style.toUpperCase(), h.lyricUsed && /*#__PURE__*/React.createElement("span", {
+      className: "badge b-gold",
+      style: {
+        marginLeft: 7
+      }
+    }, "FROM YOUR LYRICS")), /*#__PURE__*/React.createElement(CopyBtn, {
+      text: h.hook,
+      st: st
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 600,
+        color: "var(--txt)",
+        marginBottom: 5
+      }
+    }, h.hook), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--muted)",
+        fontStyle: "italic"
+      }
+    }, h.why));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement(RBox, {
+    label: "Visual Direction",
+    value: results.visualTip,
+    icon: "\uD83C\uDFAC",
+    st: st
+  }), /*#__PURE__*/React.createElement(RBox, {
+    label: "Platform Delivery Tip",
+    value: results.platformTip,
+    icon: "\uD83D\uDCF1",
+    st: st
+  })), /*#__PURE__*/React.createElement(RBox, {
+    label: "Second-by-Second Breakdown",
+    value: results.timing,
+    icon: "\u23F1",
+    st: st
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "Hooks - ".concat(form.songTitle)),
+      n: "hitwizard-hooks.txt"
+    })
+  }, "\u2B07 Save All Hooks"))));
+}
+
+// ── BUDGET PLANNER ──
+function BudgetPlanner(_ref45) {
+  var _results$allocation;
+  let addHistory = _ref45.addHistory,
+    st = _ref45.st;
+  const _useState89 = useState({
+      budget: "",
+      goal: "streams",
+      genre: "",
+      audience: "",
+      platforms: ["meta", "tiktok", "youtube"],
+      timeline: "30",
+      experience: "beginner"
+    }),
+    _useState90 = _slicedToArray(_useState89, 2),
+    form = _useState90[0],
+    setForm = _useState90[1];
+  const _useState91 = useState(null),
+    _useState92 = _slicedToArray(_useState91, 2),
+    results = _useState92[0],
+    setResults = _useState92[1];
+  const _useState93 = useState(false),
+    _useState94 = _slicedToArray(_useState93, 2),
+    loading = _useState94[0],
+    setLoading = _useState94[1];
+  const _useState95 = useState(""),
+    _useState96 = _slicedToArray(_useState95, 2),
+    err = _useState96[0],
+    setErr = _useState96[1];
+  const _useState97 = useState(null),
+    _useState98 = _slicedToArray(_useState97, 2),
+    dlData = _useState98[0],
+    setDlData = _useState98[1];
+  const plats = {
+    meta: "📘 Facebook & Instagram",
+    tiktok: "🎵 TikTok",
+    youtube: "▶️ YouTube",
+    spotify: "🟢 Spotify Ads",
+    radio: "📻 Radio & PR"
+  };
+  const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+    [k]: v
+  }));
+  const toggle = p => setForm(f => _objectSpread(_objectSpread({}, f), {}, {
+    platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p]
+  }));
+  const analyze = async () => {
+    if (!form.budget || Number(form.budget) < 10) {
+      setErr("Please enter a budget of at least $10.");
+      return;
+    }
+    if (!form.platforms.length) {
+      setErr("Please select at least one platform.");
+      return;
+    }
+    setErr("");
+    setLoading(true);
+    setResults(null);
+    try {
+      const raw = await hwAI("You are a music marketing budget expert. Give realistic data-driven spending advice. Use plain language. Respond ONLY with valid JSON.", "Plan a music marketing budget:\nTotal: $".concat(form.budget, " | Goal: ").concat(form.goal, " | Genre: ").concat(form.genre || "Not specified", "\nAudience: ").concat(form.audience || "General fans", " | Platforms: ").concat(form.platforms.join(", "), "\nTimeline: ").concat(form.timeline, " days | Experience: ").concat(form.experience, "\nReturn ONLY this JSON:\n{\"summary\":\"2-3 sentence plain English strategy summary\",\"allocation\":[{\"platform\":\"name\",\"amount\":0,\"percentage\":0,\"rationale\":\"why this amount\"}],\"dailyBudget\":\"how much to spend per day and when\",\"weeklyPlan\":{\"week1\":\"week 1 focus\",\"week2\":\"week 2 focus\",\"week3\":\"week 3 focus\",\"week4\":\"week 4 focus\"},\"expectedResults\":{\"streams\":\"realistic stream estimate\",\"reach\":\"realistic reach estimate\",\"followers\":\"realistic follower growth\",\"costPerStream\":\"estimated cost per stream\"},\"doList\":[\"do this\",\"do this\",\"do this\",\"do this\",\"do this\"],\"dontList\":[\"avoid this\",\"avoid this\",\"avoid this\"],\"proTip\":\"one advanced tip most artists never think of\",\"warning\":\"the single biggest money-wasting mistake for this scenario\"}"));
+      const p = parseJ(raw);
+      setResults(p);
+      addHistory({
+        type: "budget",
+        icon: "💰",
+        title: "$".concat(form.budget, " Plan"),
+        sub: "".concat(form.goal, " \xB7 ").concat(form.timeline, " days"),
+        date: new Date().toLocaleDateString(),
+        color: "var(--ok)",
+        result: p
+      });
+      st("Budget plan ready!", "💰");
+    } catch (e) {
+      setErr("Something went wrong: ".concat(e.message));
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
+    content: dlData.c,
+    filename: dlData.n,
+    onClose: () => setDlData(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card card-ok",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 16
+    }
+  }, "Your Budget Details"), /*#__PURE__*/React.createElement(ErrBox, {
+    msg: err
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Total Budget in USD *"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    type: "number",
+    min: "10",
+    placeholder: "e.g. 200",
+    value: form.budget,
+    onChange: e => f("budget", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "How Long to Run It"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.timeline,
+    onChange: e => f("timeline", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "7"
+  }, "7 Days \u2014 Quick Sprint"), /*#__PURE__*/React.createElement("option", {
+    value: "14"
+  }, "14 Days \u2014 Standard"), /*#__PURE__*/React.createElement("option", {
+    value: "30"
+  }, "30 Days \u2014 Full Campaign"), /*#__PURE__*/React.createElement("option", {
+    value: "60"
+  }, "60 Days \u2014 Extended Push"), /*#__PURE__*/React.createElement("option", {
+    value: "90"
+  }, "90 Days \u2014 Long Game")))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Main Goal"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.goal,
+    onChange: e => f("goal", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "streams"
+  }, "More Spotify Streams"), /*#__PURE__*/React.createElement("option", {
+    value: "followers"
+  }, "Grow Social Following"), /*#__PURE__*/React.createElement("option", {
+    value: "youtube"
+  }, "YouTube Views"), /*#__PURE__*/React.createElement("option", {
+    value: "awareness"
+  }, "Get My Name Out There"), /*#__PURE__*/React.createElement("option", {
+    value: "release"
+  }, "Push a New Release"))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Your Experience Level"), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.experience,
+    onChange: e => f("experience", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "beginner"
+  }, "First time running ads"), /*#__PURE__*/React.createElement("option", {
+    value: "intermediate"
+  }, "Done this a few times"), /*#__PURE__*/React.createElement("option", {
+    value: "advanced"
+  }, "I know the platforms well")))), /*#__PURE__*/React.createElement("div", {
+    className: "g2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Genre"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Pop, R&B",
+    value: form.genre,
+    onChange: e => f("genre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Who You Are Targeting"), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    placeholder: "e.g. Women 25-45, fans of Adele",
+    value: form.audience,
+    onChange: e => f("audience", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Which Platforms to Spend On"), /*#__PURE__*/React.createElement("div", {
+    className: "pill-row"
+  }, Object.entries(plats).map(_ref46 => {
+    let _ref47 = _slicedToArray(_ref46, 2),
+      k = _ref47[0],
+      v = _ref47[1];
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      className: "pill ".concat(form.platforms.includes(k) ? "on" : ""),
+      onClick: () => toggle(k)
+    }, v);
+  }))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ok btn-full",
+    onClick: analyze,
+    disabled: loading
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    className: "loader"
+  }), " Calculating your plan...") : "💰 Plan My Budget")), results && /*#__PURE__*/React.createElement("div", {
+    style: {
+      animation: "fadeUp .4s ease"
+    }
+  }, results.summary && /*#__PURE__*/React.createElement("div", {
+    className: "rbox rbox-ok",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rbox-lbl",
+    style: {
+      color: "var(--ok)"
+    }
+  }, "\uD83D\uDCCA Your Strategy in Plain English"), /*#__PURE__*/React.createElement("div", {
+    className: "rbox-txt",
+    style: {
+      fontWeight: 500,
+      paddingRight: 0
+    }
+  }, results.summary)), ((_results$allocation = results.allocation) === null || _results$allocation === void 0 ? void 0 : _results$allocation.length) > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 12,
+      fontSize: 13
+    }
+  }, "Where Your Money Goes"), results.allocation.map((a, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--txt)"
+    }
+  }, a.platform), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "JetBrains Mono,monospace",
+      color: "var(--gold)",
+      fontSize: 13
+    }
+  }, "$", a.amount, " (", a.percentage, "%)")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 5,
+      background: "rgba(255,184,0,.1)",
+      borderRadius: 3,
+      overflow: "hidden",
+      marginBottom: 3
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      width: "".concat(Math.min(a.percentage, 100), "%"),
+      background: "linear-gradient(90deg,var(--gold),var(--purple))",
+      borderRadius: 3
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--muted)"
+    }
+  }, a.rationale)))), results.expectedResults && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(4,1fr)",
+      gap: 12,
+      marginBottom: 14
+    }
+  }, [["Streams", results.expectedResults.streams, "🎵"], ["Reach", results.expectedResults.reach, "👁"], ["New Followers", results.expectedResults.followers, "👥"], ["Cost Per Stream", results.expectedResults.costPerStream, "💸"]].map(_ref48 => {
+    let _ref49 = _slicedToArray(_ref48, 3),
+      l = _ref49[0],
+      v = _ref49[1],
+      ic = _ref49[2];
+    return /*#__PURE__*/React.createElement("div", {
+      key: l,
+      className: "stat"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "sv",
+      style: {
+        fontSize: 18
+      }
+    }, ic)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 600,
+        color: "var(--gold)",
+        marginTop: 5
+      }
+    }, v), /*#__PURE__*/React.createElement("div", {
+      className: "sl"
+    }, l));
+  })), /*#__PURE__*/React.createElement(RBox, {
+    label: "Daily Spending Plan",
+    value: results.dailyBudget,
+    icon: "\uD83D\uDCC5",
+    st: st
+  }), results.weeklyPlan && [["Week 1", results.weeklyPlan.week1], ["Week 2", results.weeklyPlan.week2], ["Week 3", results.weeklyPlan.week3], ["Week 4", results.weeklyPlan.week4]].map(_ref50 => {
+    let _ref51 = _slicedToArray(_ref50, 2),
+      l = _ref51[0],
+      v = _ref51[1];
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCCB",
+      st: st
+    });
+  }), results.doList && /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      marginBottom: 11
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 11,
+      fontSize: 13,
+      color: "var(--ok)"
+    }
+  }, "\u2713 Do These Things"), results.doList.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      gap: 9,
+      padding: "6px 0",
+      borderBottom: i < results.doList.length - 1 ? "1px solid rgba(0,229,153,.08)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--ok)",
+      fontSize: 12
+    }
+  }, "\u2713"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--txt)"
+    }
+  }, item)))), results.dontList && /*#__PURE__*/React.createElement("div", {
+    className: "card card-err",
+    style: {
+      marginBottom: 11
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "st",
+    style: {
+      marginBottom: 11,
+      fontSize: 13,
+      color: "var(--err)"
+    }
+  }, "\u2717 Avoid These"), results.dontList.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      gap: 9,
+      padding: "6px 0",
+      borderBottom: i < results.dontList.length - 1 ? "1px solid rgba(255,68,102,.08)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--err)",
+      fontSize: 12
+    }
+  }, "\u2717"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--txt)"
+    }
+  }, item)))), /*#__PURE__*/React.createElement(RBox, {
+    label: "Pro Tip",
+    value: results.proTip,
+    icon: "\uD83D\uDCA1",
+    st: st
+  }), /*#__PURE__*/React.createElement(RBox, {
+    label: "\u26A0\uFE0F Most Important Warning",
+    value: results.warning,
+    warn: true,
+    icon: "\u26A0\uFE0F",
+    st: st
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "dl-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setDlData({
+      c: toText(results, "Budget Plan - $".concat(form.budget)),
+      n: "hitwizard-budget.txt"
+    })
+  }, "\u2B07 Save Budget Plan"))));
+}
+
+// ── HISTORY ──
+// ── HISTORY ──
+function History(_ref52) {
+  let history = _ref52.history, clearHistory = _ref52.clearHistory;
+  const [expanded, setExpanded] = React.useState(null);
+
+  const tl = {
+    campaign: "Ad Campaign", pitch: "Playlist Pitch", content: "Content Set",
+    epk: "EPK", hook: "Hook Lab", budget: "Budget Plan", video: "Shooting Script"
+  };
+
+  function renderResult(r) {
+    if (!r) return React.createElement("div", {style:{color:"#888",fontSize:13,padding:"12px 0"}},
+      "No result data. Generate a fresh campaign and it will be fully viewable."
+    );
+    var items = [];
+    function walk(obj, depth) {
+      if (!obj) return;
+      if (typeof obj === "string" && obj.trim()) {
+        items.push(React.createElement("div", {key: items.length, style:{marginBottom:14,background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.12)",borderRadius:8,padding:12}},
+          React.createElement("div", {style:{fontSize:12,color:"#F0F0F0",lineHeight:1.8,whiteSpace:"pre-wrap"}}, obj),
+          React.createElement("button", {
+            style:{marginTop:8,background:"rgba(255,255,255,.06)",color:"#F0F0F0",border:"1px solid rgba(255,255,255,.1)",padding:"4px 10px",borderRadius:6,fontSize:11,cursor:"pointer"},
+            onClick: function(e){ e.stopPropagation(); try{navigator.clipboard.writeText(obj);}catch(ex){} }
+          }, "Copy")
+        ));
+      } else if (Array.isArray(obj)) {
+        var txt = obj.join("\n");
+        if (txt.trim()) items.push(React.createElement("div", {key: items.length, style:{marginBottom:14,background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.12)",borderRadius:8,padding:12}},
+          React.createElement("div", {style:{fontSize:12,color:"#F0F0F0",lineHeight:1.8,whiteSpace:"pre-wrap"}}, txt),
+          React.createElement("button", {
+            style:{marginTop:8,background:"rgba(255,255,255,.06)",color:"#F0F0F0",border:"1px solid rgba(255,255,255,.1)",padding:"4px 10px",borderRadius:6,fontSize:11,cursor:"pointer"},
+            onClick: function(e){ e.stopPropagation(); try{navigator.clipboard.writeText(txt);}catch(ex){} }
+          }, "Copy")
+        ));
+      } else if (typeof obj === "object") {
+        Object.keys(obj).forEach(function(k) {
+          var label = k.replace(/([A-Z])/g," $1").replace(/_/g," ").toUpperCase();
+          items.push(React.createElement("div", {key:"lbl"+items.length, style:{fontSize:9,letterSpacing:2,color:"#FFB800",fontFamily:"monospace",marginTop:16,marginBottom:6,paddingBottom:4,borderBottom:"1px solid rgba(255,184,0,.1)"}}, label));
+          walk(obj[k], depth+1);
+        });
+      }
+    }
+    walk(r, 0);
+    return React.createElement("div", {style:{padding:"16px 0 4px"}}, items);
+  }
+
+  return React.createElement("div", null,
+    React.createElement("div", {className:"sh"},
+      React.createElement("div", {className:"st"}, "Everything You Have Created"),
+      history.length > 0 && React.createElement("button", {className:"btn btn-danger btn-sm", onClick: clearHistory}, "Clear All")
+    ),
+    React.createElement("div", {className:"g4", style:{marginBottom:20}},
+      ["campaign","pitch","content","epk"].map(function(type) {
+        return React.createElement("div", {className:"stat", key:type},
+          React.createElement("div", {style:{display:"flex",justifyContent:"space-between"}},
+            React.createElement("div", {className:"sv"}, history.filter(function(h){return h.type===type;}).length),
+            React.createElement("span", {style:{fontSize:19}}, {campaign:"⚡",pitch:"🎯",content:"✦",epk:"📄"}[type])
+          ),
+          React.createElement("div", {className:"sl"}, tl[type]+"s")
+        );
+      })
+    ),
+    React.createElement("div", {className:"card"},
+      history.length === 0
+        ? React.createElement("div", {style:{textAlign:"center",padding:"44px 0",color:"var(--muted)"}},
+            React.createElement("div", {style:{fontSize:38,marginBottom:11}}, "📂"),
+            React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,marginBottom:5,color:"var(--txt)"}}, "Nothing Here Yet"),
+            React.createElement("div", {style:{fontSize:12}}, "Everything you create across all eight weapons will be logged here.")
+          )
+        : history.map(function(item, i) {
+            var isOpen = expanded === i;
+            return React.createElement("div", {key:i, style:{marginBottom:6}},
+              React.createElement("div", {
+                style:{display:"flex",alignItems:"center",gap:12,padding:11,background: isOpen ? "rgba(255,184,0,.06)" : "rgba(8,8,14,.5)",border:"1px solid "+(isOpen?"rgba(255,184,0,.35)":"var(--bdr)"),borderRadius: isOpen ? "8px 8px 0 0" : 8,cursor:"pointer",transition:"all .2s"},
+                onClick: function(e){ e.stopPropagation(); setExpanded(isOpen ? null : i); }
+              },
+                React.createElement("div", {style:{width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,background:item.color+"18",border:"1px solid "+item.color+"30"}}, item.icon),
+                React.createElement("div", {style:{flex:1}},
+                  React.createElement("div", {style:{fontSize:13,fontWeight:600,color:"var(--txt)"}}, item.title),
+                  React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:1}}, item.sub)
+                ),
+                React.createElement("div", {style:{display:"flex",alignItems:"center",gap:9,flexShrink:0}},
+                  React.createElement("span", {className:"badge b-gold"}, tl[item.type]||item.type),
+                  React.createElement("span", {style:{fontSize:10,color:"var(--muted)",fontFamily:"JetBrains Mono,monospace"}}, item.date),
+                  React.createElement("span", {style:{fontSize:13,color:"var(--gold)",transition:"transform .2s",display:"inline-block",transform: isOpen?"rotate(90deg)":"rotate(0deg)"}}, "▶")
+                )
+              ),
+              isOpen && React.createElement("div", {
+                style:{background:"rgba(8,8,14,.8)",border:"1px solid rgba(255,184,0,.35)",borderTop:"none",borderRadius:"0 0 8px 8px",padding:"0 16px 16px"}
+              }, renderResult(item.result))
+            );
+          })
+    )
+  );
+}
+
+// ── PRICING ──
+function Pricing(_ref53) {
+  let st = _ref53.st;
+  const tiers = [{
+    name: "First Mate",
+    price: 15,
+    desc: "For artists just starting out",
+    feat: false,
+    features: ["5 campaigns per month", "10 playlist pitches", "20 content sets", "1 EPK per month", "Hook Lab — 3 sessions", "Budget Planner", "Save and export everything", "Email support"]
+  }, {
+    name: "Captain",
+    price: 49,
+    desc: "For serious artists scaling up",
+    feat: true,
+    features: ["Unlimited everything", "Character Vault — all 5 characters", "Video Production Engine", "Shooting script generator", "Priority AI speed", "All export formats", "Priority support", "First access to new features"]
+  }, {
+    name: "Admiral",
+    price: 149,
+    desc: "For managers and small labels",
+    feat: false,
+    features: ["Everything in Captain", "Up to 10 artist profiles", "Team access", "White-label exports", "Custom pitch templates", "Dedicated account manager", "API access coming soon"]
+  }];
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginBottom: 32,
+      animation: "fadeUp .5s ease"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 24,
+      fontWeight: 900,
+      color: "var(--txt)",
+      marginBottom: 7
+    }
+  }, "Choose Your ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "linear-gradient(135deg,#FFB800,#FF8C00)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent"
+    }
+  }, "Rank")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--muted)",
+      fontSize: 13
+    }
+  }, "From emerging artist to fleet commander")), /*#__PURE__*/React.createElement("div", {
+    className: "g3",
+    style: {
+      marginBottom: 26
+    }
+  }, tiers.map((tier, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    className: "pc ".concat(tier.feat ? "feat" : "")
+  }, tier.feat && /*#__PURE__*/React.createElement("div", {
+    className: "pc-pop"
+  }, "MOST POPULAR"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: tier.feat ? 20 : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 14,
+      fontWeight: 700,
+      color: "var(--txt)",
+      marginBottom: 4
+    }
+  }, tier.name), /*#__PURE__*/React.createElement("div", {
+    className: "pc-val"
+  }, "$", tier.price, /*#__PURE__*/React.createElement("span", null, "/mo")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--muted)",
+      margin: "4px 0 12px"
+    }
+  }, tier.desc), /*#__PURE__*/React.createElement("ul", {
+    className: "pc-list"
+  }, tier.features.map((ff, j) => /*#__PURE__*/React.createElement("li", {
+    key: j
+  }, ff))), /*#__PURE__*/React.createElement("button", {
+    className: "btn ".concat(tier.feat ? "btn-gold" : "btn-out", " btn-full"),
+    onClick: () => st("Payments launching soon — stay tuned!", "👑")
+  }, tier.feat ? "⚡ Choose Captain" : "Choose ".concat(tier.name)))))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      textAlign: "center",
+      border: "1px solid rgba(123,47,190,.3)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "Cinzel,serif",
+      fontSize: 16,
+      fontWeight: 700,
+      marginBottom: 5
+    }
+  }, "Fleet Commander"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--muted)",
+      fontSize: 13,
+      marginBottom: 13
+    }
+  }, "For agencies and companies managing 10 or more artists. Custom pricing and full white-label options."), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-out",
+    onClick: () => st("Contact us at captain@hitwizard.ai", "👑")
+  }, "Get in Touch")));
+}
+
+// ── MAIN APP ──
+function HitWizard() {
+  var _titles$page, _titles$page2;
+  const _useState99 = useState("dashboard"),
+    _useState100 = _slicedToArray(_useState99, 2),
+    page = _useState100[0],
+    setPage = _useState100[1];
+  const _useState101 = useState(() => {
+      try {
+        const s = localStorage.getItem("hw_history");
+        const meta = s ? JSON.parse(s) : [];
+        return meta.map(item => {
+          try {
+            const r = localStorage.getItem("hw_result_" + item.id);
+            return r ? Object.assign({}, item, {result: JSON.parse(r)}) : item;
+          } catch { return item; }
+        });
+      }
+      catch { return []; }
+    }),
+    _useState102 = _slicedToArray(_useState101, 2),
+    history = _useState102[0],
+    setHistory = _useState102[1];
+  useEffect(() => {
+    try {
+      const meta = history.map(function(item) { var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest; });
+      localStorage.setItem("hw_history", JSON.stringify(meta));
+    } catch {}
+  }, [history]);
+  const _useState103 = useState(null),
+    _useState104 = _slicedToArray(_useState103, 2),
+    toast = _useState104[0],
+    setToast = _useState104[1];
+  const _useState105 = useState(false),
+    _useState106 = _slicedToArray(_useState105, 2),
+    open = _useState106[0],
+    setOpen = _useState106[1];
+  const addHistory = useCallback(function(item) {
+    var id = "hw_" + Date.now();
+    var itemWithId = Object.assign({}, item, {id: id});
+    if (item.result) {
+      try { localStorage.setItem("hw_result_" + id, JSON.stringify(item.result)); } catch {}
+    }
+    setHistory(function(h) { return [itemWithId].concat(h.slice(0, 49)); });
+  }, []);
+  const st = useCallback((msg, icon) => setToast({
+    msg,
+    icon
+  }), []);
+  const clearHistory = () => {
+    history.forEach(function(item) {
+      if (item.id) { try { localStorage.removeItem("hw_result_" + item.id); } catch {} }
+    });
+    setHistory([]);
+    st("History cleared", "✓");
+  };
+  const nav = [{
+    id: "dashboard",
+    icon: "⬡",
+    label: "War Room"
+  }, {
+    id: "campaigns",
+    icon: "⚡",
+    label: "Ad Campaign Forge"
+  }, {
+    id: "pitches",
+    icon: "🎯",
+    label: "Playlist Strike"
+  }, {
+    id: "content",
+    icon: "✦",
+    label: "Content Arsenal"
+  }, {
+    id: "epk",
+    icon: "📄",
+    label: "EPK Generator"
+  }, {
+    id: "hooklab",
+    icon: "🎣",
+    label: "Hook Lab"
+  }, {
+    id: "budget",
+    icon: "💰",
+    label: "Budget Planner"
+  }, {
+    id: "video",
+    icon: "🎬",
+    label: "Video Engine"
+  }, {
+    id: "vault",
+    icon: "🧬",
+    label: "Character Vault"
+  }, {
+    id: "history",
+    icon: "📂",
+    label: "My History"
+  }, {
+    id: "pricing",
+    icon: "👑",
+    label: "Plans & Pricing"
+  }];
+  const titles = {
+    dashboard: {
+      t: "War Room",
+      s: "Your AI music marketing command center"
+    },
+    campaigns: {
+      t: "Ad Campaign Forge",
+      s: "Build complete campaigns for Facebook, Instagram, TikTok and YouTube"
+    },
+    pitches: {
+      t: "Playlist Strike",
+      s: "Pitch your song to Spotify curators with emails that actually get opened"
+    },
+    content: {
+      t: "Content Arsenal",
+      s: "Social media content for every platform — all from your lyrics"
+    },
+    epk: {
+      t: "EPK Generator",
+      s: "Professional press kit for blogs, magazines, podcasts and labels"
+    },
+    hooklab: {
+      t: "Hook Lab",
+      s: "Find the first 3 seconds that make someone stop scrolling"
+    },
+    budget: {
+      t: "Budget Planner",
+      s: "Know exactly where every dollar goes before you spend a cent"
+    },
+    video: {
+      t: "Video Engine",
+      s: "Complete Grok shooting scripts — every prompt written, every character included"
+    },
+    vault: {
+      t: "Character Vault",
+      s: "Store your characters — DNA automatically added to every video prompt"
+    },
+    history: {
+      t: "My History",
+      s: "Everything you have created"
+    },
+    pricing: {
+      t: "Plans and Pricing",
+      s: "Choose the rank that fits where you are"
+    }
+  };
+  const props = {
+    addHistory,
+    st
+  };
+  const renderPage = () => {
+    switch (page) {
+      case "dashboard":
+        return /*#__PURE__*/React.createElement(Dashboard, {
+          onNav: setPage,
+          history: history
+        });
+      case "campaigns":
+        return /*#__PURE__*/React.createElement(CampaignForge, props);
+      case "pitches":
+        return /*#__PURE__*/React.createElement(PlaylistStrike, props);
+      case "content":
+        return /*#__PURE__*/React.createElement(ContentArsenal, props);
+      case "epk":
+        return /*#__PURE__*/React.createElement(EPKGenerator, props);
+      case "hooklab":
+        return /*#__PURE__*/React.createElement(HookLab, props);
+      case "budget":
+        return /*#__PURE__*/React.createElement(BudgetPlanner, props);
+      case "video":
+        return /*#__PURE__*/React.createElement(VideoEngine, {
+          showToast: st
+        });
+      case "vault":
+        return /*#__PURE__*/React.createElement(CharacterVault, {
+          showToast: st
+        });
+      case "history":
+        return /*#__PURE__*/React.createElement(History, {
+          history: history,
+          clearHistory: clearHistory
+        });
+      case "pricing":
+        return /*#__PURE__*/React.createElement(Pricing, {
+          st: st
+        });
+      default:
+        return /*#__PURE__*/React.createElement(Dashboard, {
+          onNav: setPage,
+          history: history
+        });
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "hw"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "gbg"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "orb1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "orb2"
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "tog",
+    onClick: () => setOpen(o => !o)
+  }, "\u2630"), /*#__PURE__*/React.createElement("div", {
+    className: "ov ".concat(open ? "open" : ""),
+    onClick: () => setOpen(false)
+  }), /*#__PURE__*/React.createElement("nav", {
+    className: "side ".concat(open ? "open" : "")
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "slogo"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "lmark"
+  }, "HITWIZARD"), /*#__PURE__*/React.createElement("span", {
+    className: "lsub"
+  }, "AI Music Marketing")), /*#__PURE__*/React.createElement("div", {
+    className: "snav"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "nlbl"
+  }, "Your Weapons"), nav.slice(0, 9).map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.id,
+    className: "nb ".concat(page === item.id ? "on" : ""),
+    onClick: () => {
+      setPage(item.id);
+      setOpen(false);
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "ni"
+  }, item.icon), /*#__PURE__*/React.createElement("span", null, item.label))), /*#__PURE__*/React.createElement("div", {
+    className: "nlbl",
+    style: {
+      marginTop: 8
+    }
+  }, "Account"), nav.slice(9).map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.id,
+    className: "nb ".concat(page === item.id ? "on" : ""),
+    onClick: () => {
+      setPage(item.id);
+      setOpen(false);
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "ni"
+  }, item.icon), /*#__PURE__*/React.createElement("span", null, item.label), item.id === "history" && history.length > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "nbdg"
+  }, history.length)))), /*#__PURE__*/React.createElement("div", {
+    className: "sfoot"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ucard"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "uav"
+  }, "K"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--txt)"
+    }
+  }, "Captain Kiko"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)",
+      fontFamily: "JetBrains Mono,monospace",
+      letterSpacing: 1
+    }
+  }, "MAXIMUM READINESS"))))), /*#__PURE__*/React.createElement("main", {
+    className: "main"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "topbar"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "pgt"
+  }, (_titles$page = titles[page]) === null || _titles$page === void 0 ? void 0 : _titles$page.t), /*#__PURE__*/React.createElement("div", {
+    className: "pgs"
+  }, (_titles$page2 = titles[page]) === null || _titles$page2 === void 0 ? void 0 : _titles$page2.s)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 9
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "badge b-gold"
+  }, "\u2726 Phase 1"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-sm",
+    onClick: () => setPage("pricing")
+  }, "\uD83D\uDC51 Upgrade"))), /*#__PURE__*/React.createElement("div", {
+    className: "content"
+  }, renderPage())), toast && /*#__PURE__*/React.createElement(Toast, {
+    msg: toast.msg,
+    icon: toast.icon,
+    onClose: () => setToast(null)
+  }));
+}
+ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getElementById("root"));
+
+</script>
+</body>
+</html>
