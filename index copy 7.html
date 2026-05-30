@@ -3508,7 +3508,7 @@ function BudgetPlanner(_ref45) {
 // ── HISTORY ──
 function History(_ref52) {
   let history = _ref52.history, clearHistory = _ref52.clearHistory;
-  const [expanded, setExpanded] = React.useState(null);
+  const [expandedId, setExpandedId] = React.useState(null);
 
   const tl = {
     campaign: "Ad Campaign", pitch: "Playlist Pitch", content: "Content Set",
@@ -3575,11 +3575,12 @@ function History(_ref52) {
             React.createElement("div", {style:{fontSize:12}}, "Everything you create across all eight weapons will be logged here.")
           )
         : history.map(function(item, i) {
-            var isOpen = expanded === i;
+            var itemId = item.id || String(i);
+            var isOpen = expandedId === itemId;
             return React.createElement("div", {key:i, style:{marginBottom:6}},
               React.createElement("div", {
                 style:{display:"flex",alignItems:"center",gap:12,padding:11,background: isOpen ? "rgba(255,184,0,.06)" : "rgba(8,8,14,.5)",border:"1px solid "+(isOpen?"rgba(255,184,0,.35)":"var(--bdr)"),borderRadius: isOpen ? "8px 8px 0 0" : 8,cursor:"pointer",transition:"all .2s"},
-                onClick: function(e){ e.stopPropagation(); setExpanded(isOpen ? null : i); }
+                onClick: function(e){ e.stopPropagation(); setExpandedId(isOpen ? null : itemId); }
               },
                 React.createElement("div", {style:{width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,background:item.color+"18",border:"1px solid "+item.color+"30"}}, item.icon),
                 React.createElement("div", {style:{flex:1}},
