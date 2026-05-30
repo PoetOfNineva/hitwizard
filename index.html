@@ -268,12 +268,9 @@ function DownloadModal(_ref3) {
 // ── AI CALL ──
 async function hwAI(sys, usr) {
   let retries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 2;
-  // Get API key from Netlify edge config
-  const API_KEY = await fetch("/api/key").then(r=>r.text()).catch(()=>null)
-    || window.__HW_KEY__;
+  const API_KEY = await fetch("/api/key").then(r=>r.text()).catch(()=>null) || window.__HW_KEY__;
   for (let i = 0; i <= retries; i++) {
     try {
-      var _d$content;
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -285,18 +282,43 @@ async function hwAI(sys, usr) {
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 4000,
+          stream: true,
           system: sys,
           messages: [{role: "user", content: usr}]
         })
       });
       if (!res.ok) {
-        var _e$error;
         const e = await res.json().catch(() => ({}));
-        throw new Error((e === null || e === void 0 || (_e$error = e.error) === null || _e$error === void 0 ? void 0 : _e$error.message) || "Something went wrong (".concat(res.status, "). Please try again."));
+        throw new Error((e && e.error && e.error.message) || "Something went wrong (".concat(res.status, "). Please try again."));
       }
-      const d = await res.json();
-      if (!((_d$content = d.content) !== null && _d$content !== void 0 && (_d$content = _d$content[0]) !== null && _d$content !== void 0 && _d$content.text)) throw new Error("No response received. Please try again.");
-      return d.content[0].text.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+      // Stream the response - collect all chunks
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let buffer = "";
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, {stream: true});
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === "content_block_delta" && parsed.delta && parsed.delta.text) {
+                fullText += parsed.delta.text;
+                // Fire progress event so UI can show streaming
+                window.dispatchEvent(new CustomEvent("hw_stream", {detail: {text: fullText}}));
+              }
+            } catch(ex) {}
+          }
+        }
+      }
+      if (!fullText) throw new Error("No response received. Please try again.");
+      return fullText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
     } catch (e) {
       if (i === retries) throw e;
       await new Promise(r => setTimeout(r, 1500 * (i + 1)));
@@ -311,6 +333,48 @@ function parseJ(raw) {
     if (m) return JSON.parse(m[0]);
     throw new Error("Could not read the AI response. Please try again.");
   }
+}
+
+// ── STREAMING LOADER ──
+function StreamingLoader({label, sub}) {
+  const [dots, setDots] = React.useState(".");
+  const [streamText, setStreamText] = React.useState("");
+
+  React.useEffect(() => {
+    const dotInterval = setInterval(() => {
+      setDots(d => d.length >= 3 ? "." : d + ".");
+    }, 500);
+    const streamHandler = (e) => {
+      const text = e.detail.text || "";
+      // Show last 120 chars of streaming JSON so user sees it building
+      setStreamText(text.slice(-120));
+    };
+    window.addEventListener("hw_stream", streamHandler);
+    return () => {
+      clearInterval(dotInterval);
+      window.removeEventListener("hw_stream", streamHandler);
+    };
+  }, []);
+
+  return React.createElement("div", {className:"card", style:{textAlign:"center", padding:"44px 26px"}},
+    React.createElement("div", {className:"spin", style:{margin:"0 auto 16px"}}),
+    React.createElement("div", {style:{fontFamily:"Cinzel,serif", fontSize:14, color:"var(--gold)", marginBottom:6}}, label + dots),
+    React.createElement("div", {style:{fontSize:12, color:"var(--muted)", marginBottom: streamText ? 16 : 0}}, sub),
+    streamText && React.createElement("div", {style:{
+      background:"rgba(255,184,0,.04)",
+      border:"1px solid rgba(255,184,0,.12)",
+      borderRadius:8,
+      padding:"10px 14px",
+      fontSize:11,
+      color:"var(--muted)",
+      fontFamily:"JetBrains Mono,monospace",
+      textAlign:"left",
+      lineHeight:1.6,
+      maxHeight:80,
+      overflow:"hidden",
+      wordBreak:"break-all"
+    }}, streamText + "▌")
+  );
 }
 
 // ── SHARED COMPONENTS ──
@@ -1205,7 +1269,7 @@ function VideoEngine(_ref0) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Reading lyrics and writing your shooting script...") : "🎬 Generate My Shooting Script")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Reading lyrics and writing your shooting script...") : "🎬 Generate My Shooting Script")), loading && React.createElement(StreamingLoader, {label: "Generating Video Script", sub: "Directing your Grok video shoot"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -1831,7 +1895,7 @@ function CampaignForge(_ref10) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Building your campaign...") : "⚡ Build My Campaign")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Building your campaign...") : "⚡ Build My Campaign")), loading && /*#__PURE__*/React.createElement(StreamingLoader, {label: "Building Your Campaign", sub: "Sonnet is writing your campaigns across Meta, TikTok & YouTube"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -2132,7 +2196,7 @@ function PlaylistStrike(_ref19) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Writing your pitches...") : "🎯 Write My Pitches")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Writing your pitches...") : "🎯 Write My Pitches")), loading && React.createElement(StreamingLoader, {label: "Writing Playlist Pitches", sub: "Crafting emails that get curators to actually listen"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -2445,7 +2509,7 @@ function ContentArsenal(_ref20) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Creating your content...") : "✦ Create My Content")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Creating your content...") : "✦ Create My Content")), loading && React.createElement(StreamingLoader, {label: "Building Content Arsenal", sub: "Creating viral posts for every platform"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -2761,7 +2825,7 @@ function EPKGenerator(_ref33) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Building your EPK...") : "📄 Build My EPK")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Building your EPK...") : "📄 Build My EPK")), loading && /*#__PURE__*/React.createElement(StreamingLoader, {label: "Building Your EPK", sub: "Crafting your professional press kit"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -3003,7 +3067,7 @@ function HookLab(_ref44) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Finding your 8 hooks...") : "🎣 Find My Viral Hooks")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Finding your 8 hooks...") : "🎣 Find My Viral Hooks")), loading && React.createElement(StreamingLoader, {label: "Finding Viral Hooks", sub: "Pulling the most powerful moments from your lyrics"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -3306,7 +3370,7 @@ function BudgetPlanner(_ref45) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Calculating your plan...") : "💰 Plan My Budget")), results && /*#__PURE__*/React.createElement("div", {
+  }), " Calculating your plan...") : "💰 Plan My Budget")), loading && React.createElement(StreamingLoader, {label: "Building Budget Plan", sub: "Calculating the smartest spend strategy for your goal"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
