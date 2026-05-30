@@ -23,7 +23,7 @@ export default async function(request, context) {
     const requestBody = await request.json();
 
     const payload = {
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
       system: requestBody.system || "",
       messages: requestBody.messages || []
