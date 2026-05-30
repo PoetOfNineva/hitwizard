@@ -3597,7 +3597,7 @@ function HistoryResultModal(_ref_hrm) {
 
 function History(_ref52) {
   let history = _ref52.history, clearHistory = _ref52.clearHistory;
-  const _useState_hv = useState(null), _useState_hv2 = _slicedToArray(_useState_hv, 2), viewing = _useState_hv2[0], setViewing = _useState_hv2[1];
+  const [viewing, setViewing] = React.useState(null);
   const tl = {
     campaign: "Ad Campaign",
     pitch: "Playlist Pitch",
@@ -3608,7 +3608,7 @@ function History(_ref52) {
     video: "Shooting Script"
   };
   return React.createElement("div", null,
-    viewing && React.createElement(HistoryResultModal, {item: viewing, onClose: ()=>setViewing(null)}),
+    viewing && React.createElement(HistoryResultModal, {item: viewing, onClose: function(){ setViewing(null); }}),
     React.createElement("div", {className:"sh"},
       React.createElement("div", {className:"st"}, "Everything You Have Created"),
       history.length > 0 && React.createElement("button", {className:"btn btn-danger btn-sm", onClick:clearHistory}, "Clear All")
@@ -3634,7 +3634,7 @@ function History(_ref52) {
         : history.map((item, i) =>
             React.createElement("div", {
               key:i, className:"hi",
-              onClick:()=>setViewing(item),
+              onClick:function(e){ e.stopPropagation(); setViewing(item); },
               style:{cursor:"pointer"}
             },
               React.createElement("div", {style:{width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,background:item.color+"18",border:"1px solid "+item.color+"30"}}, item.icon),
