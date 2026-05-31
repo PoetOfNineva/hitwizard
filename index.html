@@ -877,7 +877,7 @@ function CharacterVault(_ref9) {
     style: {
       color: "var(--gold)"
     }
-  }, "How this works:"), " Every character here is automatically added to your video prompts when you use the Video Production Engine. You never have to type character descriptions manually. The full description is always included \u2014 not just the name \u2014 because Grok needs complete tags every time to render your characters correctly."), /*#__PURE__*/React.createElement("div", {
+  }, "How this works:"), " Every character here is automatically added to your video prompts when you use the Video Engine. You never type character descriptions manually. The full description is always included \u2014 not just the name \u2014 so your AI video tool renders them consistently every time."), /*#__PURE__*/React.createElement("div", {
     className: "sh"
   }, /*#__PURE__*/React.createElement("div", {
     className: "st"
@@ -963,7 +963,7 @@ function CharacterVault(_ref9) {
     className: "lbl"
   }, "Full Description Tags ", /*#__PURE__*/React.createElement("span", {
     className: "lbl-n"
-  }, "\u2014 exactly what gets pasted into every Grok prompt")), /*#__PURE__*/React.createElement("textarea", {
+  }, "\u2014 exactly what gets pasted into every AI video prompt")), /*#__PURE__*/React.createElement("textarea", {
     className: "txa",
     value: form.dna,
     onChange: e => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
@@ -1205,7 +1205,7 @@ function VideoEngine(_ref0) {
     style: {
       color: "var(--gold)"
     }
-  }, "How this works:"), " Paste your lyrics, choose your characters and video length. HitWizard reads the lyrics, figures out which lines need performance shots and which need story scenes, calculates exactly how many clips you need, and writes every single Grok prompt for you \u2014 with your characters' full descriptions already included. Then paste all prompts into one Grok chat session."), /*#__PURE__*/React.createElement("div", {
+  }, "How this works:"), " Paste your lyrics, choose your characters and video length. HitWizard reads the lyrics, figures out which lines need performance shots and which need story scenes, calculates exactly how many clips you need, and writes every single AI video prompt for you \u2014 with your characters' full descriptions already included. Then paste into your chosen AI video tool."), /*#__PURE__*/React.createElement("div", {
     className: "card card-glow",
     style: {
       marginBottom: 20
@@ -1374,7 +1374,7 @@ function VideoEngine(_ref0) {
     disabled: loading
   }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Reading lyrics and writing your shooting script...") : "🎬 Generate My Shooting Script")), loading && React.createElement(StreamingLoader, {label: "Generating Video Script", sub: "Directing your Grok video shoot"}), results && /*#__PURE__*/React.createElement("div", {
+  }), " Reading lyrics and writing your shooting script...") : "🎬 Generate My Shooting Script")), loading && React.createElement(StreamingLoader, {label: "Generating Video Script", sub: "Writing your video shooting script"}), results && /*#__PURE__*/React.createElement("div", {
     style: {
       animation: "fadeUp .4s ease"
     }
@@ -1540,7 +1540,7 @@ function Dashboard(_ref1) {
   const weapons = [{
     id: "campaigns",
     icon: "⚡",
-    title: "Ad Campaign Forge",
+    title: "Campaign Launcher",
     desc: "Generate complete Meta, TikTok and YouTube ad campaigns from your lyrics.",
     badge: "Most Powerful",
     bc: "b-gold"
@@ -1583,7 +1583,7 @@ function Dashboard(_ref1) {
     id: "video",
     icon: "🎬",
     title: "Video Engine",
-    desc: "Complete Grok shooting scripts with your characters automatically included.",
+    desc: "AI video shooting scripts with your characters automatically included.",
     badge: "Exclusive",
     bc: "b-gold"
   }, {
@@ -1665,12 +1665,12 @@ function Dashboard(_ref1) {
       /*#__PURE__*/React.createElement("button", {
         className: "btn btn-gold",
         style:{fontSize:13,padding:"10px 20px"},
-        onClick: () => { if(window.showAuthModal) window.showAuthModal("signin"); }
+        onClick: () => { if(window.showAuthModal){window.showAuthModal("signin");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signin"}));} }
       }, "🔐 Sign In"),
       /*#__PURE__*/React.createElement("button", {
         className: "btn btn-out",
         style:{fontSize:13,padding:"10px 20px"},
-        onClick: () => { if(window.showAuthModal) window.showAuthModal("signup"); }
+        onClick: () => { if(window.showAuthModal){window.showAuthModal("signup");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signup"}));} }
       }, "⚡ Create Free Account")
     )
   ),
@@ -1683,7 +1683,7 @@ function Dashboard(_ref1) {
   }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-gold",
     onClick: () => onNav("campaigns")
-  }, "\u26A1 Forge a Campaign"), /*#__PURE__*/React.createElement("button", {
+  }, "\u26A1 Launch a Campaign"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-out",
     onClick: () => onNav("pitches")
   }, "\uD83C\uDFAF Pitch Curators"), /*#__PURE__*/React.createElement("button", {
@@ -4071,7 +4071,7 @@ function HitWizard() {
   }, {
     id: "campaigns",
     icon: "⚡",
-    label: "Ad Campaign Forge"
+    label: "Campaign Launcher"
   }, {
     id: "pitches",
     icon: "🎯",
@@ -4115,8 +4115,8 @@ function HitWizard() {
       s: "Your AI music marketing command center"
     },
     campaigns: {
-      t: "Ad Campaign Forge",
-      s: "Build complete campaigns for Facebook, Instagram, TikTok and YouTube"
+      t: "Campaign Launcher",
+      s: "Launch campaigns on Facebook, Instagram, TikTok and YouTube"
     },
     pitches: {
       t: "Playlist Strike",
@@ -4140,7 +4140,7 @@ function HitWizard() {
     },
     video: {
       t: "Video Engine",
-      s: "Complete Grok shooting scripts — every prompt written, every character included"
+      s: "AI video shooting scripts — every prompt written, every character included"
     },
     vault: {
       t: "Character Vault",
@@ -4257,8 +4257,8 @@ function HitWizard() {
     className: "sfoot"
   }, /*#__PURE__*/React.createElement("div", {
     className: "ucard",
-    style: {cursor:"pointer", border:"1px solid rgba(255,184,0,.35)", background:"rgba(255,184,0,.06)"},
-    onClick: function(){ if(window.showAuthModal) window.showAuthModal("signin"); }
+    style: {cursor:"pointer", border:"1px solid rgba(255,184,0,.4)", background:"rgba(255,184,0,.08)", padding:"11px"},
+    onClick: function(){ if(window.showAuthModal){window.showAuthModal("signin");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signin"}));} }
   }, /*#__PURE__*/React.createElement("div", {
     className: "uav",
     style: {background: "rgba(119,119,170,.2)"}
@@ -4268,14 +4268,14 @@ function HitWizard() {
       fontWeight: 600,
       color: "var(--txt)"
     }
-  }, "Sign In"), /*#__PURE__*/React.createElement("div", {
+  }, "🔐 Sign In"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
       color: "var(--gold)",
       fontFamily: "JetBrains Mono,monospace",
       letterSpacing: 1
     }
-  }, "CLICK TO SIGN IN"))))), /*#__PURE__*/React.createElement("main", {
+  }, "SAVE YOUR WORK"))))), /*#__PURE__*/React.createElement("main", {
     className: "main"
   }, /*#__PURE__*/React.createElement("div", {
     className: "topbar"
@@ -4402,6 +4402,8 @@ function bootAuth(){
   window.HW_AUTH.onChange(updateUserCard);
 }
 window.showAuthModal=showAuthModal;
+// Catch any early clicks before auth was ready
+document.addEventListener("hw_open_auth",function(e){showAuthModal(e.detail||"signin");});
 window.addEventListener("hw_auth_ready",function(){
   window.showAuthModal=showAuthModal;
   updateUserCard();
