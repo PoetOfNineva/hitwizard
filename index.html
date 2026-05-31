@@ -4224,23 +4224,26 @@ function HitWizard() {
   }, history.length)))), /*#__PURE__*/React.createElement("div", {
     className: "sfoot"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "ucard"
+    className: "ucard",
+    style: {cursor:"pointer"},
+    onClick: function(){ if(window.showAuthModal) window.showAuthModal("signin"); }
   }, /*#__PURE__*/React.createElement("div", {
-    className: "uav"
-  }, "K"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "uav",
+    style: {background: "rgba(119,119,170,.2)"}
+  }, "?"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 600,
       color: "var(--txt)"
     }
-  }, "Captain Kiko"), /*#__PURE__*/React.createElement("div", {
+  }, "Sign In"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
-      color: "var(--gold)",
+      color: "var(--muted)",
       fontFamily: "JetBrains Mono,monospace",
       letterSpacing: 1
     }
-  }, "MAXIMUM READINESS"))))), /*#__PURE__*/React.createElement("main", {
+  }, "FREE ACCOUNT"))))), /*#__PURE__*/React.createElement("main", {
     className: "main"
   }, /*#__PURE__*/React.createElement("div", {
     className: "topbar"
@@ -4368,10 +4371,12 @@ async function handleForgotPassword(){
 }
 function bootAuth(){
   if(!window.HW_AUTH||!window.HW_AUTH.ready){setTimeout(bootAuth,200);return;}
+  window.showAuthModal=showAuthModal;
   updateUserCard();
   window.HW_AUTH.onChange(updateUserCard);
 }
-window.addEventListener("hw_auth_ready",function(){updateUserCard();window.HW_AUTH.onChange(updateUserCard);});
+window.showAuthModal=showAuthModal;
+window.addEventListener("hw_auth_ready",function(){window.showAuthModal=showAuthModal;updateUserCard();window.HW_AUTH.onChange(updateUserCard);});
 setTimeout(bootAuth,700);
 </script>
 </body>
