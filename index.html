@@ -22,7 +22,7 @@ body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-heigh
 .orb1{position:fixed;width:600px;height:600px;top:-150px;left:-150px;background:radial-gradient(circle,rgba(255,184,0,0.04),transparent 70%);pointer-events:none;z-index:0}
 .orb2{position:fixed;width:500px;height:500px;bottom:-100px;right:-100px;background:radial-gradient(circle,rgba(123,47,190,0.06),transparent 70%);pointer-events:none;z-index:0}
 .side{position:fixed;left:0;top:0;bottom:0;width:242px;background:rgba(8,8,14,.97);border-right:1px solid var(--bdr);z-index:100;display:flex;flex-direction:column;transition:transform .3s}
-.slogo{padding:22px 18px;border-bottom:1px solid var(--bdr)}
+.slogo{padding:14px 18px;border-bottom:1px solid var(--bdr)}.slogo-img{width:180px;height:auto;display:block;mix-blend-mode:lighten;filter:brightness(1.05) contrast(1.02)}
 .lmark{font-family:'Cinzel',serif;font-size:20px;font-weight:900;background:linear-gradient(135deg,#FFB800,#FF8C00,#FFD700);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;letter-spacing:3px;display:block}
 .lsub{font-size:9px;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-top:3px;font-family:'JetBrains Mono',monospace}
 .snav{flex:1;padding:10px;overflow-y:auto}
@@ -4042,11 +4042,11 @@ function HitWizard() {
     className: "side ".concat(open ? "open" : "")
   }, /*#__PURE__*/React.createElement("div", {
     className: "slogo"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "lmark"
-  }, "HITWIZARD"), /*#__PURE__*/React.createElement("span", {
-    className: "lsub"
-  }, "AI Music Marketing")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("img", {
+    src: "/logo.jpg",
+    alt: "HitWizard",
+    className: "slogo-img"
+  })), /*#__PURE__*/React.createElement("div", {
     className: "snav"
   }, /*#__PURE__*/React.createElement("div", {
     className: "nlbl"
