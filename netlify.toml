@@ -6,3 +6,16 @@
 [[edge_functions]]
   path = "/api/key"
   function = "key"
+
+# Serve TikTok verification file as plain text
+[[headers]]
+  for = "/*.txt"
+  [headers.values]
+    Content-Type = "text/plain"
+
+# Explicitly serve the TikTok verification file
+[[redirects]]
+  from = "/tiktokYopvycw09CJhkdLwt5TielyLm1wKfeS1.txt"
+  to = "/tiktokYopvycw09CJhkdLwt5TielyLm1wKfeS1.txt"
+  status = 200
+  force = true
