@@ -3931,7 +3931,12 @@ function HitWizard() {
     _useState102 = _slicedToArray(_useState101, 2),
     history = _useState102[0],
     setHistory = _useState102[1];
+  const historyInitialized = React.useRef(false);
   useEffect(() => {
+    if (!historyInitialized.current) {
+      historyInitialized.current = true;
+      return; // Skip the very first render — don't overwrite what we just loaded
+    }
     try {
       const meta = history.map(function(item) { var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest; });
       localStorage.setItem("hw_history", JSON.stringify(meta));
