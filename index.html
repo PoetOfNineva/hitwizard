@@ -132,16 +132,23 @@ body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-heigh
 .tog{display:none;position:fixed;top:13px;left:13px;z-index:200;background:rgba(22,22,42,.95);border:1px solid rgba(255,184,0,.3);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--gold);font-size:16px}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;display:none}
 .ov.open{display:block}
+/* Mobile logo in topbar */
+.mobile-logo{display:none;height:28px;width:auto;mix-blend-mode:lighten;filter:brightness(1.05)}
+/* Audio upload button text fix */
+.audio-upload-btn{white-space:normal!important;text-align:center;line-height:1.4;padding:10px 14px!important;font-size:12px!important}
 @media(max-width:860px){
   .side{transform:translateX(-100%)}
   .side.open{transform:translateX(0)}
   .main{margin-left:0}
   .content{padding:15px}
-  .topbar{padding:12px 15px;padding-left:50px}
+  .topbar{padding:10px 12px;padding-left:50px;gap:8px}
   .g2,.g3,.g4{grid-template-columns:1fr}
   .tog{display:flex}
   .tabs{overflow-x:auto}
   .tab{flex:none}
+  .mobile-logo{display:block}
+  .pgt{font-size:13px}
+  .pgs{display:none}
 }
 </style>
 </head>
@@ -653,7 +660,7 @@ function LyricsPanel(_ref8) {
     disabled: transcribing || loading
   }, transcribing ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     className: "loader"
-  }), " Listening to your audio...") : "🎤 Upload Audio File — MP3 recommended (WAV files are often too large)"), preview && /*#__PURE__*/React.createElement("div", {
+  }), " Listening to your audio...") : "🎤 Upload Audio File — MP3 recommended"), preview && /*#__PURE__*/React.createElement("div", {
     className: "sp-preview"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -842,10 +849,49 @@ function CharacterVault(_ref9) {
     className: "sh"
   }, /*#__PURE__*/React.createElement("div", {
     className: "st"
-  }, "Your Characters (", chars.length, ")"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-gold btn-sm",
-    onClick: addNew
-  }, "+ Add Character")), chars.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Your Characters (", chars.length, ")"), /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,flexWrap:"wrap"}},
+    /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-ghost btn-sm",
+      onClick: () => {
+        try {
+          const data = JSON.stringify(chars, null, 2);
+          const blob = new Blob([data], {type:"application/json"});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url; a.download = "hitwizard-characters-backup.json"; a.click();
+          URL.revokeObjectURL(url);
+          showToast("Characters exported!", "✓");
+        } catch(e) { showToast("Export failed", "⚠️"); }
+      }
+    }, "⬇ Export"),
+    /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-ghost btn-sm",
+      onClick: () => {
+        const input = document.createElement("input");
+        input.type = "file"; input.accept = ".json";
+        input.onchange = e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            try {
+              const imported = JSON.parse(ev.target.result);
+              if (!Array.isArray(imported)) throw new Error("Invalid");
+              setChars(imported);
+              try { localStorage.setItem("hw_characters", JSON.stringify(imported)); } catch(ex) {}
+              showToast("Imported ".concat(imported.length, " characters!"), "✓");
+            } catch(ex) { showToast("Import failed — invalid file", "⚠️"); }
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      }
+    }, "⬆ Import"),
+    /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-gold btn-sm",
+      onClick: addNew
+    }, "+ Add Character")
+  )), chars.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {textAlign:"center",padding:"44px 0",color:"var(--muted)"}
   }, /*#__PURE__*/React.createElement("div", {style:{fontSize:38,marginBottom:11}}, "\uD83E\uDDEC"),
   /*#__PURE__*/React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,marginBottom:8,color:"var(--txt)"}}, "Your Vault Is Empty"),
@@ -1069,9 +1115,10 @@ function VideoEngine(_ref0) {
     return (vt === null || vt === void 0 ? void 0 : vt.secs) || parseInt(form.duration) || 210;
   };
   const getClipCount = () => Math.ceil(getSeconds() / parseInt(form.clipLength || 10));
-  const selectedCharData = DEFAULT_CHARACTERS.filter(c => form.selectedChars.includes(c.id));
+  const selectedCharData = (function(){ try{ var s=localStorage.getItem("hw_characters"); return s?JSON.parse(s):DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} })().filter(c => form.selectedChars.includes(c.id));
   const buildCharBlock = charIds => {
-    const selected = DEFAULT_CHARACTERS.filter(c => charIds.includes(c.id));
+    const allChars = (function(){ try{ var s=localStorage.getItem("hw_characters"); return s?JSON.parse(s):DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} })();
+    const selected = allChars.filter(c => charIds.includes(c.id));
     if (!selected.length) return "";
     const count = selected.length;
     const charDescs = selected.map(c => "".concat(c.dna)).join(",\n");
@@ -1097,7 +1144,8 @@ function VideoEngine(_ref0) {
       const arollCount = Math.ceil(totalClips * 0.65);
       const brollCount = totalClips - arollCount;
       const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
-      const raw = await hwAI("You are an expert AI music video director. You understand that Grok AI generates ".concat(clipLen, "-second video clips. You must plan the exact number of clips needed and write complete ready-to-use Grok prompts for each one. Always use FULL character description tags \u2014 never just a name. Always include warm golden lighting. Always use TRACKING CAMERA that moves, never static. Always include micro-movements. Always start multi-character prompts with EXACTLY N PEOPLE in this scene. Describe the lead artist character first always. Include all consistency tags at the end. Respond ONLY with valid JSON."), "Create a complete video shooting script.\n\nSong: \"".concat(form.songTitle || "My Song", "\"\nVideo type: ").concat(form.videoType, " (").concat(totalSecs, " seconds)\nClip length: ").concat(clipLen, " seconds each\nTotal clips needed: ").concat(totalClips, " (").concat(arollCount, " A-roll performance clips, ").concat(brollCount, " B-roll story clips)\n\nCHARACTER DNA TO USE IN EVERY PROMPT:\n").concat(charDNA, "\n\nLYRICS:\n").concat(form.lyrics, "\n\nRULES FOR EVERY PROMPT:\n- Full character DNA tags every time \u2014 never just use the name\n- TRACKING CAMERA always moving \u2014 never static\n- Warm golden lighting every clip\n- Micro-movements: head tilts, eye shifts, breathing visible\n- EXACTLY N PEOPLE declaration for multi-character scenes\n- Celinenya always described first\n- All consistency tags at end of every prompt\n- 9:16 vertical format\n- 250-300 words per prompt maximum\n\nDetect A-roll vs B-roll automatically:\n- A-roll = artist performing/singing to camera\n- B-roll = story scene acting out lyric narrative (third person language, action events, location references)\n\nReturn ONLY this JSON:\n{\n  \"songTitle\": \"title\",\n  \"totalClips\": ").concat(totalClips, ",\n  \"arollCount\": ").concat(arollCount, ",\n  \"brollCount\": ").concat(brollCount, ",\n  \"totalSeconds\": ").concat(totalSecs, ",\n  \"clipLength\": ").concat(clipLen, ",\n  \"grokInstructions\": \"plain English instructions for the artist about how to use these prompts in Grok\",\n  \"capCutGuide\": \"plain English CapCut assembly instructions\",\n  \"clips\": [\n    {\n      \"number\": 1,\n      \"timestamp\": \"0:00 - 0:").concat(clipLen, "\",\n      \"type\": \"A-ROLL\",\n      \"characters\": [\"Lead Artist\"],\n      \"lyricMoment\": \"the lyric line this clip covers\",\n      \"sceneDescription\": \"what happens visually\",\n      \"grokPrompt\": \"the complete ready-to-paste Grok prompt with full character DNA\"\n    }\n  ]\n}"));
+      const aiToolName = {grok:"Grok AI",veo3:"Veo 3",kling:"Kling AI",runway:"Runway ML",pika:"Pika Labs"}[form.aiTool||"grok"]||"Grok AI";
+      const raw = await hwAI("You are an expert AI music video director. You understand that ".concat(aiToolName," generates ").concat(clipLen,"-second video clips. You must plan the exact number of clips needed and write complete ready-to-use ").concat(aiToolName," prompts for each one. Always use FULL character description tags \u2014 never just a name. Always include warm golden lighting. Always use TRACKING CAMERA that moves, never static. Always include micro-movements. Always start multi-character prompts with EXACTLY N PEOPLE in this scene. Describe the lead artist character CELINE first always. Include all consistency tags at the end. Respond ONLY with valid JSON."), "Create a complete video shooting script.\n\nSong: \"".concat(form.songTitle || "My Song", "\"\nVideo type: ").concat(form.videoType, " (").concat(totalSecs, " seconds)\nClip length: ").concat(clipLen, " seconds each\nTotal clips needed: ").concat(totalClips, " (").concat(arollCount, " A-roll performance clips, ").concat(brollCount, " B-roll story clips)\nAI Video Tool: ").concat(aiToolName,"\n\nCHARACTER DNA TO USE IN EVERY PROMPT:\n").concat(charDNA, "\n\nLYRICS:\n").concat(form.lyrics, "\n\nRULES FOR EVERY PROMPT:\n- Full character DNA tags every time \u2014 never just use the name\n- TRACKING CAMERA always moving \u2014 never static\n- Warm golden lighting every clip\n- Micro-movements: head tilts, eye shifts, breathing visible\n- EXACTLY N PEOPLE declaration for multi-character scenes\n- CELINE always described first\n- All consistency tags at end of every prompt\n- 9:16 vertical format\n- 250-300 words per prompt maximum\n\nDetect A-roll vs B-roll automatically:\n- A-roll = artist performing/singing to camera\n- B-roll = story scene acting out lyric narrative (third person language, action events, location references)\n\nReturn ONLY this JSON:\n{\n  \"songTitle\": \"title\",\n  \"totalClips\": ").concat(totalClips, ",\n  \"arollCount\": ").concat(arollCount, ",\n  \"brollCount\": ").concat(brollCount, ",\n  \"totalSeconds\": ").concat(totalSecs, ",\n  \"clipLength\": ").concat(clipLen, ",\n  \"grokInstructions\": \"plain English instructions for the artist about how to use these prompts in ").concat(aiToolName,"\",\n  \"capCutGuide\": \"plain English CapCut assembly instructions\",\n  \"clips\": [\n    {\n      \"number\": 1,\n      \"timestamp\": \"0:00 - 0:").concat(clipLen, "\",\n      \"type\": \"A-ROLL\",\n      \"characters\": [\"CELINE\"],\n      \"lyricMoment\": \"the lyric line this clip covers\",\n      \"sceneDescription\": \"what happens visually\",\n      \"grokPrompt\": \"the complete ready-to-paste ").concat(aiToolName," prompt with full character DNA\"\n    }\n  ]\n}"));
       const p = parseJ(raw);
       setResults(p);
       showToast("Shooting script ready! ".concat(p.totalClips, " clips generated."), "🎬");
@@ -1234,7 +1282,7 @@ function VideoEngine(_ref0) {
       gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
       gap: 8
     }
-  }, DEFAULT_CHARACTERS.map(c => /*#__PURE__*/React.createElement("div", {
+  }, (function(){ try{ var s=localStorage.getItem("hw_characters"); var chars=s?JSON.parse(s):DEFAULT_CHARACTERS; return chars.length?chars:DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} })().map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     onClick: () => toggleChar(c.id),
     style: {
@@ -1280,7 +1328,15 @@ function VideoEngine(_ref0) {
       fontSize: 12,
       lineHeight: 1.8
     }
-  })), /*#__PURE__*/React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "AI Video Tool "), /*#__PURE__*/React.createElement("select", {
+    className: "sel",
+    value: form.aiTool || "grok",
+    onChange: e => f("aiTool", e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {value:"grok"}, "🤖 Grok (xAI) — Default"), /*#__PURE__*/React.createElement("option", {value:"veo3"}, "🎬 Veo 3 (Google)"), /*#__PURE__*/React.createElement("option", {value:"kling"}, "🎥 Kling AI"), /*#__PURE__*/React.createElement("option", {value:"runway"}, "✈️ Runway ML"), /*#__PURE__*/React.createElement("option", {value:"pika"}, "⚡ Pika Labs"))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-pur btn-full",
     onClick: generate,
     disabled: loading
@@ -2339,7 +2395,7 @@ function ContentArsenal(_ref20) {
       mood: "",
       theme: "",
       releaseStatus: "new",
-      platforms: ["tiktok", "instagram", "youtube", "twitter"],
+      platforms: ["tiktok", "instagram", "youtube", "twitter", "facebook"],
       lyrics: ""
     }),
     _useState56 = _slicedToArray(_useState55, 2),
@@ -2369,7 +2425,8 @@ function ContentArsenal(_ref20) {
     tiktok: "🎵 TikTok",
     instagram: "📸 Instagram",
     youtube: "▶️ YouTube",
-    twitter: "𝕏 Twitter/X"
+    twitter: "𝕏 Twitter/X",
+    facebook: "📘 Facebook"
   };
   const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
     [k]: v
@@ -2603,6 +2660,18 @@ function ContentArsenal(_ref20) {
       label: l,
       value: v,
       icon: "\uD835\uDD4F",
+      st: st
+    });
+  }), tab === "facebook" && results.facebook && [["Facebook Ad Copy", results.facebook.adCaption], ["Organic Page Post", results.facebook.pagePost], ["Facebook Reels Caption", results.facebook.reelsCaption]].map(_ref29b => {
+    let _ref30b = _slicedToArray(_ref29b, 2),
+      l = _ref30b[0],
+      v = _ref30b[1];
+    if (!v) return null;
+    return /*#__PURE__*/React.createElement(RBox, {
+      key: l,
+      label: l,
+      value: v,
+      icon: "\uD83D\uDCF8",
       st: st
     });
   }), tab === "press" && results.press && [["Press Email Subject", results.press.subject], ["Press Release Opening", results.press.opening], ["Newsletter Subject", results.press.emailSubject]].map(_ref31 => {
@@ -2866,11 +2935,11 @@ function EPKGenerator(_ref33) {
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "tabs"
-  }, ["bio", "facebook", "pitch", "social", "assets"].map(t => /*#__PURE__*/React.createElement("button", {
+  }, ["bio", "press", "pitch", "social", "assets"].map(t => /*#__PURE__*/React.createElement("button", {
     key: t,
     className: "tab ".concat(tab === t ? "on" : ""),
     onClick: () => setTab(t)
-  }, t === "bio" ? "📝 Bios" : t === "facebook" ? "📘 Facebook/Meta" : t === "pitch" ? "📧 Pitch Emails" : t === "social" ? "📱 Social Bios" : "📦 Assets"))), tab === "bio" && results.bio && [["50-Word Bio", results.bio.short], ["150-Word Press Bio", results.bio.medium], ["300-Word Full Bio", results.bio.long], ["In Your Own Words", results.bio.firstPerson]].map(_ref34 => {
+  }, t === "bio" ? "📝 Bios" : t === "press" ? "📰 Press" : t === "pitch" ? "📧 Pitch Emails" : t === "social" ? "📱 Social Bios" : "📦 Assets"))), tab === "bio" && results.bio && [["50-Word Bio", results.bio.short], ["150-Word Press Bio", results.bio.medium], ["300-Word Full Bio", results.bio.long], ["In Your Own Words", results.bio.firstPerson]].map(_ref34 => {
     let _ref35 = _slicedToArray(_ref34, 2),
       l = _ref35[0],
       v = _ref35[1];
@@ -2881,7 +2950,7 @@ function EPKGenerator(_ref33) {
       icon: "\uD83D\uDCDD",
       st: st
     });
-  }), tab === "facebook" && results.press && [["Press Release Headline", results.press.headline], ["Full Press Release", results.press.release], ["Your Quote", results.press.quote], ["Your Newsworthy Angle", results.press.angle]].map(_ref36 => {
+  }), tab === "press" && results.press && [["Press Release Headline", results.press.headline], ["Full Press Release", results.press.release], ["Your Quote", results.press.quote], ["Your Newsworthy Angle", results.press.angle]].map(_ref36 => {
     let _ref37 = _slicedToArray(_ref36, 2),
       l = _ref37[0],
       v = _ref37[1];
@@ -2903,7 +2972,13 @@ function EPKGenerator(_ref33) {
       icon: "\uD83D\uDCE7",
       st: st
     });
-  }), tab === "social" && results.social && [["Instagram Bio", results.social.instagram], ["Twitter/X Bio", results.social.twitter], ["YouTube About Section", results.social.youtube], ["TikTok Bio", results.social.tiktok]].map(_ref40 => {
+  }), tab === "social" && results.social && /*#__PURE__*/React.createElement("div", null,
+    form.socialLinks && /*#__PURE__*/React.createElement("div", {
+      style:{background:"rgba(0,229,153,.05)",border:"1px solid rgba(0,229,153,.2)",borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:12,color:"var(--muted)"}
+    }, /*#__PURE__*/React.createElement("span", {style:{color:"var(--ok)",fontWeight:600}}, "Your Social Handles: "), form.socialLinks,
+      form.website && /*#__PURE__*/React.createElement("span", null, " | Website: ", /*#__PURE__*/React.createElement("a", {href:form.website,target:"_blank",style:{color:"var(--gold)"}}, form.website))
+    ),
+    [["Instagram Bio", results.social.instagram], ["Twitter/X Bio", results.social.twitter], ["YouTube About Section", results.social.youtube], ["TikTok Bio", results.social.tiktok]].map(_ref40 => {
     let _ref41 = _slicedToArray(_ref40, 2),
       l = _ref41[0],
       v = _ref41[1];
@@ -2914,7 +2989,7 @@ function EPKGenerator(_ref33) {
       icon: "\uD83D\uDCF1",
       st: st
     });
-  }), tab === "assets" && results.assets && [["Your One-Liner", results.assets.oneliner], ["Spotify and Apple Music Bio", results.assets.streamingBio], ["Press Photo Caption", results.assets.photoCaption]].map(_ref42 => {
+  })), tab === "assets" && results.assets && [["Your One-Liner", results.assets.oneliner], ["Spotify and Apple Music Bio", results.assets.streamingBio], ["Press Photo Caption", results.assets.photoCaption]].map(_ref42 => {
     let _ref43 = _slicedToArray(_ref42, 2),
       l = _ref43[0],
       v = _ref43[1];
@@ -3690,24 +3765,27 @@ function History(_ref52) {
                 style:{display:"flex",alignItems:"center",gap:12,padding:11,background: isOpen ? "rgba(255,184,0,.06)" : "rgba(8,8,14,.5)",border:"1px solid "+(isOpen?"rgba(255,184,0,.35)":"var(--bdr)"),borderRadius: isOpen ? "8px 8px 0 0" : 8,cursor:"pointer",transition:"all .2s"},
                 onClick: function(e){ e.stopPropagation(); setExpandedId(isOpen ? null : itemId); }
               },
-                React.createElement("div", {style:{width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,background:item.color+"18",border:"1px solid "+item.color+"30"}}, item.icon),
-                React.createElement("div", {style:{flex:1}},
-                  React.createElement("div", {style:{fontSize:13,fontWeight:600,color:"var(--txt)"}}, item.title),
-                  React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:1}}, item.sub)
-                ),
                 React.createElement("div", {style:{display:"flex",alignItems:"center",gap:9,flexShrink:0}},
+                  React.createElement("div", {style:{width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,background:item.color+"18",border:"1px solid "+item.color+"30"}}, item.icon),
                   React.createElement("span", {style:{
                     background:"linear-gradient(135deg,rgba(255,184,0,.2),rgba(255,184,0,.08))",
                     border:"1px solid rgba(255,184,0,.4)",
                     color:"#FFB800",
-                    fontSize:11,
+                    fontSize:10,
                     fontWeight:700,
                     fontFamily:"JetBrains Mono,monospace",
-                    padding:"3px 10px",
+                    padding:"3px 8px",
                     borderRadius:6,
                     letterSpacing:1,
-                    textTransform:"uppercase"
-                  }}, tl[item.type]||item.type),
+                    textTransform:"uppercase",
+                    whiteSpace:"nowrap"
+                  }}, tl[item.type]||item.type)
+                ),
+                React.createElement("div", {style:{flex:1,minWidth:0}},
+                  React.createElement("div", {style:{fontSize:13,fontWeight:600,color:"var(--txt)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}, item.title),
+                  React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:1}}, item.sub)
+                ),
+                React.createElement("div", {style:{display:"flex",alignItems:"center",gap:9,flexShrink:0}},
                   React.createElement("span", {style:{fontSize:10,color:"var(--muted)",fontFamily:"JetBrains Mono,monospace"}}, item.date),
                   React.createElement("span", {style:{fontSize:13,color:"var(--gold)",transition:"transform .2s",display:"inline-block",transform: isOpen?"rotate(90deg)":"rotate(0deg)"}}, "▶")
                 )
@@ -4098,15 +4176,18 @@ function HitWizard() {
     className: "main"
   }, /*#__PURE__*/React.createElement("div", {
     className: "topbar"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}},
+    /*#__PURE__*/React.createElement("img", {src:"/logo.jpg",alt:"HitWizard",className:"mobile-logo"}),
+    /*#__PURE__*/React.createElement("div", {style:{minWidth:0}}, /*#__PURE__*/React.createElement("div", {
     className: "pgt"
   }, (_titles$page = titles[page]) === null || _titles$page === void 0 ? void 0 : _titles$page.t), /*#__PURE__*/React.createElement("div", {
     className: "pgs"
-  }, (_titles$page2 = titles[page]) === null || _titles$page2 === void 0 ? void 0 : _titles$page2.s)), /*#__PURE__*/React.createElement("div", {
+  }, (_titles$page2 = titles[page]) === null || _titles$page2 === void 0 ? void 0 : _titles$page2.s))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
-      gap: 9
+      gap: 9,
+      flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("span", {
     className: "badge b-gold"
