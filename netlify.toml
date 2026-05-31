@@ -3,6 +3,16 @@
   functions = "functions"
   edge_functions = "netlify/edge-functions"
 
+[[redirects]]
+  from = "/auth/callback"
+  to = "/auth/callback/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/auth/reset"
+  to = "/index.html"
+  status = 200
+
 [[edge_functions]]
   path = "/api/key"
   function = "key"

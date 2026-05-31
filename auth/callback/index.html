@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HitWizard — Signing you in...</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#08080E;color:#F0F0F0;font-family:sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.wrap{text-align:center}
+.logo{font-size:48px;margin-bottom:20px}
+.title{font-size:20px;font-weight:700;color:#FFB800;margin-bottom:8px}
+.sub{font-size:14px;color:#7777AA}
+.spin{width:40px;height:40px;border:3px solid rgba(255,184,0,.2);border-top-color:#FFB800;border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">🧙‍♂️</div>
+  <div class="title">Signing you into HitWizard...</div>
+  <div class="sub">You will be redirected in a moment</div>
+  <div class="spin"></div>
+</div>
+<script>
+const sb = supabase.createClient(
+  "https://vklwiqbglmhyjuenysal.supabase.co",
+  "sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS"
+);
+sb.auth.getSession().then(function(res) {
+  var session = res.data && res.data.session;
+  if (session) {
+    window.location.href = "https://hitwizardai.com";
+  } else {
+    sb.auth.exchangeCodeForSession(window.location.search).then(function() {
+      window.location.href = "https://hitwizardai.com";
+    }).catch(function() {
+      window.location.href = "https://hitwizardai.com";
+    });
+  }
+});
+</script>
+</body>
+</html>

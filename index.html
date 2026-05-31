@@ -6,6 +6,7 @@
 <meta name="description" content="HitWizard — AI Music Marketing Platform. Generate ad campaigns, playlist pitches, content, EPKs and video scripts from your lyrics.">
 <title>HitWizard — AI Music Marketing</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
@@ -132,6 +133,37 @@ body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-heigh
 .tog{display:none;position:fixed;top:13px;left:13px;z-index:200;background:rgba(22,22,42,.95);border:1px solid rgba(255,184,0,.3);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--gold);font-size:16px}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;display:none}
 .ov.open{display:block}
+/* AUTH MODAL */
+.auth-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.auth-modal{background:#10101A;border:1px solid rgba(255,184,0,.3);border-radius:16px;width:100%;max-width:440px;padding:32px;animation:fadeUp .3s ease}
+.auth-logo{text-align:center;margin-bottom:24px}
+.auth-logo-img{width:120px;height:auto;mix-blend-mode:lighten}
+.auth-title{font-family:'Cinzel',serif;font-size:18px;font-weight:900;color:var(--gold);text-align:center;margin-bottom:6px}
+.auth-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.auth-divider span{font-size:11px;color:var(--muted);white-space:nowrap}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.oauth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:9px;font-family:'DM Sans',sans-serif}
+.oauth-btn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.2)}
+.oauth-btn img{width:18px;height:18px}
+.auth-err{background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.25);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--err);margin-bottom:12px;display:none}
+.auth-err.show{display:block}
+.auth-switch{text-align:center;font-size:12px;color:var(--muted);margin-top:16px}
+.auth-switch a{color:var(--gold);cursor:pointer;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px}
+/* USER MENU */
+.user-menu{position:absolute;bottom:70px;left:10px;right:10px;background:#10101A;border:1px solid var(--bdr);border-radius:10px;padding:8px;z-index:200;animation:fadeUp .2s ease}
+.user-menu-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s}
+.user-menu-item:hover{background:rgba(255,184,0,.08)}
+.user-menu-item.danger{color:var(--err)}
+.user-menu-item.danger:hover{background:rgba(255,68,102,.08)}
+/* TIER BADGES */
+.tier-free{background:rgba(119,119,170,.15);color:#7777AA;border:1px solid rgba(119,119,170,.3)}
+.tier-first_mate{background:rgba(0,229,153,.1);color:var(--ok);border:1px solid rgba(0,229,153,.3)}
+.tier-captain{background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3)}
+.tier-admiral{background:rgba(123,47,190,.15);color:#9B4FDE;border:1px solid rgba(123,47,190,.3)}
+.tier-fleet_commander{background:rgba(255,68,102,.1);color:#FF4466;border:1px solid rgba(255,68,102,.3)}
 /* Mobile logo in topbar */
 .mobile-logo{display:none;height:28px;width:auto;mix-blend-mode:lighten;filter:brightness(1.05)}
 /* Audio upload button text fix */
@@ -4240,6 +4272,107 @@ function HitWizard() {
 }
 ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getElementById("root"));
 
+</script>
+<script src="/auth.js"></script>
+<script>
+// AUTH UI INJECTION
+function getTierLabel(t){return{free:"Free",first_mate:"First Mate",captain:"Captain",admiral:"Admiral",fleet_commander:"Fleet Commander"}[t]||"Free";}
+function updateUserCard(){
+  var card=document.querySelector(".ucard");if(!card)return;
+  var auth=window.HW_AUTH;
+  if(auth&&auth.isLoggedIn()){
+    var user=auth.user,profile=auth.profile;
+    var name=(profile&&profile.full_name)||(user.email&&user.email.split("@")[0])||"Captain";
+    var tier=(profile&&profile.tier)||"free";
+    var avatar=(profile&&profile.avatar_url)||(user.user_metadata&&user.user_metadata.avatar_url);
+    card.style.cursor="pointer";card.innerHTML="";
+    var av=document.createElement("div");av.className="uav";
+    if(avatar){av.innerHTML='<img src="'+avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
+    else{av.textContent=name.charAt(0).toUpperCase();}
+    var info=document.createElement("div");info.style.flex="1";info.style.minWidth="0";
+    info.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</div><div class="badge" style="font-size:9px;font-family:JetBrains Mono,monospace;letter-spacing:1px;margin-top:2px;background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3);padding:1px 6px;border-radius:4px">'+getTierLabel(tier).toUpperCase()+'</div>';
+    var chev=document.createElement("span");chev.textContent="v";chev.style.cssText="color:var(--muted);font-size:12px;flex-shrink:0";
+    card.appendChild(av);card.appendChild(info);card.appendChild(chev);
+    card.onclick=function(e){
+      e.stopPropagation();
+      var ex=document.querySelector(".user-menu");if(ex){ex.remove();return;}
+      var menu=document.createElement("div");menu.className="user-menu";
+      var so=document.createElement("div");so.className="user-menu-item danger";so.textContent="Sign Out";
+      so.onclick=function(){window.HW_AUTH.signOut().then(function(){location.reload();});};
+      menu.appendChild(so);
+      card.parentElement.style.position="relative";card.parentElement.appendChild(menu);
+      setTimeout(function(){document.addEventListener("click",function(){var m=document.querySelector(".user-menu");if(m)m.remove();},{once:true});},10);
+    };
+  } else {
+    card.style.cursor="pointer";card.innerHTML="";
+    var av2=document.createElement("div");av2.className="uav";av2.textContent="?";av2.style.background="rgba(119,119,170,.2)";
+    var info2=document.createElement("div");
+    info2.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--txt)">Sign In</div><div style="font-size:9px;color:var(--muted);font-family:JetBrains Mono,monospace;letter-spacing:1px">FREE ACCOUNT</div>';
+    card.appendChild(av2);card.appendChild(info2);
+    card.onclick=function(){showAuthModal("signin");};
+  }
+}
+function showAuthModal(mode){
+  mode=mode||"signin";
+  var ex=document.querySelector(".auth-modal-bg");if(ex)ex.remove();
+  var bg=document.createElement("div");bg.className="auth-modal-bg";
+  bg.onclick=function(e){if(e.target===bg)bg.remove();};
+  var nameField=mode==="signup"?'<div class="field"><input class="inp" id="hw-auth-name" placeholder="Your full name"></div>':'';
+  var forgotLink=mode==="signin"?'<div style="text-align:center;margin-top:10px"><a style="font-size:11px;color:var(--muted);cursor:pointer" id="hw-forgot">Forgot password?</a></div>':'';
+  var switchText=mode==="signup"?'Already have an account? <a onclick="showAuthModal('signin')">Sign In</a>':'New to HitWizard? <a onclick="showAuthModal('signup')">Create Free Account</a>';
+  var btnText=mode==="signup"?"Create Account":"Sign In";
+  var titleText=mode==="signup"?"Create Your Account":"Welcome Back";
+  bg.innerHTML='<div class="auth-modal" style="position:relative"><button class="auth-close" onclick="this.closest('.auth-modal-bg').remove()">x</button><div class="auth-logo"><img src="/logo.jpg" class="auth-logo-img" alt="HitWizard"></div><div class="auth-title">'+titleText+'</div><div class="auth-sub">Sign in to save your history and characters across all devices.</div><div class="auth-err" id="hw-auth-err"></div><button class="oauth-btn" onclick="window.HW_AUTH.signInWithGoogle()">Continue with Google</button><button class="oauth-btn" onclick="window.HW_AUTH.signInWithFacebook()">Continue with Facebook</button><button class="oauth-btn" onclick="window.HW_AUTH.signInWithDiscord()">Continue with Discord</button><div class="auth-divider"><span>or use email</span></div>'+nameField+'<div class="field"><input class="inp" id="hw-auth-email" type="email" placeholder="Email address"></div><div class="field"><input class="inp" id="hw-auth-pass" type="password" placeholder="Password (min 8 characters)"></div><button class="btn btn-gold btn-full" id="hw-auth-submit" style="margin-top:4px">'+btnText+'</button>'+forgotLink+'<div class="auth-switch">'+switchText+'</div></div>';
+  document.body.appendChild(bg);
+  document.getElementById("hw-auth-submit").onclick=function(){handleAuthSubmit(mode);};
+  var fg=document.getElementById("hw-forgot");if(fg)fg.onclick=handleForgotPassword;
+  bg.addEventListener("keydown",function(e){if(e.key==="Enter")handleAuthSubmit(mode);});
+  setTimeout(function(){var el=document.getElementById("hw-auth-email");if(el)el.focus();},100);
+}
+async function handleAuthSubmit(mode){
+  var btn=document.getElementById("hw-auth-submit");
+  var emailEl=document.getElementById("hw-auth-email");
+  var passEl=document.getElementById("hw-auth-pass");
+  var nameEl=document.getElementById("hw-auth-name");
+  var email=emailEl?emailEl.value.trim():"";
+  var pass=passEl?passEl.value:"";
+  var name=nameEl?nameEl.value.trim():"";
+  if(!email||!pass){showAuthErr("Please fill in all fields.");return;}
+  if(pass.length<8){showAuthErr("Password must be at least 8 characters.");return;}
+  btn.disabled=true;btn.textContent="Please wait...";
+  try{
+    if(mode==="signup"){
+      await window.HW_AUTH.signUpWithEmail(email,pass,name);
+      showAuthErr("Check your email to confirm your account!",true);
+    } else {
+      await window.HW_AUTH.signInWithEmail(email,pass);
+      document.querySelector(".auth-modal-bg")&&document.querySelector(".auth-modal-bg").remove();
+    }
+  } catch(e){
+    showAuthErr(e.message||"Something went wrong. Please try again.");
+    btn.disabled=false;btn.textContent=mode==="signup"?"Create Account":"Sign In";
+  }
+}
+function showAuthErr(msg,ok){
+  var el=document.getElementById("hw-auth-err");if(!el)return;
+  el.textContent=msg;el.style.background=ok?"rgba(0,229,153,.08)":"rgba(255,68,102,.08)";
+  el.style.borderColor=ok?"rgba(0,229,153,.25)":"rgba(255,68,102,.25)";
+  el.style.color=ok?"var(--ok)":"var(--err)";el.className="auth-err show";
+}
+async function handleForgotPassword(){
+  var emailEl=document.getElementById("hw-auth-email");
+  var email=emailEl?emailEl.value.trim():"";
+  if(!email){showAuthErr("Enter your email address first.");return;}
+  try{await window.HW_AUTH.resetPassword(email);showAuthErr("Password reset email sent!",true);}
+  catch(e){showAuthErr(e.message||"Failed to send reset email.");}
+}
+function bootAuth(){
+  if(!window.HW_AUTH||!window.HW_AUTH.ready){setTimeout(bootAuth,200);return;}
+  updateUserCard();
+  window.HW_AUTH.onChange(updateUserCard);
+}
+window.addEventListener("hw_auth_ready",function(){updateUserCard();window.HW_AUTH.onChange(updateUserCard);});
+setTimeout(bootAuth,700);
 </script>
 </body>
 </html>
