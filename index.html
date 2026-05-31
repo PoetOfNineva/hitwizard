@@ -3737,7 +3737,24 @@ function History(_ref52) {
   return React.createElement("div", null,
     React.createElement("div", {className:"sh"},
       React.createElement("div", {className:"st"}, "Everything You Have Created"),
-      history.length > 0 && React.createElement("button", {className:"btn btn-danger btn-sm", onClick: clearHistory}, "Clear All")
+      React.createElement("div", {style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        history.length > 0 && React.createElement("button", {
+          className:"btn btn-ghost btn-sm",
+          onClick: () => {
+            try {
+              const meta = history.map(function(item) {
+                var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest;
+              });
+              const blob = new Blob([JSON.stringify({history: meta, exported: new Date().toISOString()}, null, 2)], {type:"application/json"});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url; a.download = "hitwizard-history-backup.json"; a.click();
+              URL.revokeObjectURL(url);
+            } catch(e) {}
+          }
+        }, "⬇ Export Backup"),
+        history.length > 0 && React.createElement("button", {className:"btn btn-danger btn-sm", onClick: clearHistory}, "Clear All")
+      )
     ),
     React.createElement("div", {className:"g4", style:{marginBottom:20}},
       ["campaign","pitch","content","epk"].map(function(type) {
@@ -3917,8 +3934,10 @@ function HitWizard() {
     setPage = _useState100[1];
   const _useState101 = useState(() => {
       try {
-        const s = localStorage.getItem("hw_history");
+        // Try primary key first, fall back to backup key
+        const s = localStorage.getItem("hw_history") || localStorage.getItem("hw_history_backup");
         const meta = s ? JSON.parse(s) : [];
+        if (!Array.isArray(meta)) return [];
         return meta.map(item => {
           try {
             const r = localStorage.getItem("hw_result_" + item.id);
@@ -3933,13 +3952,19 @@ function HitWizard() {
     setHistory = _useState102[1];
   const historyInitialized = React.useRef(false);
   useEffect(() => {
+    // Skip first render — never overwrite storage with what we just read from it
     if (!historyInitialized.current) {
       historyInitialized.current = true;
-      return; // Skip the very first render — don't overwrite what we just loaded
+      return;
     }
     try {
-      const meta = history.map(function(item) { var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest; });
-      localStorage.setItem("hw_history", JSON.stringify(meta));
+      const meta = history.map(function(item) {
+        var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest;
+      });
+      const json = JSON.stringify(meta);
+      // Write to both primary and backup key — double protection
+      localStorage.setItem("hw_history", json);
+      localStorage.setItem("hw_history_backup", json);
     } catch {}
   }, [history]);
   const _useState103 = useState(null),
@@ -3954,18 +3979,24 @@ function HitWizard() {
     var id = "hw_" + Date.now();
     var itemWithId = Object.assign({}, item, {id: id});
     if (item.result) {
-      try { localStorage.setItem("hw_result_" + id, JSON.stringify(item.result)); } catch {}
+      try {
+        const resultJson = JSON.stringify(item.result);
+        localStorage.setItem("hw_result_" + id, resultJson);
+        localStorage.setItem("hw_result_backup_" + id, resultJson);
+      } catch {}
     }
     setHistory(function(h) { return [itemWithId].concat(h.slice(0, 49)); });
   }, []);
-  const st = useCallback((msg, icon) => setToast({
-    msg,
-    icon
-  }), []);
+  const st = useCallback((msg, icon) => setToast({msg, icon}), []);
   const clearHistory = () => {
     history.forEach(function(item) {
-      if (item.id) { try { localStorage.removeItem("hw_result_" + item.id); } catch {} }
+      if (item.id) {
+        try { localStorage.removeItem("hw_result_" + item.id); } catch {}
+        try { localStorage.removeItem("hw_result_backup_" + item.id); } catch {}
+      }
     });
+    localStorage.removeItem("hw_history");
+    localStorage.removeItem("hw_history_backup");
     setHistory([]);
     st("History cleared", "✓");
   };
