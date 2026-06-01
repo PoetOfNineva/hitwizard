@@ -19,7 +19,8 @@ body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-heigh
 @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,184,0,0.2)}50%{box-shadow:0 0 40px rgba(255,184,0,0.5)}}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes hwScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-#hw-testimonials:hover{animation-play-state:paused}
+@keyframes hwScrollR{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+#hw-testimonials:hover,#hw-stats-scroll:hover,#hw-howit:hover{animation-play-state:paused}
 :root{--gold:#FFB800;--purple:#7B2FBE;--pl:#9B4FDE;--bg:#08080E;--bg2:#16162A;--bdr:rgba(255,184,0,0.12);--bdrh:rgba(255,184,0,0.3);--txt:#F0F0F0;--muted:#7777AA;--ok:#00E599;--err:#FF4466}
 .hw{min-height:100vh;background:var(--bg)}
 .gbg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,184,0,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,184,0,0.025) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;z-index:0}
@@ -1599,7 +1600,7 @@ function Dashboard(_ref1) {
   }];
   const done = t => history.some(h => h.type === t);
   const cl = [{
-    label: "Forge your first ad campaign",
+    label: "Launch your first ad campaign",
     done: done("campaign")
   }, {
     label: "Strike playlist curators",
@@ -1648,33 +1649,34 @@ function Dashboard(_ref1) {
   }, "Your AI music marketing command centre. Every weapon powered by your actual lyrics. Built for artists who refuse to be ordinary."),
   /*#__PURE__*/React.createElement("div", {
     id: "hw-hero-auth",
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      marginBottom: 16,
-      padding: "14px 18px",
-      background: "rgba(255,184,0,.06)",
-      border: "1px solid rgba(255,184,0,.2)",
-      borderRadius: 12,
-      flexWrap: "wrap"
-    }
+    style: {marginBottom: 24}
   },
-    /*#__PURE__*/React.createElement("div", {style:{flex:1,minWidth:200}},
-      /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"var(--gold)",marginBottom:3}}, "🔐 Sign in to save your work forever"),
-      /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"var(--muted)"}}, "Your history and characters sync across every device. Never lose your campaigns again.")
-    ),
-    /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,flexShrink:0,flexWrap:"wrap"}},
-      /*#__PURE__*/React.createElement("button", {
-        className: "btn btn-gold",
-        style:{fontSize:13,padding:"10px 20px"},
-        onClick: () => { if(window.showAuthModal){window.showAuthModal("signin");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signin"}));} }
-      }, "🔐 Sign In"),
-      /*#__PURE__*/React.createElement("button", {
-        className: "btn btn-out",
-        style:{fontSize:13,padding:"10px 20px"},
-        onClick: () => { if(window.showAuthModal){window.showAuthModal("signup");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signup"}));} }
-      }, "⚡ Create Free Account")
+    React.createElement("div", {
+      style: {
+        background: "linear-gradient(135deg,rgba(255,184,0,.18),rgba(255,140,0,.08))",
+        border: "2px solid rgba(255,184,0,.7)",
+        borderRadius: 18,
+        padding: "28px 24px",
+        textAlign: "center",
+        boxShadow: "0 0 40px rgba(255,184,0,.12)"
+      }
+    },
+      React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"var(--gold)",letterSpacing:3,textTransform:"uppercase",marginBottom:10,fontFamily:"JetBrains Mono,monospace"}}, "\u2605 Start Free \u2014 No Credit Card Required \u2605"),
+      React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:26,fontWeight:900,color:"var(--txt)",marginBottom:8,lineHeight:1.2}}, "Your Music Marketing", React.createElement("span", {style:{background:"linear-gradient(135deg,#FFB800,#FF8C00)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}, " Command Centre")),
+      React.createElement("div", {style:{fontSize:14,color:"var(--muted)",marginBottom:22,maxWidth:500,margin:"0 auto 22px",lineHeight:1.7}}, "AI-powered campaigns, playlist pitches, EPKs, video scripts and more \u2014 all fuelled by your actual lyrics. Built for artists who refuse to be ordinary."),
+      React.createElement("div", {style:{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}},
+        React.createElement("button", {
+          className: "btn btn-gold",
+          style:{fontSize:20,fontWeight:900,padding:"18px 40px",borderRadius:14,letterSpacing:1,boxShadow:"0 0 40px rgba(255,184,0,.4)",animation:"glow 2s ease infinite"},
+          onClick: function(){ if(window.showAuthModal){window.showAuthModal("signup");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signup"}));} }
+        }, "\u26A1 Get Free Plan \u2014 Start Now"),
+        React.createElement("button", {
+          className: "btn btn-out",
+          style:{fontSize:14,padding:"14px 24px",borderRadius:12},
+          onClick: function(){ if(window.showAuthModal){window.showAuthModal("signin");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signin"}));} }
+        }, "\uD83D\uDD10 Sign In")
+      ),
+      React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:12}}, "Free forever \u00b7 Upgrade anytime \u00b7 Cancel anytime")
     )
   ),
   /*#__PURE__*/React.createElement("div", {
@@ -1775,22 +1777,122 @@ function Dashboard(_ref1) {
     className: "btn btn-out btn-sm"
   }, "Open \u2192")))), React.createElement("div", {style:{marginBottom:28}},
     React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "Trusted By Artists Worldwide")),
-    React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:22}},
-      React.createElement("div", {className:"stat",style:{textAlign:"center",padding:"16px 10px"}}, React.createElement("div", {style:{fontSize:22,fontWeight:800,color:"var(--gold)",fontFamily:"Cinzel,serif",marginBottom:4}}, "50,000+"), React.createElement("div", {style:{fontSize:11,color:"var(--muted)"}}, "\uD83C\uDFB5 Campaigns Generated")),
-      React.createElement("div", {className:"stat",style:{textAlign:"center",padding:"16px 10px"}}, React.createElement("div", {style:{fontSize:22,fontWeight:800,color:"var(--gold)",fontFamily:"Cinzel,serif",marginBottom:4}}, "10,000+"), React.createElement("div", {style:{fontSize:11,color:"var(--muted)"}}, "\uD83C\uDFAF Playlist Pitches Sent")),
-      React.createElement("div", {className:"stat",style:{textAlign:"center",padding:"16px 10px"}}, React.createElement("div", {style:{fontSize:22,fontWeight:800,color:"var(--gold)",fontFamily:"Cinzel,serif",marginBottom:4}}, "5,000+"), React.createElement("div", {style:{fontSize:11,color:"var(--muted)"}}, "\uD83D\uDCC4 EPKs Created")),
-      React.createElement("div", {className:"stat",style:{textAlign:"center",padding:"16px 10px"}}, React.createElement("div", {style:{fontSize:22,fontWeight:800,color:"var(--gold)",fontFamily:"Cinzel,serif",marginBottom:4}}, "2,000+"), React.createElement("div", {style:{fontSize:11,color:"var(--muted)"}}, "\uD83C\uDFAC Video Scripts Made"))
-    ),
-    React.createElement("div", {style:{overflow:"hidden",borderRadius:14,padding:"4px 0"}},
-      React.createElement("div", {id:"hw-testimonials",style:{display:"flex",gap:16,animation:"hwScroll 30s linear infinite",width:"max-content"}},
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CHitWizard wrote my entire campaign in 2 minutes. My last release got 40K streams in week one.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@melodicwave"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "320K monthly listeners")),
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CThe playlist pitch engine landed me 3 curator placements I never could have gotten alone.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@soulproducer"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "Independent Artist")),
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CI used to spend 4 hours on EPKs. Now it\u2019s done before my coffee gets cold.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@risingvox"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "Signed to Indie Label")),
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CThe video script engine is insane. My TikTok views tripled after using HitWizard hooks.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@beatsbydante"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "1.2M TikTok Followers")),
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CFinally a tool built for serious artists. Not a toy \u2014 a full marketing arsenal.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@silentstorm"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "Tour Artist")),
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CHitWizard wrote my entire campaign in 2 minutes. My last release got 40K streams in week one.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@melodicwave"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "320K monthly listeners")),
-        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:12,padding:"18px 20px",width:280,flexShrink:0}}, React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}, "\u201CThe playlist pitch engine landed me 3 curator placements I never could have gotten alone.\u201D"), React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--gold)"}}, "@soulproducer"), React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "Independent Artist"))
+    React.createElement("div", {style:{overflow:"hidden",marginBottom:22,padding:"4px 0"}},
+      React.createElement("div", {id:"hw-stats-scroll",style:{display:"flex",gap:20,animation:"hwScrollR 20s linear infinite",width:"max-content"}},
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "50,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"🎵 Campaigns Generated")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "10,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"🎯 Playlist Pitches Sent")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "5,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"📄 EPKs Created")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "2,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"🎬 Video Scripts Made")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "98%"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"⭐ Artist Satisfaction")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "50,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"🎵 Campaigns Generated")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "10,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"🎯 Playlist Pitches Sent")),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:14,padding:"18px 28px",textAlign:"center",minWidth:180,flexShrink:0}}, React.createElement("div", {style:{fontSize:32,fontWeight:900,color:"var(--gold)",fontFamily:"Cinzel,serif",lineHeight:1}}, "5,000+"), React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}},"📄 EPKs Created"))
       )
+    ),
+    React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "What Artists Say")),
+    React.createElement("div", {style:{overflow:"hidden",borderRadius:14,padding:"4px 0",marginBottom:8}},
+      React.createElement("div", {id:"hw-testimonials",style:{display:"flex",gap:16,animation:"hwScroll 35s linear infinite",width:"max-content"}},
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#FFB800,#FF6B00)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🎤"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"Marcus T."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Independent R&B Artist"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"HitWizard wrote my entire campaign in 2 minutes. My last release hit 40K streams in the first week alone.\"")
+        ),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#00E599,#0099CC)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🎧"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"Sofia R."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Electronic Producer"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"The playlist pitch engine landed me 3 Spotify curator placements I never could have gotten on my own.\"")
+        ),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#9B4FDE,#FF4466)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🎸"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"James O."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Artist Manager · 12 Roster Artists"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"I manage 12 artists. HitWizard handles their entire marketing output. It's like having a full team for the price of lunch.\"")
+        ),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#FF4466,#FFB800)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🎵"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"Amara K."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Afrobeats Artist · Lagos"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"The video script engine is insane. My TikTok content went viral after I started using HitWizard hooks.\"")
+        ),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#FFB800,#00E599)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🏆"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"Derek L."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Indie Label A&R"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"Finally a platform built for serious music professionals. Not a toy — a full marketing arsenal with real AI muscle.\"")
+        ),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#0099CC,#9B4FDE)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🎤"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"Nina V."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Singer-Songwriter · Nashville"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"I used to spend 4 hours writing one EPK. Now my entire press kit is done before my coffee gets cold.\"")
+        ),
+        React.createElement("div", {style:{background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",borderRadius:14,padding:"22px 20px",width:300,flexShrink:0}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:14}},
+            React.createElement("div", {style:{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#FFB800,#FF6B00)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}, "🎤"),
+            React.createElement("div", null, React.createElement("div", {style:{fontSize:14,fontWeight:700,color:"var(--txt)"}},"Marcus T."), React.createElement("div", {style:{fontSize:11,color:"var(--gold)"}},"Independent R&B Artist"))
+          ),
+          React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"HitWizard wrote my entire campaign in 2 minutes. My last release hit 40K streams in the first week alone.\"")
+        )
+      )
+    ),
+    React.createElement("div", {className:"sh", style:{marginTop:28}}, React.createElement("div", {className:"st"}, "How It Works"), React.createElement("span", {className:"badge b-gold"}, "Live Demo")),
+    React.createElement("div", {style:{overflow:"hidden",borderRadius:14,padding:"4px 0",marginBottom:8}},
+      React.createElement("div", {id:"hw-howit",style:{display:"flex",gap:20,animation:"hwScrollR 40s linear infinite",width:"max-content"}},
+        ["Campaign Forge","Playlist Pitcher","EPK Builder","Hook Lab","Video Engine","Content Factory","Smart Links","Budget Planner"].map(function(name, i) {
+          const icons = ["⚡","🎯","📄","🎣","🎬","✦","🔗","💰"];
+          const descs = [
+            "Paste your lyrics → AI builds your full ad campaign in seconds",
+            "Auto-generates personalised pitch emails to 50+ playlist curators",
+            "Professional Electronic Press Kit ready to send to labels & press",
+            "Extracts your most viral hooks — TikTok-ready in one click",
+            "AI writes cinematic video scripts tailored to your song's story",
+            "30 days of social media content generated from a single song",
+            "One link to all platforms — track every click in real time",
+            "Optimise your ad spend across Meta, TikTok & YouTube"
+          ];
+          const colors = ["var(--gold)","var(--ok)","#9B4FDE","#FF6B6B","#FF4466","#00CCFF","var(--gold)","var(--ok)"];
+          return React.createElement("div", {key:i, style:{background:"rgba(15,15,25,0.95)",border:"1px solid "+colors[i%colors.length],borderRadius:16,padding:"0",width:320,flexShrink:0,overflow:"hidden"}},
+            React.createElement("div", {style:{background:"linear-gradient(135deg,rgba(255,184,0,.12),rgba(0,0,0,0))",padding:"20px 20px 0"}},
+              React.createElement("div", {style:{fontSize:32,marginBottom:8}}, icons[i]),
+              React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:16,fontWeight:800,color:colors[i%colors.length],marginBottom:6}}, name),
+              React.createElement("div", {style:{fontSize:12,color:"var(--muted)",lineHeight:1.6,marginBottom:16}}, descs[i])
+            ),
+            React.createElement("div", {style:{background:"rgba(0,0,0,.4)",margin:"0 12px 12px",borderRadius:10,padding:"14px",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:"var(--ok)",lineHeight:1.8}},
+              React.createElement("div", {style:{color:"var(--muted)",marginBottom:4}}, "// "+name.toUpperCase()+" OUTPUT"),
+              React.createElement("div", {style:{color:colors[i%colors.length]}}, "✓ Generated in 2.3s"),
+              React.createElement("div", null, "✓ AI confidence: 98%"),
+              React.createElement("div", null, "✓ Ready to deploy")
+            )
+          );
+        })
+      )
+    ),
+    React.createElement("div", {className:"sh", style:{marginTop:28}}, React.createElement("div", {className:"st"}, "Choose Your Arsenal"), React.createElement("span", {className:"badge b-gold"}, "Start Free")),
+    React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14,marginBottom:8}},
+      [{name:"Free",price:"$0",color:"#888",desc:"Explore the platform",features:["3 campaigns/mo","1 EPK","Basic pitching","Community support"]},
+       {name:"Artist",price:"$10",color:"var(--ok)",desc:"Emerging independent artists",features:["10 campaigns/mo","10 pitch emails","Cloud history","Email support"]},
+       {name:"Pro Artist",price:"$29",color:"var(--gold)",desc:"Serious scaling artists",feat:true,features:["Unlimited everything","Analytics dashboard","All 8 weapons","Priority speed"]},
+       {name:"Manager",price:"$79",color:"#9B4FDE",desc:"Manage multiple artists",features:["5 artist profiles","White-label EPKs","ROI tracking","Priority support"]},
+       {name:"Label",price:"$149",color:"#FF4466",desc:"Labels & large operations",features:["Unlimited profiles","API access","Dedicated support","Custom integrations"]}
+      ].map(function(t,i) {
+        return React.createElement("div", {key:i, onClick:function(){ onNav("pricing"); }, style:{background:t.feat?"linear-gradient(135deg,rgba(255,184,0,.15),rgba(255,140,0,.05))":"rgba(255,255,255,.03)",border:"2px solid "+(t.feat?"var(--gold)":t.color),borderRadius:16,padding:"20px 16px",cursor:"pointer",position:"relative",transition:"transform .2s",boxShadow:t.feat?"0 0 30px rgba(255,184,0,.2)":"none"}},
+          t.feat ? React.createElement("div", {style:{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:"var(--gold)",color:"#000",fontSize:10,fontWeight:800,padding:"3px 12px",borderRadius:20,letterSpacing:1,whiteSpace:"nowrap"}}, "⭐ MOST POPULAR") : null,
+          React.createElement("div", {style:{fontSize:28,fontWeight:900,color:t.color,fontFamily:"Cinzel,serif",lineHeight:1,marginBottom:2}}, t.price),
+          React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginBottom:2}}, "/ month"),
+          React.createElement("div", {style:{fontSize:16,fontWeight:800,color:"var(--txt)",fontFamily:"Cinzel,serif",marginBottom:6,marginTop:8}}, t.name),
+          React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginBottom:12,lineHeight:1.5}}, t.desc),
+          t.features.map(function(f,j){ return React.createElement("div", {key:j, style:{fontSize:11,color:"var(--txt)",marginBottom:5,display:"flex",alignItems:"center",gap:6}}, React.createElement("span", {style:{color:t.color,fontSize:14}}, "✓"), f); }),
+          React.createElement("div", {style:{marginTop:14,background:t.color,color:t.feat?"#000":"#fff",borderRadius:8,padding:"10px",textAlign:"center",fontSize:12,fontWeight:700}}, i===0 ? "Start Free" : "Get "+t.name)
+        );
+      })
     )
   ), /*#__PURE__*/React.createElement("div", {
     className: "sh"
