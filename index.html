@@ -1877,11 +1877,11 @@ function Dashboard(_ref1) {
     ),
     React.createElement("div", {className:"sh", style:{marginTop:28}}, React.createElement("div", {className:"st"}, "Choose Your Arsenal"), React.createElement("span", {className:"badge b-gold"}, "Start Free")),
     React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14,marginBottom:8}},
-      [{name:"Free",price:"$0",color:"#888",desc:"Explore the platform",features:["3 campaigns/mo","1 EPK","Basic pitching","Community support"]},
-       {name:"Artist",price:"$10",color:"var(--ok)",desc:"Emerging independent artists",features:["10 campaigns/mo","10 pitch emails","Cloud history","Email support"]},
-       {name:"Pro Artist",price:"$29",color:"var(--gold)",desc:"Serious scaling artists",feat:true,features:["Unlimited everything","Analytics dashboard","All 8 weapons","Priority speed"]},
-       {name:"Manager",price:"$79",color:"#9B4FDE",desc:"Manage multiple artists",features:["5 artist profiles","White-label EPKs","ROI tracking","Priority support"]},
-       {name:"Label",price:"$149",color:"#FF4466",desc:"Labels & large operations",features:["Unlimited profiles","API access","Dedicated support","Custom integrations"]}
+      [{name:"Free",price:"$0",color:"#666",desc:"Dip your toes in the future",features:["3 AI campaigns per month","1 basic EPK (text only)","5 playlist pitch emails","Hook Lab — 3 sessions","No cloud save — browser only","Community support only","HitWizard branding on exports"]},
+       {name:"Artist",price:"$10",color:"var(--ok)",desc:"Your first real marketing weapon",features:["30 AI campaigns per month","Full EPK with press release + pitches","50 playlist pitch emails per month","Hook Lab — unlimited sessions","Content Factory — 30 days of posts","Smart Link + Download Gate","Cloud save — history across devices","Character Vault — 3 artist profiles","Email support within 48hrs","No HitWizard branding on exports"]},
+       {name:"Pro Artist",price:"$29",color:"var(--gold)",desc:"The full arsenal. Unlimited. Unstoppable.",feat:true,features:["UNLIMITED campaigns, pitches & EPKs","EPK with video script + sync licensing pitch","250 curator pitch emails per month — personalised","Analytics Dashboard — real stream & click data","Pre-Save Pages + Fan Email Collection","Video Engine — full cinematic AI scripts","All AI tools: Grok, Veo3, Kling, Runway, Pika","Spotify Autopilot — paste link, fire all 8 weapons","Character Vault — unlimited artist profiles","Priority AI — 3× faster generation","First access to every new feature before anyone else","Priority support within 4hrs"]},
+       {name:"Manager",price:"$79",color:"#9B4FDE",desc:"Run a roster. Own the charts.",features:["Everything in Pro Artist — for every client","10 separate artist profiles & vaults","White-label EPKs — your brand, not ours","Campaign ROI Dashboard — ad spend vs streams","Team seats — invite 3 collaborators","Custom pitch email templates per artist","Bulk campaign generation — all artists at once","Dedicated account manager","Contract & release planner per artist","Monthly strategy report (AI-generated)"]},
+       {name:"Label",price:"$149",color:"#FF4466",desc:"Command the entire music operation.",features:["Everything in Manager — no limits","Unlimited artist profiles","Label Command Dashboard — full roster overview","Bulk EPK generation — entire roster in one click","API access — plug HitWizard into your own systems","White-label platform — your domain, your brand","Sync Licensing Pitch Engine — TV, Film & Ad placements","Press Release Generator — ready for Billboard & NME","Dedicated support team — 1hr response SLA","Custom AI training on your label's sound & tone","Quarterly business review with HitWizard team"]}
       ].map(function(t,i) {
         return React.createElement("div", {key:i, onClick:function(){ onNav("pricing"); }, style:{background:t.feat?"linear-gradient(135deg,rgba(255,184,0,.15),rgba(255,140,0,.05))":"rgba(255,255,255,.03)",border:"2px solid "+(t.feat?"var(--gold)":t.color),borderRadius:16,padding:"20px 16px",cursor:"pointer",position:"relative",transition:"transform .2s",boxShadow:t.feat?"0 0 30px rgba(255,184,0,.2)":"none"}},
           t.feat ? React.createElement("div", {style:{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",background:"var(--gold)",color:"#000",fontSize:10,fontWeight:800,padding:"3px 12px",borderRadius:20,letterSpacing:1,whiteSpace:"nowrap"}}, "⭐ MOST POPULAR") : null,
@@ -4011,34 +4011,85 @@ function Pricing(_ref53) {
     name: "Artist",
     tier: "artist",
     price: 10,
-    desc: "For emerging artists starting their journey",
+    desc: "Your first real marketing weapon",
     feat: false,
     color: "var(--ok)",
-    features: ["10 AI campaigns per month", "10 playlist pitch emails", "10 content sets", "1 EPK per month", "Hook Lab — 5 sessions", "Budget Planner", "Smart Links", "Download Gates", "Cloud history & characters", "Email support"]
+    features: [
+      "30 AI campaigns per month",
+      "Full EPK — bio, press release & 4 pitch variants",
+      "50 personalised playlist pitch emails per month",
+      "Hook Lab — unlimited viral hook extraction",
+      "Content Factory — 30 days of social posts per song",
+      "Smart Link + Download Gate",
+      "Cloud history saved across all devices",
+      "Character Vault — up to 3 artist profiles",
+      "Export in PDF, Text & Email-ready formats",
+      "No HitWizard branding on your exports",
+      "Email support within 48 hours"
+    ]
   }, {
     name: "Pro Artist",
     tier: "pro_artist",
     price: 29,
-    desc: "For serious artists scaling their career",
+    desc: "The full arsenal. Unlimited. Unstoppable.",
     feat: true,
     color: "var(--gold)",
-    features: ["Unlimited everything", "Analytics Dashboard", "Pre-Save Pages", "Character Vault — all characters", "Video Engine — AI scripts", "All AI tools (Grok/Veo3/Kling/Runway/Pika)", "Priority AI speed", "All export formats", "Priority support", "First access to new features"]
+    features: [
+      "UNLIMITED campaigns, EPKs & pitches — no caps ever",
+      "Elite EPK — video script + sync licensing pitch included",
+      "250 curator pitch emails per month — hyper-personalised",
+      "Analytics Dashboard — live stream counts & click data",
+      "Pre-Save Pages — collect fans before your release drops",
+      "Fan Email Collection — own your audience forever",
+      "Video Engine — full cinematic AI scripts for every platform",
+      "All AI video tools: Grok, Veo3, Kling, Runway, Pika",
+      "Spotify Autopilot — paste one link, fire all 8 weapons",
+      "Character Vault — unlimited artist profiles",
+      "3× Priority AI speed — no queue, no wait",
+      "First access to every new weapon before public launch",
+      "Priority support within 4 hours"
+    ]
   }, {
     name: "Manager",
     tier: "manager",
     price: 79,
-    desc: "For managers handling multiple artists",
+    desc: "Run a roster. Own the charts.",
     feat: false,
     color: "#9B4FDE",
-    features: ["Everything in Pro Artist", "5 artist profiles", "White-label EPKs", "Campaign ROI tracking", "Priority support", "Custom pitch templates", "Team collaboration"]
+    features: [
+      "Everything in Pro Artist — across your full client roster",
+      "10 separate artist profiles & Character Vaults",
+      "White-label EPKs — your agency brand, not HitWizard",
+      "Campaign ROI Dashboard — ad spend vs streams per artist",
+      "Team collaboration — invite 3 seats to your workspace",
+      "Custom pitch templates per artist — no copy-pasting",
+      "Bulk campaign generation — fire all artists in one click",
+      "Contract & release planner per artist",
+      "Monthly AI strategy report for each artist",
+      "Dedicated account manager",
+      "Priority support within 2 hours"
+    ]
   }, {
     name: "Label",
     tier: "label",
     price: 149,
-    desc: "For labels and large music operations",
+    desc: "Command the entire music operation.",
     feat: false,
     color: "#FF4466",
-    features: ["Everything in Manager", "Unlimited artist profiles", "Label dashboard", "Bulk campaign generation", "API access", "Dedicated support", "Custom integrations", "White-label platform"]
+    features: [
+      "Everything in Manager — zero limits",
+      "Unlimited artist profiles across your entire roster",
+      "Label Command Dashboard — full roster overview in one view",
+      "Bulk EPK generation — entire roster exported in seconds",
+      "Sync Licensing Pitch Engine — TV, Film & Ad placements",
+      "Press Release Generator — Billboard & NME-ready copy",
+      "API access — embed HitWizard into your own platform",
+      "White-label platform — your domain, your brand entirely",
+      "Custom AI tone training on your label's sound & identity",
+      "Unlimited team seats — your whole team in",
+      "Dedicated support team — 1 hour response SLA",
+      "Quarterly business review with the HitWizard team"
+    ]
   }];
 
   const handleCheckout = async (tier) => {
@@ -4499,24 +4550,42 @@ function updateUserCard(){
     var name=(profile&&profile.full_name)||(user.email&&user.email.split("@")[0])||"Captain";
     var tier=(profile&&profile.tier)||"free";
     var avatar=(profile&&profile.avatar_url)||(user.user_metadata&&user.user_metadata.avatar_url);
-    card.style.cursor="pointer";card.innerHTML="";
+
+    // Update user card
+    card.style.cursor="default";card.innerHTML="";card.onclick=null;
     var av=document.createElement("div");av.className="uav";
     if(avatar){av.innerHTML='<img src="'+avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
     else{av.textContent=name.charAt(0).toUpperCase();}
     var info=document.createElement("div");info.style.flex="1";info.style.minWidth="0";
     info.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</div><div class="badge" style="font-size:9px;font-family:JetBrains Mono,monospace;letter-spacing:1px;margin-top:2px;background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3);padding:1px 6px;border-radius:4px">'+getTierLabel(tier).toUpperCase()+'</div>';
-    var chev=document.createElement("span");chev.textContent="v";chev.style.cssText="color:var(--muted);font-size:12px;flex-shrink:0";
-    card.appendChild(av);card.appendChild(info);card.appendChild(chev);
-    card.onclick=function(e){
-      e.stopPropagation();
-      var ex=document.querySelector(".user-menu");if(ex){ex.remove();return;}
-      var menu=document.createElement("div");menu.className="user-menu";
-      var so=document.createElement("div");so.className="user-menu-item danger";so.textContent="Sign Out";
-      so.onclick=function(){window.HW_AUTH.signOut().then(function(){location.reload();});};
-      menu.appendChild(so);
-      card.parentElement.style.position="relative";card.parentElement.appendChild(menu);
-      setTimeout(function(){document.addEventListener("click",function(){var m=document.querySelector(".user-menu");if(m)m.remove();},{once:true});},10);
-    };
+    card.appendChild(av);card.appendChild(info);
+
+    // Inject prominent Sign Out button right after the card
+    var existingSignOut=document.getElementById("hw-signout-btn");
+    if(!existingSignOut){
+      var soBtn=document.createElement("button");
+      soBtn.id="hw-signout-btn";
+      soBtn.textContent="🚪 Sign Out";
+      soBtn.style.cssText="width:100%;margin-top:10px;padding:11px;border-radius:10px;background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.4);color:#FF6B6B;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.5px;font-family:inherit;transition:background .2s;";
+      soBtn.onmouseover=function(){this.style.background="rgba(255,60,60,.22)";};
+      soBtn.onmouseout=function(){this.style.background="rgba(255,60,60,.12)";};
+      soBtn.onclick=function(){
+        soBtn.textContent="Signing out...";
+        soBtn.disabled=true;
+        var doSignOut=function(){
+          try{
+            var keys=Object.keys(localStorage);
+            keys.forEach(function(k){if(k.startsWith("sb-")||k==="hw_session"||k==="hw_user")localStorage.removeItem(k);});
+          }catch(e){}
+          document.cookie.split(";").forEach(function(c){document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date(0).toUTCString()+";path=/");});
+          window.location.href=window.location.origin+"?signedout=1";
+        };
+        if(window.HW_AUTH&&window.HW_AUTH.signOut){
+          window.HW_AUTH.signOut().then(doSignOut).catch(doSignOut);
+        }else{doSignOut();}
+      };
+      card.parentElement.appendChild(soBtn);
+    }
   } else {
     card.style.cursor="pointer";card.innerHTML="";
     var av2=document.createElement("div");av2.className="uav";av2.textContent="?";av2.style.background="rgba(119,119,170,.2)";
