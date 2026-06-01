@@ -1542,61 +1542,37 @@ function Dashboard(_ref1) {
   let onNav = _ref1.onNav,
     history = _ref1.history;
   const weapons = [{
-    id: "campaigns",
-    icon: "⚡",
-    title: "Campaign Launcher",
+    id: "campaigns", icon: "⚡", title: "Campaign Launcher",
     desc: "Generate complete Meta, TikTok and YouTube ad campaigns from your lyrics.",
-    badge: "Most Powerful",
-    bc: "b-gold"
+    badge: "Most Powerful", bc: "b-gold", color: "#FFB800", glow: "rgba(255,184,0,.25)"
   }, {
-    id: "pitches",
-    icon: "🎯",
-    title: "Playlist Strike",
+    id: "pitches", icon: "🎯", title: "Playlist Strike",
     desc: "3 personalized curator pitch emails, follow-ups, send timing and where to find curators.",
-    badge: "Highest ROI",
-    bc: "b-ok"
+    badge: "Highest ROI", bc: "b-ok", color: "#00E599", glow: "rgba(0,229,153,.25)"
   }, {
-    id: "content",
-    icon: "✦",
-    title: "Content Arsenal",
+    id: "content", icon: "✦", title: "Content Arsenal",
     desc: "Social media captions, hooks and hashtags for TikTok, Instagram, YouTube and X.",
-    badge: "Multi-Platform",
-    bc: "b-pur"
+    badge: "Multi-Platform", bc: "b-pur", color: "#9B4FDE", glow: "rgba(155,79,222,.25)"
   }, {
-    id: "epk",
-    icon: "📄",
-    title: "EPK Generator",
+    id: "epk", icon: "📄", title: "EPK Generator",
     desc: "Professional bios, press releases and pitch emails for media and blogs.",
-    badge: "Press Ready",
-    bc: "b-gold"
+    badge: "Press Ready", bc: "b-gold", color: "#FF8C00", glow: "rgba(255,140,0,.25)"
   }, {
-    id: "hooklab",
-    icon: "🎣",
-    title: "Hook Lab",
+    id: "hooklab", icon: "🎣", title: "Hook Lab",
     desc: "8 different viral video hooks written from your actual lyrics.",
-    badge: "Go Viral",
-    bc: "b-pur"
+    badge: "Go Viral", bc: "b-pur", color: "#FF4466", glow: "rgba(255,68,102,.25)"
   }, {
-    id: "budget",
-    icon: "💰",
-    title: "Budget Planner",
+    id: "budget", icon: "💰", title: "Budget Planner",
     desc: "Smart spending plan. Know exactly where every dollar goes.",
-    badge: "Save Money",
-    bc: "b-ok"
+    badge: "Save Money", bc: "b-ok", color: "#00CCFF", glow: "rgba(0,204,255,.25)"
   }, {
-    id: "video",
-    icon: "🎬",
-    title: "Video Engine",
+    id: "video", icon: "🎬", title: "Video Engine",
     desc: "AI video shooting scripts with your characters automatically included.",
-    badge: "Exclusive",
-    bc: "b-gold"
+    badge: "Exclusive", bc: "b-gold", color: "#FF6B00", glow: "rgba(255,107,0,.25)"
   }, {
-    id: "vault",
-    icon: "🧬",
-    title: "Character Vault",
+    id: "vault", icon: "🧬", title: "Character Vault",
     desc: "Store your characters. DNA auto-injects into every video prompt.",
-    badge: "Your Characters",
-    bc: "b-pur"
+    badge: "Your Characters", bc: "b-pur", color: "#C084FC", glow: "rgba(192,132,252,.25)"
   }];
   const done = t => history.some(h => h.type === t);
   const cl = [{
@@ -1775,7 +1751,106 @@ function Dashboard(_ref1) {
     }
   }, w.desc), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-out btn-sm"
-  }, "Open \u2192")))), React.createElement("div", {style:{marginBottom:28}},
+  }, "Open \u2192")))),
+
+  React.createElement("div", {style:{marginBottom:32}},
+
+    React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "Social Autopilot"), React.createElement("span", {className:"badge b-gold"}, "Industry First")),
+    React.createElement("div", {style:{background:"linear-gradient(135deg,rgba(0,229,153,.08),rgba(0,204,255,.06))",border:"2px solid rgba(0,229,153,.3)",borderRadius:20,padding:"32px 28px",marginBottom:8,position:"relative",overflow:"hidden"}},
+      React.createElement("div", {style:{position:"absolute",top:-40,right:-40,width:200,height:200,background:"radial-gradient(circle,rgba(0,229,153,.15),transparent 70%)",pointerEvents:"none"}}),
+      React.createElement("div", {style:{position:"absolute",bottom:-40,left:-40,width:200,height:200,background:"radial-gradient(circle,rgba(0,204,255,.1),transparent 70%)",pointerEvents:"none"}}),
+      React.createElement("div", {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:32,alignItems:"center",position:"relative"}},
+        React.createElement("div", null,
+          React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"var(--ok)",letterSpacing:3,textTransform:"uppercase",marginBottom:12,fontFamily:"JetBrains Mono,monospace"}}, "⚡ THE FUTURE IS NOW"),
+          React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:28,fontWeight:900,color:"var(--txt)",lineHeight:1.2,marginBottom:16}},
+            "Write a song Monday.", React.createElement("br",null),
+            React.createElement("span", {style:{background:"linear-gradient(135deg,#00E599,#00CCFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}, "Fans see it everywhere"),
+            React.createElement("br",null), "by Friday."
+          ),
+          React.createElement("div", {style:{fontSize:14,color:"var(--muted)",lineHeight:1.8,marginBottom:24}}, "Connect your Instagram, TikTok, YouTube and more. HitWizard generates your content from your lyrics, schedules it, and posts on your behalf. You touch nothing."),
+          React.createElement("div", {style:{display:"flex",gap:10,flexWrap:"wrap"}},
+            React.createElement("button", {className:"btn btn-gold",style:{fontSize:14,padding:"12px 24px",fontWeight:800},onClick:()=>onNav("social")}, "⚡ Connect Platforms"),
+            React.createElement("button", {className:"btn btn-out",style:{fontSize:13,padding:"12px 20px"},onClick:()=>onNav("content")}, "Generate Content First")
+          )
+        ),
+        React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:10}},
+          [
+            {icon:"📸",name:"Instagram",color:"#E1306C",status:"Connecting"},
+            {icon:"🎵",name:"TikTok",color:"#FF0050",status:"Connecting"},
+            {icon:"▶️",name:"YouTube",color:"#FF0000",status:"Connecting"},
+            {icon:"👥",name:"Facebook",color:"#1877F2",status:"Connecting"},
+            {icon:"@",name:"Threads",color:"#000",status:"Connecting"},
+            {icon:"✕",name:"X (Twitter)",color:"#fff",status:"Coming Soon"}
+          ].map(function(p,i) {
+            return React.createElement("div", {key:i, style:{display:"flex",alignItems:"center",gap:12,background:"rgba(0,0,0,.3)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"10px 14px"}},
+              React.createElement("div", {style:{fontSize:18,width:32,textAlign:"center"}}, p.icon),
+              React.createElement("div", {style:{flex:1,fontSize:13,fontWeight:600,color:"var(--txt)"}}, p.name),
+              React.createElement("div", {style:{fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:20,background:i<5?"rgba(0,229,153,.12)":"rgba(255,255,255,.05)",border:"1px solid "+(i<5?"rgba(0,229,153,.3)":"rgba(255,255,255,.1)"),color:i<5?"var(--ok)":"var(--muted)"}}, i<5?"● READY":"○ SOON")
+            );
+          })
+        )
+      )
+    )
+  ),
+
+  React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "All Eight Weapons")),
+  React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:14,marginBottom:32}},
+    weapons.map(w => React.createElement("div", {
+      key: w.id, onClick:()=>onNav(w.id),
+      style:{background:"rgba(10,10,20,.8)",border:"1px solid "+w.color+"44",borderRadius:16,padding:"24px 20px",cursor:"pointer",transition:"all .25s",position:"relative",overflow:"hidden"}
+    },
+      React.createElement("div", {style:{position:"absolute",top:-20,right:-20,width:100,height:100,background:"radial-gradient(circle,"+w.glow+",transparent 70%)",pointerEvents:"none"}}),
+      React.createElement("div", {style:{fontSize:38,marginBottom:12,position:"relative"}}, w.icon),
+      React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:15,fontWeight:800,color:w.color,marginBottom:6,position:"relative"}}, w.title),
+      React.createElement("span", {className:"badge "+w.bc, style:{marginBottom:10,display:"inline-flex"}}, w.badge),
+      React.createElement("p", {style:{fontSize:12,color:"var(--muted)",lineHeight:1.65,marginBottom:14,position:"relative"}}, w.desc),
+      React.createElement("button", {className:"btn btn-out btn-sm", style:{borderColor:w.color+"66",color:w.color}}, "Open \u2192")
+    ))
+  ),
+
+  React.createElement("div", {className:"sh", style:{marginTop:8}}, React.createElement("div", {className:"st"}, "How It Works")),
+  React.createElement("div", {style:{marginBottom:32}},
+    React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14,marginBottom:20}},
+      [
+        {step:"01",title:"Drop Your Lyrics",desc:"Paste your song lyrics, add your artist details. That's the only input we need.",icon:"🎵",color:"var(--gold)"},
+        {step:"02",title:"AI Fires All Weapons",desc:"Campaign, pitches, EPK, hooks, content, video scripts — all generated in seconds.",icon:"⚡",color:"var(--ok)"},
+        {step:"03",title:"Connect Your Platforms",desc:"Link your Instagram, TikTok and YouTube once. We remember your accounts.",icon:"🔌",color:"#00CCFF"},
+        {step:"04",title:"Schedule & Forget",desc:"Pick dates and times. HitWizard posts your content automatically. You make music.",icon:"🚀",color:"#9B4FDE"}
+      ].map(function(s,i) {
+        return React.createElement("div", {key:i, style:{background:"rgba(10,10,20,.8)",border:"1px solid rgba(255,255,255,.08)",borderRadius:16,padding:"24px 18px",position:"relative",overflow:"hidden"}},
+          React.createElement("div", {style:{position:"absolute",top:12,right:16,fontFamily:"Cinzel,serif",fontSize:48,fontWeight:900,color:s.color,opacity:.08,lineHeight:1}}, s.step),
+          React.createElement("div", {style:{fontSize:32,marginBottom:10}}, s.icon),
+          React.createElement("div", {style:{fontSize:11,fontWeight:700,color:s.color,letterSpacing:2,marginBottom:6,fontFamily:"JetBrains Mono,monospace"}}, "STEP "+s.step),
+          React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:800,color:"var(--txt)",marginBottom:8}}, s.title),
+          React.createElement("div", {style:{fontSize:12,color:"var(--muted)",lineHeight:1.65}}, s.desc)
+        );
+      })
+    ),
+    React.createElement("div", {style:{overflow:"hidden",borderRadius:14,padding:"4px 0"}},
+      React.createElement("div", {id:"hw-howit",style:{display:"flex",gap:20,animation:"hwScrollR 40s linear infinite",width:"max-content"}},
+        ["Campaign Forge","Playlist Pitcher","EPK Builder","Hook Lab","Video Engine","Content Factory","Social Autopilot","Budget Planner"].map(function(name,i) {
+          const icons=["⚡","🎯","📄","🎣","🎬","✦","🌐","💰"];
+          const colors=["var(--gold)","var(--ok)","#9B4FDE","#FF4466","#FF6B00","#00CCFF","var(--ok)","var(--gold)"];
+          const descs=["Full ad campaign in seconds","Curator pitches that get opened","Press kit ready to send","Viral hooks from your lyrics","Video scripts, fully scripted","30 days of social content","Post everywhere automatically","Know where every dollar goes"];
+          return React.createElement("div", {key:i, style:{background:"rgba(15,15,25,.95)",border:"1px solid "+colors[i],borderRadius:16,width:260,flexShrink:0,overflow:"hidden"}},
+            React.createElement("div", {style:{background:"linear-gradient(135deg,"+colors[i]+"15,transparent)",padding:"20px 18px 0"}},
+              React.createElement("div", {style:{fontSize:28,marginBottom:8}}, icons[i]),
+              React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:800,color:colors[i],marginBottom:4}}, name),
+              React.createElement("div", {style:{fontSize:11,color:"var(--muted)",lineHeight:1.6,marginBottom:14}}, descs[i])
+            ),
+            React.createElement("div", {style:{background:"rgba(0,0,0,.5)",margin:"0 10px 10px",borderRadius:8,padding:"12px",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:"var(--ok)",lineHeight:1.8}},
+              React.createElement("div", {style:{color:"var(--muted)",marginBottom:2}}, "// OUTPUT"),
+              React.createElement("div", {style:{color:colors[i]}}, "\u2713 Generated 2.3s"),
+              React.createElement("div", null, "\u2713 AI score: 98%"),
+              React.createElement("div", null, "\u2713 Ready to deploy")
+            )
+          );
+        })
+      )
+    )
+  ),
+
+  React.createElement("div", {style:{marginBottom:28}},
     React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "Trusted By Artists Worldwide")),
     React.createElement("div", {style:{overflow:"hidden",marginBottom:22,padding:"4px 0"}},
       React.createElement("div", {id:"hw-stats-scroll",style:{display:"flex",gap:20,animation:"hwScrollR 20s linear infinite",width:"max-content"}},
