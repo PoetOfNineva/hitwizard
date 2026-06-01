@@ -17,6 +17,10 @@
   path = "/api/key"
   function = "key"
 
+[[edge_functions]]
+  path = "/api/stripe-checkout"
+  function = "stripe-checkout"
+
 # Serve TikTok verification file as plain text
 [[headers]]
   for = "/*.txt"

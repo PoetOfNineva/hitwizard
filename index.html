@@ -161,10 +161,10 @@ body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-heigh
 .user-menu-item.danger:hover{background:rgba(255,68,102,.08)}
 /* TIER BADGES */
 .tier-free{background:rgba(119,119,170,.15);color:#7777AA;border:1px solid rgba(119,119,170,.3)}
-.tier-first_mate{background:rgba(0,229,153,.1);color:var(--ok);border:1px solid rgba(0,229,153,.3)}
-.tier-captain{background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3)}
-.tier-admiral{background:rgba(123,47,190,.15);color:#9B4FDE;border:1px solid rgba(123,47,190,.3)}
-.tier-fleet_commander{background:rgba(255,68,102,.1);color:#FF4466;border:1px solid rgba(255,68,102,.3)}
+.tier-artist{background:rgba(0,229,153,.1);color:var(--ok);border:1px solid rgba(0,229,153,.3)}
+.tier-pro_artist{background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3)}
+.tier-manager{background:rgba(123,47,190,.15);color:#9B4FDE;border:1px solid rgba(123,47,190,.3)}
+.tier-label{background:rgba(255,68,102,.1);color:#FF4466;border:1px solid rgba(255,68,102,.3)}
 /* Mobile logo in topbar */
 .mobile-logo{display:none;height:28px;width:auto;mix-blend-mode:lighten;filter:brightness(1.05)}
 /* Audio upload button text fix */
@@ -3885,24 +3885,66 @@ function History(_ref52) {
 function Pricing(_ref53) {
   let st = _ref53.st;
   const tiers = [{
-    name: "First Mate",
-    price: 15,
-    desc: "For artists just starting out",
+    name: "Artist",
+    tier: "artist",
+    price: 10,
+    desc: "For emerging artists starting their journey",
     feat: false,
-    features: ["5 campaigns per month", "10 playlist pitches", "20 content sets", "1 EPK per month", "Hook Lab — 3 sessions", "Budget Planner", "Save and export everything", "Email support"]
+    color: "var(--ok)",
+    features: ["10 AI campaigns per month", "10 playlist pitch emails", "10 content sets", "1 EPK per month", "Hook Lab — 5 sessions", "Budget Planner", "Smart Links", "Download Gates", "Cloud history & characters", "Email support"]
   }, {
-    name: "Captain",
-    price: 49,
-    desc: "For serious artists scaling up",
+    name: "Pro Artist",
+    tier: "pro_artist",
+    price: 29,
+    desc: "For serious artists scaling their career",
     feat: true,
-    features: ["Unlimited everything", "Character Vault — all 5 characters", "Video Production Engine", "Shooting script generator", "Priority AI speed", "All export formats", "Priority support", "First access to new features"]
+    color: "var(--gold)",
+    features: ["Unlimited everything", "Analytics Dashboard", "Pre-Save Pages", "Character Vault — all characters", "Video Engine — AI scripts", "All AI tools (Grok/Veo3/Kling/Runway/Pika)", "Priority AI speed", "All export formats", "Priority support", "First access to new features"]
   }, {
-    name: "Admiral",
-    price: 149,
-    desc: "For managers and small labels",
+    name: "Manager",
+    tier: "manager",
+    price: 79,
+    desc: "For managers handling multiple artists",
     feat: false,
-    features: ["Everything in Captain", "Up to 10 artist profiles", "Team access", "White-label exports", "Custom pitch templates", "Dedicated account manager", "API access coming soon"]
+    color: "#9B4FDE",
+    features: ["Everything in Pro Artist", "5 artist profiles", "White-label EPKs", "Campaign ROI tracking", "Priority support", "Custom pitch templates", "Team collaboration"]
+  }, {
+    name: "Label",
+    tier: "label",
+    price: 149,
+    desc: "For labels and large music operations",
+    feat: false,
+    color: "#FF4466",
+    features: ["Everything in Manager", "Unlimited artist profiles", "Label dashboard", "Bulk campaign generation", "API access", "Dedicated support", "Custom integrations", "White-label platform"]
   }];
+
+  const handleCheckout = async (tier) => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
+    try {
+      st("Preparing checkout...", "💳");
+      const res = await fetch("/api/stripe-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tier,
+          email: window.HW_AUTH.user.email,
+          userId: window.HW_AUTH.user.id
+        })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        st("Checkout error — please try again", "⚠️");
+      }
+    } catch(e) {
+      st("Checkout error — please try again", "⚠️");
+    }
+  };
+
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
@@ -3923,71 +3965,72 @@ function Pricing(_ref53) {
       WebkitBackgroundClip: "text",
       WebkitTextFillColor: "transparent"
     }
-  }, "Rank")), /*#__PURE__*/React.createElement("div", {
+  }, "Plan")), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "var(--muted)",
       fontSize: 13
     }
-  }, "From emerging artist to fleet commander")), /*#__PURE__*/React.createElement("div", {
-    className: "g3",
+  }, "Join thousands of independent artists growing with AI")), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginBottom: 26
+      background: "rgba(0,229,153,.06)",
+      border: "1px solid rgba(0,229,153,.2)",
+      borderRadius: 10,
+      padding: "12px 18px",
+      textAlign: "center",
+      marginBottom: 24,
+      fontSize: 13,
+      color: "var(--ok)"
     }
+  }, "✅ Free plan available — no credit card required · Cancel anytime · Instant access"), /*#__PURE__*/React.createElement("div", {
+    className: "g2",
+    style: { marginBottom: 16 }
   }, tiers.map((tier, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
-    className: "pc ".concat(tier.feat ? "feat" : "")
+    className: "pc ".concat(tier.feat ? "feat" : ""),
+    style: { position: "relative" }
   }, tier.feat && /*#__PURE__*/React.createElement("div", {
     className: "pc-pop"
-  }, "MOST POPULAR"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: tier.feat ? 20 : 0
-    }
+  }, "⚡ MOST POPULAR"), /*#__PURE__*/React.createElement("div", {
+    style: { marginTop: tier.feat ? 20 : 0 }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "Cinzel,serif",
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: 700,
-      color: "var(--txt)",
+      color: tier.color,
       marginBottom: 4
     }
   }, tier.name), /*#__PURE__*/React.createElement("div", {
     className: "pc-val"
   }, "$", tier.price, /*#__PURE__*/React.createElement("span", null, "/mo")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--muted)",
-      margin: "4px 0 12px"
-    }
+    style: { fontSize: 12, color: "var(--muted)", margin: "4px 0 14px" }
   }, tier.desc), /*#__PURE__*/React.createElement("ul", {
     className: "pc-list"
-  }, tier.features.map((ff, j) => /*#__PURE__*/React.createElement("li", {
-    key: j
-  }, ff))), /*#__PURE__*/React.createElement("button", {
+  }, tier.features.map((ff, j) => /*#__PURE__*/React.createElement("li", { key: j }, ff))), /*#__PURE__*/React.createElement("button", {
     className: "btn ".concat(tier.feat ? "btn-gold" : "btn-out", " btn-full"),
-    onClick: () => st("Payments launching soon — stay tuned!", "👑")
-  }, tier.feat ? "⚡ Choose Captain" : "Choose ".concat(tier.name)))))), /*#__PURE__*/React.createElement("div", {
+    style: { marginTop: 16 },
+    onClick: () => handleCheckout(tier.tier)
+  }, tier.feat ? "⚡ Get Pro Artist" : "Get ".concat(tier.name)))))), /*#__PURE__*/React.createElement("div", {
     className: "card",
-    style: {
-      textAlign: "center",
-      border: "1px solid rgba(123,47,190,.3)"
-    }
+    style: { textAlign: "center", border: "1px solid rgba(255,68,102,.3)", marginBottom: 16 }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "Cinzel,serif",
-      fontSize: 16,
-      fontWeight: 700,
-      marginBottom: 5
-    }
-  }, "Fleet Commander"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "var(--muted)",
-      fontSize: 13,
-      marginBottom: 13
-    }
-  }, "For agencies and companies managing 10 or more artists. Custom pricing and full white-label options."), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-out",
-    onClick: () => st("Contact us at captain@hitwizard.ai", "👑")
-  }, "Get in Touch")));
+    style: { fontFamily: "Cinzel,serif", fontSize: 16, fontWeight: 700, marginBottom: 5, color: "#FF4466" }
+  }, "🏷️ Label Plan — $149/mo"), /*#__PURE__*/React.createElement("div", {
+    style: { color: "var(--muted)", fontSize: 13, marginBottom: 13 }
+  }, "Unlimited artists · API access · Dedicated support · Bulk generation · White-label platform"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-out btn-full",
+    onClick: () => handleCheckout("label")
+  }, "Get Label Plan")), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: { textAlign: "center", border: "1px solid rgba(119,119,170,.3)" }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontFamily: "Cinzel,serif", fontSize: 15, fontWeight: 700, marginBottom: 5 }
+  }, "🆓 Free Plan"), /*#__PURE__*/React.createElement("div", {
+    style: { color: "var(--muted)", fontSize: 13, marginBottom: 13 }
+  }, "3 campaigns · 1 EPK · 1 Smart Link · Basic analytics · No credit card required"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost btn-full",
+    onClick: () => { if(window.showAuthModal) window.showAuthModal("signup"); }
+  }, "Start Free — No Card Needed")));
 }
 
 // ── MAIN APP ──
@@ -4306,7 +4349,31 @@ ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getE
 <script src="/auth.js"></script>
 <script>
 // AUTH UI INJECTION
-function getTierLabel(t){return{free:"Free",first_mate:"First Mate",captain:"Captain",admiral:"Admiral",fleet_commander:"Fleet Commander"}[t]||"Free";}
+function getTierLabel(t){return{free:"Free",artist:"Artist",pro_artist:"Pro Artist",manager:"Manager",label:"Label"}[t]||"Free";}
+
+// Handle Stripe checkout return
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const checkout = params.get("checkout");
+  const tier = params.get("tier");
+  if(checkout === "success" && tier) {
+    setTimeout(function(){
+      if(window.HW_AUTH && window.HW_AUTH.isLoggedIn()) {
+        window.HW_AUTH.loadProfile();
+      }
+      var msg = "🎉 Welcome to HitWizard " + (tier.charAt(0).toUpperCase() + tier.slice(1).replace("_"," ")) + "! Your account has been upgraded.";
+      var banner = document.createElement("div");
+      banner.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#00E599,#00B377);color:#08080E;padding:14px;text-align:center;font-weight:700;font-size:14px;";
+      banner.textContent = msg;
+      document.body.appendChild(banner);
+      setTimeout(function(){ banner.remove(); }, 6000);
+      window.history.replaceState({}, "", "/");
+    }, 1000);
+  }
+  if(checkout === "cancelled") {
+    window.history.replaceState({}, "", "/");
+  }
+})();
 function updateUserCard(){
   var card=document.querySelector(".ucard");if(!card)return;
   var auth=window.HW_AUTH;
