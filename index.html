@@ -18,6 +18,8 @@ body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-heigh
 @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
 @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,184,0,0.2)}50%{box-shadow:0 0 40px rgba(255,184,0,0.5)}}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes hwScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+#hw-testimonials:hover{animation-play-state:paused}
 :root{--gold:#FFB800;--purple:#7B2FBE;--pl:#9B4FDE;--bg:#08080E;--bg2:#16162A;--bdr:rgba(255,184,0,0.12);--bdrh:rgba(255,184,0,0.3);--txt:#F0F0F0;--muted:#7777AA;--ok:#00E599;--err:#FF4466}
 .hw{min-height:100vh;background:var(--bg)}
 .gbg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,184,0,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,184,0,0.025) 1px,transparent 1px);background-size:64px 64px;pointer-events:none;z-index:0}
@@ -1643,7 +1645,7 @@ function Dashboard(_ref1) {
       lineHeight: 1.65,
       marginBottom: 16
     }
-  }, "Your AI music marketing war room. Every weapon powered by your actual lyrics. Built for artists who refuse to be ordinary."),
+  }, "Your AI music marketing command centre. Every weapon powered by your actual lyrics. Built for artists who refuse to be ordinary."),
   /*#__PURE__*/React.createElement("div", {
     id: "hw-hero-auth",
     style: {
@@ -1772,6 +1774,72 @@ function Dashboard(_ref1) {
   }, w.desc), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-out btn-sm"
   }, "Open \u2192")))), /*#__PURE__*/React.createElement("div", {
+    style: {marginBottom: 28}
+  },
+    /*#__PURE__*/React.createElement("div", {className: "sh"},
+      /*#__PURE__*/React.createElement("div", {className: "st"}, "Trusted By Artists Worldwide")
+    ),
+    /*#__PURE__*/React.createElement("div", {
+      style: {display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:22}
+    },
+      [
+        {n:"50,000+", l:"Campaigns Generated", ic:"🎵"},
+        {n:"10,000+", l:"Playlist Pitches Sent", ic:"🎯"},
+        {n:"5,000+",  l:"EPKs Created", ic:"📄"},
+        {n:"2,000+",  l:"Video Scripts Made", ic:"🎬"}
+      ].map((s,i) => /*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: "stat",
+        style: {textAlign:"center", padding:"16px 10px"}
+      },
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:22, fontWeight:800, color:"var(--gold)", fontFamily:"Cinzel,serif", marginBottom:4}}, s.n),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11, color:"var(--muted)", lineHeight:1.4}}, s.ic + " " + s.l)
+      ))
+    ),
+    /*#__PURE__*/React.createElement("div", {
+      style: {
+        overflow: "hidden",
+        position: "relative",
+        borderRadius: 14,
+        padding: "4px 0"
+      }
+    },
+      /*#__PURE__*/React.createElement("div", {
+        id: "hw-testimonials",
+        style: {
+          display: "flex",
+          gap: 16,
+          animation: "hwScroll 30s linear infinite",
+          width: "max-content"
+        }
+      },
+        [
+          {q:"HitWizard wrote my entire campaign in under 2 minutes. My last release got 40K streams in the first week.", n:"@melodicwave", s:"320K monthly listeners"},
+          {q:"The playlist pitch engine landed me 3 curator placements I never could have gotten on my own.", n:"@soulproducer", s:"Independent Artist"},
+          {q:"I used to spend 4 hours on EPKs. Now it's done before my coffee gets cold.", n:"@risingvox", s:"Signed to Indie Label"},
+          {q:"The video script engine is insane. My TikTok views tripled after using HitWizard hooks.", n:"@beatsbydante", s:"1.2M TikTok Followers"},
+          {q:"Finally a tool built for serious artists. Not a toy — a full marketing arsenal.", n:"@silentstorm", s:"Tour Artist"},
+          {q:"HitWizard wrote my entire campaign in under 2 minutes. My last release got 40K streams in the first week.", n:"@melodicwave", s:"320K monthly listeners"},
+          {q:"The playlist pitch engine landed me 3 curator placements I never could have gotten on my own.", n:"@soulproducer", s:"Independent Artist"},
+          {q:"I used to spend 4 hours on EPKs. Now it's done before my coffee gets cold.", n:"@risingvox", s:"Signed to Indie Label"}
+        ].map((t, i) => /*#__PURE__*/React.createElement("div", {
+          key: i,
+          style: {
+            background: "rgba(255,184,0,.06)",
+            border: "1px solid rgba(255,184,0,.2)",
+            borderRadius: 12,
+            padding: "18px 20px",
+            width: 280,
+            flexShrink: 0
+          }
+        },
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:13, color:"var(--txt)", lineHeight:1.65, marginBottom:12, fontStyle:"italic"}}, "\u201C" + t.q + "\u201D"),
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:12, fontWeight:700, color:"var(--gold)"}}, t.n),
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:10, color:"var(--muted)", marginTop:2}}, t.s)
+        ))
+      )
+    )
+  ), /*#__PURE__*/React.createElement("div", {
     className: "sh"
   }, /*#__PURE__*/React.createElement("div", {
     className: "st"
@@ -4111,7 +4179,7 @@ function HitWizard() {
   const nav = [{
     id: "dashboard",
     icon: "⬡",
-    label: "War Room"
+    label: "Command Centre"
   }, {
     id: "campaigns",
     icon: "⚡",
@@ -4155,7 +4223,7 @@ function HitWizard() {
   }];
   const titles = {
     dashboard: {
-      t: "War Room",
+      t: "Command Centre",
       s: "Your AI music marketing command center"
     },
     campaigns: {
@@ -4301,25 +4369,28 @@ function HitWizard() {
     className: "sfoot"
   }, /*#__PURE__*/React.createElement("div", {
     className: "ucard",
-    style: {cursor:"pointer", border:"1px solid rgba(255,184,0,.4)", background:"rgba(255,184,0,.08)", padding:"11px"},
+    style: {cursor:"pointer", border:"2px solid rgba(255,184,0,.8)", background:"linear-gradient(135deg,rgba(255,184,0,.15),rgba(255,184,0,.05))", padding:"16px", borderRadius:"14px", boxShadow:"0 0 20px rgba(255,184,0,.15)"},
     onClick: function(){ if(window.showAuthModal){window.showAuthModal("signin");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signin"}));} }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "uav",
-    style: {background: "rgba(119,119,170,.2)"}
-  }, "?"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: "var(--txt)"
-    }
-  }, "🔐 Sign In"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9,
-      color: "var(--gold)",
-      fontFamily: "JetBrains Mono,monospace",
-      letterSpacing: 1
-    }
-  }, "SAVE YOUR WORK"))))), /*#__PURE__*/React.createElement("main", {
+  }, /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
+    /*#__PURE__*/React.createElement("div", {
+      className: "uav",
+      style: {background:"rgba(255,184,0,.25)", width:38, height:38, fontSize:18, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:"50%", flexShrink:0}
+    }, "🔐"),
+    /*#__PURE__*/React.createElement("div", null,
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:15,fontWeight:800,color:"var(--gold)",lineHeight:1.2}}, "Sign In / Sign Up"),
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, "Free forever — no credit card")
+    )
+  ),
+  /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginBottom:12,lineHeight:1.5}}, "Save your campaigns, characters & history across every device."),
+  /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold btn-full",
+    style:{fontSize:13,fontWeight:700,padding:"10px",width:"100%",textAlign:"center"},
+    onClick: function(e){ e.stopPropagation(); if(window.showAuthModal){window.showAuthModal("signup");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signup"}));} }
+  }, "⚡ Create Free Account"),
+  /*#__PURE__*/React.createElement("div", {style:{textAlign:"center",marginTop:8,fontSize:11,color:"var(--muted)"}},
+    "Already have an account? ",
+    /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",cursor:"pointer",fontWeight:600}, onClick: function(e){ e.stopPropagation(); if(window.showAuthModal){window.showAuthModal("signin");}else{document.dispatchEvent(new CustomEvent("hw_open_auth",{detail:"signin"}));} }}, "Sign In")
+  ))))), /*#__PURE__*/React.createElement("main", {
     className: "main"
   }, /*#__PURE__*/React.createElement("div", {
     className: "topbar"
