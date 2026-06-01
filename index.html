@@ -4004,6 +4004,258 @@ function History(_ref52) {
   );
 }
 
+// ── SOCIAL AUTOPILOT ──
+function SocialAutopilot({showToast}) {
+  const [connected, setConnected] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem("hw_social_connected") || "{}"); } catch { return {}; }
+  });
+  const [tab, setTab] = React.useState("connect");
+  const [posts, setPosts] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem("hw_scheduled_posts") || "[]"); } catch { return []; }
+  });
+  const [composer, setComposer] = React.useState(false);
+  const [draft, setDraft] = React.useState({caption:"",platforms:[],scheduleDate:"",scheduleTime:"",branded:false,commercial:false,videoFile:null,videoPreview:null});
+  const [uploading, setUploading] = React.useState(false);
+
+  const platforms = [
+    {id:"instagram", name:"Instagram", icon:"📸", color:"#E1306C", desc:"Business/Creator accounts · Reels, Posts, Stories", scope:"instagram_business_content_publish", status:"App Review Required"},
+    {id:"facebook",  name:"Facebook",  icon:"👥", color:"#1877F2", desc:"Pages · Feed Posts, Reels, Stories", scope:"pages_manage_posts", status:"App Review Required"},
+    {id:"tiktok",    name:"TikTok",    icon:"🎵", color:"#FF0050", desc:"Creator accounts · Videos, Photo Posts", scope:"video.upload,video.publish", status:"Sandbox Audit Required"},
+    {id:"youtube",   name:"YouTube",   icon:"▶️", color:"#FF0000", desc:"Channels · Shorts, Long-form Videos", scope:"youtube.upload", status:"OAuth Verification"},
+    {id:"twitter",   name:"X (Twitter)",icon:"✕", color:"#000000", desc:"Accounts · Posts, Threads, Media", scope:"tweet.write", status:"Pay-per-use API"},
+    {id:"threads",   name:"Threads",   icon:"@", color:"#000000", desc:"Profiles · Text & Media Posts", scope:"threads_content_publish", status:"Via Meta App"},
+  ];
+
+  function savePosts(p) { setPosts(p); try{localStorage.setItem("hw_scheduled_posts",JSON.stringify(p));}catch(e){} }
+  function saveConnected(c) { setConnected(c); try{localStorage.setItem("hw_social_connected",JSON.stringify(c));}catch(e){} }
+
+  function handleConnect(pid) {
+    const p = platforms.find(x=>x.id===pid);
+    if(!p) return;
+    // Real OAuth redirect — currently sends to our auth endpoint
+    // Phase B: replace with direct platform OAuth URLs once approved
+    const redirectMap = {
+      instagram: "https://www.facebook.com/v19.0/dialog/oauth?client_id="+encodeURIComponent("26857151587229215")+"&redirect_uri="+encodeURIComponent("https://hitwizardai.com/auth/social-callback")+"&scope=instagram_business_basic,instagram_business_content_publish&state=instagram",
+      facebook:  "https://www.facebook.com/v19.0/dialog/oauth?client_id="+encodeURIComponent("26857151587229215")+"&redirect_uri="+encodeURIComponent("https://hitwizardai.com/auth/social-callback")+"&scope=pages_manage_posts,pages_read_engagement&state=facebook",
+      tiktok:    "https://www.tiktok.com/v2/auth/authorize/?client_key="+encodeURIComponent("pending_approval")+"&redirect_uri="+encodeURIComponent("https://hitwizardai.com/auth/social-callback")+"&scope=user.info.basic,video.upload,video.publish&response_type=code&state=tiktok",
+      youtube:   "https://accounts.google.com/o/oauth2/v2/auth?client_id="+encodeURIComponent("886704503240-t0tr1fcs7ddcdjjhq2fc2rdpko6292dp.apps.googleusercontent.com")+"&redirect_uri="+encodeURIComponent("https://hitwizardai.com/auth/social-callback")+"&scope=https://www.googleapis.com/auth/youtube.upload&response_type=code&state=youtube",
+      twitter:   "https://twitter.com/i/oauth2/authorize?response_type=code&client_id=pending_approval&redirect_uri="+encodeURIComponent("https://hitwizardai.com/auth/social-callback")+"&scope=tweet.write+users.read&state=twitter&code_challenge=challenge&code_challenge_method=plain",
+      threads:   "https://www.facebook.com/v19.0/dialog/oauth?client_id="+encodeURIComponent("26857151587229215")+"&redirect_uri="+encodeURIComponent("https://hitwizardai.com/auth/social-callback")+"&scope=threads_content_publish&state=threads"
+    };
+    if(pid==="instagram"||pid==="facebook"||pid==="threads") {
+      window.open(redirectMap[pid],"_blank","width=600,height=700");
+      showToast("Meta OAuth window opened — approve permissions then return here","📸");
+    } else if(pid==="youtube") {
+      window.open(redirectMap[pid],"_blank","width=600,height=700");
+      showToast("Google OAuth window opened — approve YouTube permissions","▶️");
+    } else {
+      showToast(p.name+" API approval is in progress — you will be first to connect when live","⏳");
+    }
+  }
+
+  function handleDisconnect(pid) {
+    const c = {...connected}; delete c[pid]; saveConnected(c);
+    showToast("Disconnected","✓");
+  }
+
+  function handleFileUpload(e) {
+    const file = e.target.files[0]; if(!file) return;
+    if(file.size > 500*1024*1024){showToast("File too large — max 500MB","⚠️");return;}
+    const url = URL.createObjectURL(file);
+    setDraft(d=>({...d, videoFile:file, videoPreview:url}));
+    showToast("Video loaded — "+file.name,"✓");
+  }
+
+  function togglePlatform(pid) {
+    setDraft(d=>({...d, platforms: d.platforms.includes(pid) ? d.platforms.filter(x=>x!==pid) : [...d.platforms, pid]}));
+  }
+
+  function schedulePost() {
+    if(!draft.caption.trim()){showToast("Add a caption first","⚠️");return;}
+    if(!draft.platforms.length){showToast("Select at least one platform","⚠️");return;}
+    if(!draft.scheduleDate||!draft.scheduleTime){showToast("Set a date and time","⚠️");return;}
+    const post = {
+      id: Date.now(),
+      caption: draft.caption,
+      platforms: draft.platforms,
+      scheduleDate: draft.scheduleDate,
+      scheduleTime: draft.scheduleTime,
+      branded: draft.branded,
+      commercial: draft.commercial,
+      videoName: draft.videoFile ? draft.videoFile.name : null,
+      status: "scheduled",
+      createdAt: new Date().toISOString()
+    };
+    savePosts([post, ...posts]);
+    setDraft({caption:"",platforms:[],scheduleDate:"",scheduleTime:"",branded:false,commercial:false,videoFile:null,videoPreview:null});
+    setComposer(false);
+    setTab("queue");
+    showToast("Post scheduled — "+draft.platforms.length+" platform"+(draft.platforms.length>1?"s":""),"✓");
+  }
+
+  function deletePost(id) {
+    savePosts(posts.filter(p=>p.id!==id));
+    showToast("Post removed","✓");
+  }
+
+  const platformIcon = id => platforms.find(p=>p.id===id)?.icon||"🌐";
+  const platformColor = id => platforms.find(p=>p.id===id)?.color||"var(--gold)";
+
+  return React.createElement("div", {style:{maxWidth:900,margin:"0 auto"}},
+
+    // Tabs
+    React.createElement("div", {style:{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}},
+      [{id:"connect",label:"🔌 Connect Platforms"},{id:"compose",label:"✍️ Compose & Schedule"},{id:"queue",label:"📅 Post Queue "+(posts.length>0?"("+posts.length+")":"")}].map(t=>
+        React.createElement("button", {key:t.id, onClick:()=>setTab(t.id), className:"btn "+(tab===t.id?"btn-gold":"btn-out"), style:{fontSize:13,padding:"10px 18px"}}, t.label)
+      )
+    ),
+
+    // CONNECT TAB
+    tab==="connect" && React.createElement("div", null,
+      React.createElement("div", {className:"card", style:{marginBottom:20,background:"linear-gradient(135deg,rgba(255,184,0,.08),rgba(0,0,0,0))",border:"1px solid rgba(255,184,0,.3)"}},
+        React.createElement("div", {style:{fontSize:16,fontWeight:800,color:"var(--gold)",marginBottom:8}}, "🚀 Connect Your Platforms"),
+        React.createElement("div", {style:{fontSize:13,color:"var(--muted)",lineHeight:1.7}}, "Connect your social accounts once. HitWizard posts your AI-generated content everywhere automatically. You create the music — we handle the marketing machine.")
+      ),
+      React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14}},
+        platforms.map(p => React.createElement("div", {key:p.id, className:"card", style:{border:"1px solid "+(connected[p.id]?"rgba(0,229,153,.4)":"rgba(255,255,255,.08)"),transition:"border .2s"}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:12}},
+            React.createElement("div", {style:{width:44,height:44,borderRadius:12,background:p.color+"22",border:"1px solid "+p.color+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}, p.icon),
+            React.createElement("div", {style:{flex:1}},
+              React.createElement("div", {style:{fontSize:15,fontWeight:700,color:"var(--txt)"}},"  "+p.name),
+              React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:2}}, p.desc)
+            ),
+            connected[p.id] ? React.createElement("div", {style:{background:"rgba(0,229,153,.15)",border:"1px solid var(--ok)",borderRadius:20,padding:"3px 10px",fontSize:10,fontWeight:700,color:"var(--ok)"}}, "✓ LIVE") :
+            React.createElement("div", {style:{background:"rgba(255,184,0,.1)",border:"1px solid rgba(255,184,0,.3)",borderRadius:20,padding:"3px 10px",fontSize:10,color:"var(--gold)"}}, "PENDING")
+          ),
+          React.createElement("div", {style:{fontSize:10,fontFamily:"JetBrains Mono,monospace",color:"var(--muted)",marginBottom:12,padding:"6px 10px",background:"rgba(0,0,0,.3)",borderRadius:6}}, "scope: "+p.scope),
+          React.createElement("div", {style:{fontSize:10,color:"rgba(255,184,0,.6)",marginBottom:12}}, "⏱ "+p.status),
+          React.createElement("div", {style:{display:"flex",gap:8}},
+            !connected[p.id] ?
+              React.createElement("button", {className:"btn btn-gold", style:{flex:1,fontSize:12,padding:"9px"}, onClick:()=>handleConnect(p.id)}, "Connect "+p.name) :
+              React.createElement("button", {className:"btn btn-out", style:{flex:1,fontSize:12,padding:"9px",color:"#FF6B6B",borderColor:"rgba(255,60,60,.4)"}, onClick:()=>handleDisconnect(p.id)}, "Disconnect")
+          )
+        ))
+      ),
+
+      React.createElement("div", {className:"card", style:{marginTop:20,border:"1px solid rgba(255,184,0,.2)"}},
+        React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"var(--gold)",marginBottom:10}}, "🛡️ Platform Approval Status"),
+        React.createElement("div", {style:{fontSize:12,color:"var(--muted)",lineHeight:1.8}},
+          "Instagram & Facebook — Meta App Review submitted. Awaiting approval (2–4 weeks).", React.createElement("br",null),
+          "TikTok — Sandbox audit in progress. Content Posting API scope requested.", React.createElement("br",null),
+          "YouTube — Google OAuth verification active. YouTube upload scope pending.", React.createElement("br",null),
+          "X/Twitter — Pay-per-use API. Goes live when Pro Artist tier reaches 50 users.", React.createElement("br",null),
+          "Threads — Covered under Meta app approval. Free once Instagram is live."
+        )
+      )
+    ),
+
+    // COMPOSE TAB
+    tab==="compose" && React.createElement("div", null,
+      React.createElement("div", {className:"card", style:{marginBottom:16}},
+        React.createElement("div", {style:{fontSize:15,fontWeight:800,color:"var(--gold)",marginBottom:16}}, "✍️ Compose Your Post"),
+
+        // Platform selector
+        React.createElement("div", {style:{marginBottom:16}},
+          React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--muted)",marginBottom:8,letterSpacing:1}}, "SELECT PLATFORMS"),
+          React.createElement("div", {style:{display:"flex",gap:8,flexWrap:"wrap"}},
+            platforms.map(p => React.createElement("button", {key:p.id,
+              onClick:()=>togglePlatform(p.id),
+              style:{padding:"8px 14px",borderRadius:20,border:"1px solid "+(draft.platforms.includes(p.id)?p.color:"rgba(255,255,255,.15)"),background:draft.platforms.includes(p.id)?p.color+"22":"transparent",color:draft.platforms.includes(p.id)?p.color:"var(--muted)",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .2s"}
+            }, p.icon+" "+p.name))
+          )
+        ),
+
+        // Caption
+        React.createElement("div", {style:{marginBottom:16}},
+          React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--muted)",marginBottom:6,letterSpacing:1}}, "CAPTION"),
+          React.createElement("textarea", {
+            value:draft.caption,
+            onChange:e=>setDraft(d=>({...d,caption:e.target.value})),
+            placeholder:"Write your caption here — or paste from Content Arsenal...",
+            style:{width:"100%",minHeight:120,background:"rgba(0,0,0,.4)",border:"1px solid rgba(255,255,255,.1)",borderRadius:10,padding:"12px",color:"var(--txt)",fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}
+          }),
+          React.createElement("div", {style:{fontSize:10,color:"var(--muted)",marginTop:4,textAlign:"right"}},
+            draft.caption.length+" chars · "+
+            (draft.platforms.includes("twitter") && draft.caption.length>280?"⚠️ Exceeds X 280 char limit · ":"")+
+            (draft.platforms.includes("tiktok") && draft.caption.length>150?"⚠️ Exceeds TikTok 150 char limit":"")
+          )
+        ),
+
+        // Video upload
+        React.createElement("div", {style:{marginBottom:16}},
+          React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--muted)",marginBottom:6,letterSpacing:1}}, "MEDIA (OPTIONAL)"),
+          draft.videoPreview ? React.createElement("div", {style:{position:"relative",marginBottom:8}},
+            React.createElement("video", {src:draft.videoPreview,controls:true,style:{width:"100%",maxHeight:200,borderRadius:10,background:"#000"}}),
+            React.createElement("button", {onClick:()=>setDraft(d=>({...d,videoFile:null,videoPreview:null})),style:{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14}}, "✕")
+          ) : React.createElement("label", {style:{display:"flex",alignItems:"center",justifyContent:"center",gap:10,border:"2px dashed rgba(255,184,0,.3)",borderRadius:12,padding:"24px",cursor:"pointer",color:"var(--muted)",fontSize:13}},
+            React.createElement("input", {type:"file",accept:"video/*",onChange:handleFileUpload,style:{display:"none"}}),
+            "🎬 Upload video from Grok, Veo3, Kling or any AI tool · MP4, WebM · Max 500MB"
+          ),
+          React.createElement("div", {style:{fontSize:11,color:"rgba(255,184,0,.5)",marginTop:6}}, "💡 Generate your video with our Video Engine prompts → download from AI tool → upload here")
+        ),
+
+        // Schedule
+        React.createElement("div", {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}},
+          React.createElement("div", null,
+            React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--muted)",marginBottom:6,letterSpacing:1}}, "DATE"),
+            React.createElement("input", {type:"date",value:draft.scheduleDate,onChange:e=>setDraft(d=>({...d,scheduleDate:e.target.value})),style:{width:"100%",background:"rgba(0,0,0,.4)",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,padding:"10px",color:"var(--txt)",fontSize:13,boxSizing:"border-box"}})
+          ),
+          React.createElement("div", null,
+            React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--muted)",marginBottom:6,letterSpacing:1}}, "TIME"),
+            React.createElement("input", {type:"time",value:draft.scheduleTime,onChange:e=>setDraft(d=>({...d,scheduleTime:e.target.value})),style:{width:"100%",background:"rgba(0,0,0,.4)",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,padding:"10px",color:"var(--txt)",fontSize:13,boxSizing:"border-box"}})
+          )
+        ),
+
+        // TikTok legal disclosures (required for TikTok approval)
+        draft.platforms.includes("tiktok") && React.createElement("div", {className:"card", style:{marginBottom:16,background:"rgba(255,0,80,.05)",border:"1px solid rgba(255,0,80,.2)"}},
+          React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"#FF0050",marginBottom:10}}, "🎵 TikTok Content Disclosure (Required by TikTok)"),
+          React.createElement("label", {style:{display:"flex",alignItems:"center",gap:10,fontSize:13,color:"var(--txt)",marginBottom:8,cursor:"pointer"}},
+            React.createElement("input", {type:"checkbox",checked:draft.branded,onChange:e=>setDraft(d=>({...d,branded:e.target.checked})),style:{width:16,height:16,accentColor:"#FF0050"}}),
+            "This post promotes a brand, product or service (Branded Content)"
+          ),
+          React.createElement("label", {style:{display:"flex",alignItems:"center",gap:10,fontSize:13,color:"var(--txt)",cursor:"pointer"}},
+            React.createElement("input", {type:"checkbox",checked:draft.commercial,onChange:e=>setDraft(d=>({...d,commercial:e.target.checked})),style:{width:16,height:16,accentColor:"#FF0050"}}),
+            "This is a paid promotion or I received compensation for this content"
+          )
+        ),
+
+        React.createElement("button", {className:"btn btn-gold", style:{width:"100%",fontSize:15,fontWeight:800,padding:"14px"}, onClick:schedulePost}, "⚡ Schedule Post to "+( draft.platforms.length ? draft.platforms.length+" Platform"+(draft.platforms.length>1?"s":"") : "Selected Platforms"))
+      )
+    ),
+
+    // QUEUE TAB
+    tab==="queue" && React.createElement("div", null,
+      posts.length===0 ? React.createElement("div", {className:"card", style:{textAlign:"center",padding:"40px 20px"}},
+        React.createElement("div", {style:{fontSize:40,marginBottom:12}},"📅"),
+        React.createElement("div", {style:{fontSize:16,fontWeight:700,color:"var(--txt)",marginBottom:8}}, "No posts scheduled yet"),
+        React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginBottom:16}}, "Go to Compose & Schedule to queue your first post"),
+        React.createElement("button", {className:"btn btn-gold",onClick:()=>setTab("compose"),style:{padding:"12px 24px"}}, "✍️ Compose First Post")
+      ) :
+      React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:12}},
+        posts.map(post => React.createElement("div", {key:post.id, className:"card"},
+          React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}},
+            React.createElement("div", {style:{flex:1}},
+              React.createElement("div", {style:{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}},
+                post.platforms.map(pid => React.createElement("span", {key:pid, style:{background:platformColor(pid)+"22",border:"1px solid "+platformColor(pid)+"44",color:platformColor(pid),borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}, platformIcon(pid)+" "+pid))
+              ),
+              React.createElement("div", {style:{fontSize:13,color:"var(--txt)",marginBottom:8,lineHeight:1.5}}, post.caption.length>120?post.caption.substring(0,120)+"...":post.caption),
+              post.videoName && React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginBottom:6}}, "🎬 "+post.videoName),
+              React.createElement("div", {style:{fontSize:11,color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}},
+                "📅 "+post.scheduleDate+" at "+post.scheduleTime,
+                post.branded || post.commercial ? React.createElement("span", {style:{marginLeft:8,color:"#FF0050"}}, "· "+( post.branded?"Branded Content":"")+(post.commercial?" · Paid Promotion":"")) : null
+              )
+            ),
+            React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:6}},
+              React.createElement("span", {style:{background:"rgba(0,229,153,.1)",border:"1px solid rgba(0,229,153,.3)",color:"var(--ok)",borderRadius:20,padding:"3px 10px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}, "⏳ QUEUED"),
+              React.createElement("button", {onClick:()=>deletePost(post.id),style:{background:"rgba(255,60,60,.1)",border:"1px solid rgba(255,60,60,.3)",color:"#FF6B6B",borderRadius:8,padding:"6px 12px",fontSize:11,cursor:"pointer"}}, "Remove")
+            )
+          )
+        ))
+      )
+    )
+  );
+}
+
 // ── PRICING ──
 function Pricing(_ref53) {
   let st = _ref53.st;
@@ -4326,6 +4578,10 @@ function HitWizard() {
     id: "pricing",
     icon: "👑",
     label: "Plans & Pricing"
+  }, {
+    id: "social",
+    icon: "🌐",
+    label: "Social Autopilot"
   }];
   const titles = {
     dashboard: {
@@ -4371,6 +4627,10 @@ function HitWizard() {
     pricing: {
       t: "Plans and Pricing",
       s: "Choose the rank that fits where you are"
+    },
+    social: {
+      t: "Social Autopilot",
+      s: "Connect your platforms. Post everywhere. Touch nothing."
     }
   };
   const props = {
@@ -4412,6 +4672,10 @@ function HitWizard() {
       case "pricing":
         return /*#__PURE__*/React.createElement(Pricing, {
           st: st
+        });
+      case "social":
+        return /*#__PURE__*/React.createElement(SocialAutopilot, {
+          showToast: st
         });
       default:
         return /*#__PURE__*/React.createElement(Dashboard, {
