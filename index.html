@@ -867,7 +867,8 @@ const DEFAULT_CHARACTERS = (function() {
 // ── CHARACTER VAULT PAGE ──
 function CharacterVault(_ref9) {
   let showToast = _ref9.showToast;
-  const _useState11 = useState(DEFAULT_CHARACTERS),
+  const getVaultChars = () => { try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} };
+  const _useState11 = useState(getVaultChars),
     _useState12 = _slicedToArray(_useState11, 2),
     chars = _useState12[0],
     setChars = _useState12[1];
@@ -890,55 +891,53 @@ function CharacterVault(_ref9) {
     _useState18 = _slicedToArray(_useState17, 2),
     dlData = _useState18[0],
     setDlData = _useState18[1];
+    // Load from Supabase on mount if logged in
+  useEffect(() => {
+    async function loadCloud() {
+      if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_CHARS) {
+        const cloudChars = await window.HW_CHARS.load();
+        if (cloudChars && cloudChars.length > 0) {
+          setChars(cloudChars);
+          try { localStorage.setItem("hw_characters", JSON.stringify(cloudChars)); } catch(e) {}
+        }
+      }
+    }
+    loadCloud();
+  }, []);
+  const persistLocal = (updated) => { try { localStorage.setItem("hw_characters", JSON.stringify(updated)); } catch(e) {} };
   const startEdit = c => {
     setEditing(c.id);
-    setForm({
-      name: c.name,
-      role: c.role,
-      emoji: c.emoji,
-      dna: c.dna,
-      tag: c.tag,
-      color: c.color
-    });
+    setForm({ name: c.name, role: c.role, emoji: c.emoji, dna: c.dna, tag: c.tag, color: c.color });
   };
-  const saveEdit = () => {
-    setChars(cs => {
-      const updated = cs.map(c => c.id === editing ? _objectSpread(_objectSpread({}, c), form) : c);
-      try { localStorage.setItem("hw_characters", JSON.stringify(updated)); } catch(e) {}
-      return updated;
-    });
+  const saveEdit = async () => {
+    const updated = chars.map(c => c.id === editing ? _objectSpread(_objectSpread({}, c), form) : c);
+    setChars(updated); persistLocal(updated);
+    if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_CHARS) {
+      const char = updated.find(c => c.id === editing);
+      if (char) await window.HW_CHARS.save(char);
+    }
     setEditing(null);
-    showToast("Character updated!", "✓");
+    showToast("Character saved!", "✓");
   };
-  const addNew = () => {
+  const addNew = async () => {
     const id = "char_" + Date.now();
-    const nc = {
-      id,
-      name: "New Character",
-      role: "Supporting",
-      emoji: "🧑",
-      dna: "",
-      tag: "same character as before for consistency",
-      color: "#FFB800"
-    };
-    setChars(cs => {
-      const updated = [...cs, nc];
-      try { localStorage.setItem("hw_characters", JSON.stringify(updated)); } catch(e) {}
-      return updated;
-    });
-    setEditing(id);
-    setForm(nc);
+    const nc = { id, name: "New Character", role: "Supporting", emoji: "🧑", dna: "", tag: "same character as before for consistency", color: "#FFB800" };
+    const updated = [...chars, nc];
+    setChars(updated); persistLocal(updated);
+    if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_CHARS) {
+      await window.HW_CHARS.save(nc);
+    }
+    setEditing(id); setForm(nc);
   };
-  const deleteChar = id => {
-    
-    setChars(cs => {
-      const updated = cs.filter(c => c.id !== id);
-      try { localStorage.setItem("hw_characters", JSON.stringify(updated)); } catch(e) {}
-      return updated;
-    });
+  const deleteChar = async (id) => {
+    const updated = chars.filter(c => c.id !== id);
+    setChars(updated); persistLocal(updated);
+    if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_CHARS) {
+      await window.HW_CHARS.delete(id);
+    }
     showToast("Character removed", "✓");
   };
-  const buildSinglePrompt = c => "".concat(c.dna, ", ").concat(c.tag);
+const buildSinglePrompt = c => "".concat(c.dna, ", ").concat(c.tag);
   return /*#__PURE__*/React.createElement("div", null, dlData && /*#__PURE__*/React.createElement(DownloadModal, {
     content: dlData.c,
     filename: dlData.n,
@@ -4592,6 +4591,10 @@ function HitWizard() {
       } catch {}
     }
     setHistory(function(h) { return [itemWithId].concat(h.slice(0, 49)); });
+    // Save to Supabase if logged in
+    if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_HISTORY) {
+      window.HW_HISTORY.save(itemWithId).catch(e => console.warn("History cloud save:", e));
+    }
   }, []);
   const st = useCallback((msg, icon) => setToast({msg, icon}), []);
   const clearHistory = () => {
