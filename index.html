@@ -1808,45 +1808,35 @@ function Dashboard(_ref1) {
     ))
   ),
 
-  React.createElement("div", {className:"sh", style:{marginTop:8}}, React.createElement("div", {className:"st"}, "How It Works")),
+  React.createElement("div", {className:"sh", style:{marginTop:8}}, React.createElement("div", {className:"st"}, "How It Works"), React.createElement("span", {className:"badge b-gold"}, "Watch · 25 sec")),
   React.createElement("div", {style:{marginBottom:32}},
-    React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14,marginBottom:20}},
+    React.createElement("div", {style:{position:"relative",borderRadius:20,overflow:"hidden",border:"1px solid rgba(255,184,0,.3)",boxShadow:"0 0 60px rgba(255,184,0,.08)",background:"#000"}},
+      React.createElement("video", {
+        src:"/hitwizard-demo.mp4",
+        autoPlay:true,
+        muted:true,
+        loop:true,
+        playsInline:true,
+        controls:true,
+        style:{width:"100%",display:"block",maxHeight:520,objectFit:"contain"}
+      }),
+      React.createElement("div", {style:{position:"absolute",top:16,right:16,background:"rgba(0,0,0,.7)",border:"1px solid rgba(255,184,0,.4)",borderRadius:20,padding:"5px 14px",fontFamily:"JetBrains Mono,monospace",fontSize:11,color:"var(--gold)",letterSpacing:2,pointerEvents:"none"}}, "⚡ HITWIZARD DEMO")
+    ),
+    React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14,marginTop:20}},
       [
-        {step:"01",title:"Drop Your Lyrics",desc:"Paste your song lyrics, add your artist details. That's the only input we need.",icon:"🎵",color:"var(--gold)"},
-        {step:"02",title:"AI Fires All Weapons",desc:"Campaign, pitches, EPK, hooks, content, video scripts — all generated in seconds.",icon:"⚡",color:"var(--ok)"},
-        {step:"03",title:"Connect Your Platforms",desc:"Link your Instagram, TikTok and YouTube once. We remember your accounts.",icon:"🔌",color:"#00CCFF"},
-        {step:"04",title:"Schedule & Forget",desc:"Pick dates and times. HitWizard posts your content automatically. You make music.",icon:"🚀",color:"#9B4FDE"}
+        {step:"01",title:"Paste One Link",desc:"Spotify, Apple Music, SoundCloud or YouTube — we fetch everything automatically.",icon:"🔗",color:"var(--gold)"},
+        {step:"02",title:"AI Fires All Weapons",desc:"Campaign, pitches, EPK, hooks, content, video scripts — done in 2.3 seconds.",icon:"⚡",color:"var(--ok)"},
+        {step:"03",title:"Connect Platforms",desc:"Link Instagram, TikTok, YouTube and Facebook once. We remember forever.",icon:"🔌",color:"#00CCFF"},
+        {step:"04",title:"Post Everywhere",desc:"HitWizard schedules and posts automatically. You focus on creating.",icon:"🚀",color:"#9B4FDE"}
       ].map(function(s,i) {
-        return React.createElement("div", {key:i, style:{background:"rgba(10,10,20,.8)",border:"1px solid rgba(255,255,255,.08)",borderRadius:16,padding:"24px 18px",position:"relative",overflow:"hidden"}},
-          React.createElement("div", {style:{position:"absolute",top:12,right:16,fontFamily:"Cinzel,serif",fontSize:48,fontWeight:900,color:s.color,opacity:.08,lineHeight:1}}, s.step),
-          React.createElement("div", {style:{fontSize:32,marginBottom:10}}, s.icon),
-          React.createElement("div", {style:{fontSize:11,fontWeight:700,color:s.color,letterSpacing:2,marginBottom:6,fontFamily:"JetBrains Mono,monospace"}}, "STEP "+s.step),
-          React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:800,color:"var(--txt)",marginBottom:8}}, s.title),
+        return React.createElement("div", {key:i, style:{background:"rgba(10,10,20,.8)",border:"1px solid rgba(255,255,255,.08)",borderRadius:16,padding:"20px 18px",position:"relative",overflow:"hidden"}},
+          React.createElement("div", {style:{position:"absolute",top:10,right:14,fontFamily:"Cinzel,serif",fontSize:44,fontWeight:900,color:s.color,opacity:.07,lineHeight:1}}, s.step),
+          React.createElement("div", {style:{fontSize:30,marginBottom:8}}, s.icon),
+          React.createElement("div", {style:{fontSize:10,fontWeight:700,color:s.color,letterSpacing:2,marginBottom:5,fontFamily:"JetBrains Mono,monospace"}}, "STEP "+s.step),
+          React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:800,color:"var(--txt)",marginBottom:6}}, s.title),
           React.createElement("div", {style:{fontSize:12,color:"var(--muted)",lineHeight:1.65}}, s.desc)
         );
       })
-    ),
-    React.createElement("div", {style:{overflow:"hidden",borderRadius:14,padding:"4px 0"}},
-      React.createElement("div", {id:"hw-howit",style:{display:"flex",gap:20,animation:"hwScrollR 40s linear infinite",width:"max-content"}},
-        ["Campaign Forge","Playlist Pitcher","EPK Builder","Hook Lab","Video Engine","Content Factory","Social Autopilot","Budget Planner"].map(function(name,i) {
-          const icons=["⚡","🎯","📄","🎣","🎬","✦","🌐","💰"];
-          const colors=["var(--gold)","var(--ok)","#9B4FDE","#FF4466","#FF6B00","#00CCFF","var(--ok)","var(--gold)"];
-          const descs=["Full ad campaign in seconds","Curator pitches that get opened","Press kit ready to send","Viral hooks from your lyrics","Video scripts, fully scripted","30 days of social content","Post everywhere automatically","Know where every dollar goes"];
-          return React.createElement("div", {key:i, style:{background:"rgba(15,15,25,.95)",border:"1px solid "+colors[i],borderRadius:16,width:260,flexShrink:0,overflow:"hidden"}},
-            React.createElement("div", {style:{background:"linear-gradient(135deg,"+colors[i]+"15,transparent)",padding:"20px 18px 0"}},
-              React.createElement("div", {style:{fontSize:28,marginBottom:8}}, icons[i]),
-              React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:800,color:colors[i],marginBottom:4}}, name),
-              React.createElement("div", {style:{fontSize:11,color:"var(--muted)",lineHeight:1.6,marginBottom:14}}, descs[i])
-            ),
-            React.createElement("div", {style:{background:"rgba(0,0,0,.5)",margin:"0 10px 10px",borderRadius:8,padding:"12px",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:"var(--ok)",lineHeight:1.8}},
-              React.createElement("div", {style:{color:"var(--muted)",marginBottom:2}}, "// OUTPUT"),
-              React.createElement("div", {style:{color:colors[i]}}, "\u2713 Generated 2.3s"),
-              React.createElement("div", null, "\u2713 AI score: 98%"),
-              React.createElement("div", null, "\u2713 Ready to deploy")
-            )
-          );
-        })
-      )
     )
   ),
 
