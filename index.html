@@ -369,13 +369,42 @@ async function hwAI(sys, usr) {
   }
 }
 function parseJ(raw) {
+  // Step 1: strip markdown fences
+  let s = raw.replace(/```json\s*/gi,"").replace(/```\s*/gi,"").trim();
+  // Step 2: extract outermost JSON object
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if(start !== -1 && end !== -1) s = s.slice(start, end+1);
+  // Step 3: try clean parse first
+  try { return JSON.parse(s); } catch(_){}
+  // Step 4: aggressive repair — fix unescaped newlines and tabs inside strings
   try {
-    return JSON.parse(raw);
-  } catch (_unused) {
-    const m = raw.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
-    throw new Error("Could not read the AI response. Please try again.");
-  }
+    const repaired = s
+      .replace(/[\u0000-\u001F\u007F]/g, c => {
+        if(c==="\n") return "\\n";
+        if(c==="\r") return "\\r";
+        if(c==="\t") return "\\t";
+        return "";
+      });
+    return JSON.parse(repaired);
+  } catch(_){}
+  // Step 5: nuclear option — extract clips array manually if full parse fails
+  try {
+    const titleM = s.match(/"songTitle"\s*:\s*"([^"]+)"/);
+    const clipsM = s.match(/"clips"\s*:\s*(\[[\s\S]*?\}[\s\S]*?\])/);
+    if(clipsM) {
+      const clipsStr = clipsM[1].replace(/[\u0000-\u001F]/g, c => c==="\n"?"\\n":c==="\t"?"\\t":"");
+      const clips = JSON.parse(clipsStr);
+      return {
+        songTitle: titleM?titleM[1]:"Your Song",
+        clips: clips,
+        totalClips: clips.length,
+        grokInstructions: "Paste each prompt into your AI video tool in the same session.",
+        capCutGuide: "Arrange clips in order. A-roll on main track, B-roll as overlays."
+      };
+    }
+  } catch(_){}
+  throw new Error("Script generation failed — the AI returned an unreadable response. Please try again.");
 }
 
 // ── STREAMING LOADER ──
