@@ -780,11 +780,16 @@ function LyricsPanel(_ref8) {
 }
 
 // ── CHARACTER VAULT DATA ──
+const BUILTIN_CHARACTERS = [
+  {id:"celine", name:"CELINE", emoji:"👩", color:"#FFB800", tag:"CELINE_CONSISTENCY_TAG", dna:"CELINE (Celine Enya Houston): tall slender Black woman, late 20s, high cheekbones, almond-shaped dark eyes, full lips, natural kinky hair worn in various styles, warm brown skin, expressive face, commanding stage presence", role:"Lead Artist"},
+  {id:"kiko",   name:"KIKO",   emoji:"👨", color:"#00E599", tag:"KIKO_CONSISTENCY_TAG",   dna:"KIKO: tall athletic Black man, early 30s, strong jawline, warm dark eyes, short natural hair, smooth dark brown skin, confident presence, expressive emotional range", role:"Male Lead"}
+];
 const DEFAULT_CHARACTERS = (function() {
   try {
     var saved = localStorage.getItem("hw_characters");
-    return saved ? JSON.parse(saved) : [];
-  } catch(e) { return []; }
+    var parsed = saved ? JSON.parse(saved) : [];
+    return parsed.length ? parsed : BUILTIN_CHARACTERS;
+  } catch(e) { return BUILTIN_CHARACTERS; }
 })();
 
 // ── CHARACTER VAULT PAGE ──
@@ -1083,11 +1088,12 @@ function CharacterVault(_ref9) {
 function VideoEngine(_ref0) {
   var _results$clips;
   let showToast = _ref0.showToast;
-  const getVaultChars = () => { try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} };
+  const getVaultChars = () => { try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} };
   const _useState19 = useState(getVaultChars),
     _useState20 = _slicedToArray(_useState19, 2),
     chars = _useState20[0],
     setChars = _useState20[1];
+  useEffect(() => { setChars(getVaultChars()); }, []);
   const _useState21 = useState({
       songTitle: "",
       duration: "210",
@@ -1313,42 +1319,42 @@ function VideoEngine(_ref0) {
     className: "lbl"
   }, "Characters in This Video ", /*#__PURE__*/React.createElement("span", {
     className: "lbl-n"
-  }, "\u2014 select all who appear")), /*#__PURE__*/React.createElement("div", {
+  }, "\u2014 select all who appear")), chars.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style:{padding:"14px",border:"1px solid rgba(255,184,0,.2)",borderRadius:10,background:"rgba(255,184,0,.05)",fontSize:13,color:"var(--gold)"}
+  }, "⚠️ No characters in your vault yet. ", /*#__PURE__*/React.createElement("span", {style:{textDecoration:"underline",cursor:"pointer",color:"var(--gold)"}, onClick:()=>{ document.dispatchEvent(new CustomEvent("hw_nav",{detail:"vault"})); }}, "Go to Character Vault to add them →")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
-      gap: 8
+      gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+      gap: 10
     }
-  }, (function(){ try{ var s=localStorage.getItem("hw_characters"); var chars=s?JSON.parse(s):DEFAULT_CHARACTERS; return chars.length?chars:DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} })().map(c => /*#__PURE__*/React.createElement("div", {
+  }, chars.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     onClick: () => toggleChar(c.id),
     style: {
-      padding: "10px 12px",
-      borderRadius: 8,
-      border: "1px solid ".concat(form.selectedChars.includes(c.id) ? c.color + "60" : "rgba(255,255,255,.08)"),
-      background: form.selectedChars.includes(c.id) ? c.color + "15" : "rgba(8,8,14,.5)",
+      padding: "14px 16px",
+      borderRadius: 10,
+      border: "2px solid ".concat(form.selectedChars.includes(c.id) ? c.color : "rgba(255,255,255,.08)"),
+      background: form.selectedChars.includes(c.id) ? c.color + "20" : "rgba(8,8,14,.5)",
       cursor: "pointer",
       transition: "all .2s",
       display: "flex",
       alignItems: "center",
-      gap: 8
+      gap: 10,
+      boxShadow: form.selectedChars.includes(c.id) ? "0 0 16px "+c.color+"40" : "none"
     }
   }, /*#__PURE__*/React.createElement("span", {
+    style: { fontSize: 26 }
+  }, c.emoji || "🎤"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 18
-    }
-  }, c.emoji), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: form.selectedChars.includes(c.id) ? "var(--txt)" : "var(--muted)"
+      fontSize: 13,
+      fontWeight: 700,
+      color: form.selectedChars.includes(c.id) ? c.color : "var(--txt)"
     }
   }, c.name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "var(--muted)"
-    }
-  }, c.role)))))), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 11, color: "var(--muted)", marginTop: 2 }
+  }, c.role || "Artist"), form.selectedChars.includes(c.id) ? /*#__PURE__*/React.createElement("div", {
+    style:{fontSize:10,color:c.color,marginTop:3,fontWeight:700}
+  }, "✓ SELECTED") : null))))), /*#__PURE__*/React.createElement("div", {
     className: "field"
   }, /*#__PURE__*/React.createElement("label", {
     className: "lbl"
