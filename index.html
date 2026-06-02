@@ -517,6 +517,33 @@ function ErrBox(_ref7) {
 }
 
 // ── SPOTIFY + AUDIO FETCH PANEL ──
+
+// -- ARTIST TYPE SELECTOR COMPONENT --
+function ArtistTypeSelector({form, f}) {
+  return React.createElement('div', {
+    style:{display:'flex',gap:10,marginBottom:16,padding:'14px 16px',background:'rgba(255,184,0,.04)',border:'1px solid rgba(255,184,0,.15)',borderRadius:10,alignItems:'center'}
+  },
+    React.createElement('div', {style:{flex:1}},
+      React.createElement('div', {style:{fontSize:13,fontWeight:700,color:'var(--txt)',marginBottom:3}}, 'Human or AI Artist?'),
+      React.createElement('div', {style:{fontSize:11,color:'var(--muted)',lineHeight:1.5}}, 
+        form.isAI 
+          ? '⚡ AI Artist mode active — content will be transparent and honest. No fabricated backstory or fake hometown. Being honest gives better results.' 
+          : '✓ Human Artist mode active — content will be personal and authentic to your real story.'
+      )
+    ),
+    React.createElement('div', {style:{display:'flex',gap:0,background:'rgba(8,8,14,.8)',borderRadius:8,border:'1px solid var(--bdr)',overflow:'hidden',flexShrink:0}},
+      React.createElement('button', {
+        style:{padding:'8px 18px',fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background: !form.isAI ? 'linear-gradient(135deg,#FFB800,#FF8C00)' : 'transparent',color: !form.isAI ? '#08080E' : 'var(--muted)',transition:'all .2s'},
+        onClick: function(e){e.preventDefault();f('isAI',false);}
+      }, '👤 Human'),
+      React.createElement('button', {
+        style:{padding:'8px 18px',fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background: form.isAI ? 'linear-gradient(135deg,#FFB800,#FF8C00)' : 'transparent',color: form.isAI ? '#08080E' : 'var(--muted)',transition:'all .2s'},
+        onClick: function(e){e.preventDefault();f('isAI',true);}
+      }, '🤖 AI Artist')
+    )
+  );
+}
+
 function LyricsPanel(_ref8) {
   let onFetched = _ref8.onFetched,
     st = _ref8.st;
@@ -2239,7 +2266,7 @@ function CampaignForge(_ref10) {
   let addHistory = _ref10.addHistory,
     st = _ref10.st;
   const _useState31 = useState(() => {
-      try { const s = localStorage.getItem("hw_cf"); return s ? JSON.parse(s) : {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
+      try { const s = localStorage.getItem("hw_cf"); return s ? JSON.parse(s) : {songTitle:"",artist:"",genre:"",mood:"",isAI:false,similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
       catch { return {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
     }),
     _useState32 = _slicedToArray(_useState31, 2),
@@ -2293,7 +2320,7 @@ function CampaignForge(_ref10) {
     try {
       const lb = form.lyrics ? "\n\nLYRICS \u2014 pull actual phrases from these into ALL ad copy:\n".concat(form.lyrics) : "";
       const sb = form.story ? "\n\nSONG STORY: ".concat(form.story) : "";
-      const raw = await hwAI("You are an expert music marketing strategist. Generate complete ad campaigns powered by the song's actual lyrics. Write in plain English that any artist understands. Respond ONLY with valid JSON.", "Create a complete ad campaign for:\nSong: \"".concat(form.songTitle, "\" by ").concat(form.artist, "\nGenre: ").concat(form.genre, " | Mood: ").concat(form.mood || "Not specified", "\nSimilar Artists: ").concat(form.similar || "Not specified", "\nTarget Audience: ").concat(form.audience || "General music fans", "\nBudget: $").concat(form.budget, " | Goal: ").concat(form.goal).concat(lb).concat(sb, "\n").concat(form.lyrics ? "CRITICAL: Use actual lyric lines and phrases in the ad copy — not generic music promotion language." : "", "\nReturn ONLY this JSON:\n{\"meta\":{\"headline\":\"punchy ad headline under 40 characters\",\"primaryText\":\"2-3 sentence Facebook Instagram ad copy that makes someone stop scrolling\",\"cta\":\"call to action button text\",\"targeting\":\"specific audience targeting recommendation\",\"adFormat\":\"best ad format with reason why\",\"hook\":\"what to show in the first 3 seconds of a video ad\",\"budgetSplit\":\"how to divide $").concat(form.budget, " across Meta placements\",\"estimatedReach\":\"realistic reach estimate for this budget\"},\"tiktok\":{\"hook\":\"first 3 seconds \u2014 must stop the scroll\",\"caption\":\"TikTok caption with hashtags under 150 characters\",\"hashtags\":\"12 hashtags mixing trending and niche\",\"trend\":\"specific trend or format to attach this song to\",\"videoIdea\":\"detailed video concept that would perform well\",\"targetingTip\":\"TikTok-specific targeting recommendation\"},\"youtube\":{\"adTitle\":\"YouTube pre-roll title\",\"adScript\":\"complete 15-second ad script with timing\",\"targeting\":\"YouTube audience targeting \u2014 channels keywords demographics\",\"keywords\":\"7 keyword targets\",\"budgetNote\":\"YouTube budget recommendation\"},\"strategy\":{\"week1\":\"what to do in week 1\",\"week2\":\"what to do in week 2\",\"week3\":\"what to do in week 3\",\"week4\":\"what to do in week 4\",\"kpi\":\"specific numbers to track and targets\",\"warning\":\"the single most important mistake to avoid\"}}"));
+      const raw = await hwAI("You are an expert music marketing strategist. Generate ad campaigns powered by the song's actual lyrics. IMPORTANT: If the artist is AI-generated, never invent biographical details — focus on the sonic identity and musical concept. For human artists, use personal authentic language. Respond ONLY with valid JSON. No apostrophes in string values.", "Create a complete ad campaign for:\nSong: \"".concat(form.songTitle, "\" by ").concat(form.artist, "\nGenre: ").concat(form.genre, " | Mood: ").concat(form.mood || "Not specified", "\nSimilar Artists: ").concat(form.similar || "Not specified", "\nTarget Audience: ").concat(form.audience || "General music fans", "\nBudget: $").concat(form.budget, " | Goal: ").concat(form.goal).concat(lb).concat(sb, "\n").concat(form.lyrics ? "CRITICAL: Use actual lyric lines and phrases in the ad copy — not generic music promotion language." : "", "\nReturn ONLY this JSON:\n{\"meta\":{\"headline\":\"punchy ad headline under 40 characters\",\"primaryText\":\"2-3 sentence Facebook Instagram ad copy that makes someone stop scrolling\",\"cta\":\"call to action button text\",\"targeting\":\"specific audience targeting recommendation\",\"adFormat\":\"best ad format with reason why\",\"hook\":\"what to show in the first 3 seconds of a video ad\",\"budgetSplit\":\"how to divide $").concat(form.budget, " across Meta placements\",\"estimatedReach\":\"realistic reach estimate for this budget\"},\"tiktok\":{\"hook\":\"first 3 seconds \u2014 must stop the scroll\",\"caption\":\"TikTok caption with hashtags under 150 characters\",\"hashtags\":\"12 hashtags mixing trending and niche\",\"trend\":\"specific trend or format to attach this song to\",\"videoIdea\":\"detailed video concept that would perform well\",\"targetingTip\":\"TikTok-specific targeting recommendation\"},\"youtube\":{\"adTitle\":\"YouTube pre-roll title\",\"adScript\":\"complete 15-second ad script with timing\",\"targeting\":\"YouTube audience targeting \u2014 channels keywords demographics\",\"keywords\":\"7 keyword targets\",\"budgetNote\":\"YouTube budget recommendation\"},\"strategy\":{\"week1\":\"what to do in week 1\",\"week2\":\"what to do in week 2\",\"week3\":\"what to do in week 3\",\"week4\":\"what to do in week 4\",\"kpi\":\"specific numbers to track and targets\",\"warning\":\"the single most important mistake to avoid\"}}"));
       const p = parseJ(raw);
       setResults(p);
       setTab("meta");
@@ -2329,7 +2356,7 @@ function CampaignForge(_ref10) {
   }, "Tell Us About Your Song"), /*#__PURE__*/React.createElement(LinkAutopilot, {
     onFetched: onAutopilotFetch,
     showToast: st
-  }), /*#__PURE__*/React.createElement(ErrBox, {
+  }), /*#__PURE__*/React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
     msg: err
   }), /*#__PURE__*/React.createElement("div", {
     className: "g2"
@@ -2883,6 +2910,7 @@ function ContentArsenal(_ref20) {
       genre: "",
       mood: "",
       theme: "",
+      isAI: false,
       releaseStatus: "new",
       platforms: ["tiktok", "instagram", "youtube", "twitter", "facebook"],
       lyrics: ""
@@ -2966,7 +2994,7 @@ function ContentArsenal(_ref20) {
     style: {
       marginBottom: 16
     }
-  }, "Your Song Details"), /*#__PURE__*/React.createElement(ErrBox, {
+  }, "Your Song Details"), /*#__PURE__*/React.createElement(LinkAutopilot, {onFetched:(meta)=>{if(meta.songTitle)f("songTitle",meta.songTitle);if(meta.artist)f("artist",meta.artist);if(meta.genre)f("genre",meta.genre);if(meta.mood)f("mood",meta.mood);if(meta.lyrics)f("lyrics",meta.lyrics);st("Song loaded!","⚡");},showToast:st}), React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
     msg: err
   }), /*#__PURE__*/React.createElement("div", {
     className: "g2"
@@ -3239,7 +3267,7 @@ function EPKGenerator(_ref33) {
     setResults(null);
     try {
       const lb = form.lyrics ? "\n\nSAMPLE LYRICS to match the writing voice:\n".concat(form.lyrics) : "";
-      const raw = await hwAI("You are a professional music publicist specializing in both human and AI artists. When the artist is AI-generated, you write honest, transparent bios that celebrate the AI nature — never misleading fans. For AI artists: describe the AI creative process, the human team behind it, and frame it as the future of music. For human artists: write warm personal bios. Always write in compelling plain English. Respond ONLY with valid JSON.", "Build a complete EPK for:\nArtist: ".concat(form.artistName, " | Genre: ").concat(form.genre, " | Artist Type: ").concat(form.isAI ? "AI-GENERATED ARTIST — write honest transparent bios celebrating AI nature, never misleading fans" : "HUMAN ARTIST — write warm personal authentic bios", "\nHometown: ").concat(form.hometown || "Not specified", " | Influences: ").concat(form.influences || "Not specified", "\nAchievements: ").concat(form.achievements || "Independent artist", " | Featured Song: ").concat(form.songHighlight || "Not specified", "\nSong Story: ").concat(form.songStory || "Not specified", " | Press Angle: ").concat(form.pressAngle || "Not specified", "\nWebsite: ").concat(form.website || "Not specified", " | Socials: ").concat(form.socialLinks || "Not specified").concat(lb, "\nReturn ONLY this JSON:\n{\"bio\":{\"short\":\"50-word punchy bio\",\"medium\":\"150-word press bio\",\"long\":\"300-word full narrative bio\",\"firstPerson\":\"100-word first-person artist statement\"},\"press\":{\"release\":\"complete 300-word press release\",\"headline\":\"press release headline\",\"quote\":\"compelling artist quote\",\"angle\":\"unique newsworthy angle\"},\"pitch\":{\"blog\":\"100-word music blog pitch\",\"magazine\":\"100-word magazine pitch\",\"podcast\":\"100-word podcast pitch\",\"sync\":\"100-word sync licensing pitch\"},\"social\":{\"instagram\":\"Instagram bio under 150 chars\",\"twitter\":\"Twitter bio under 160 chars\",\"youtube\":\"YouTube channel description 200 words\",\"tiktok\":\"TikTok bio under 80 chars\"},\"assets\":{\"oneliner\":\"one sentence that defines this artist forever\",\"streamingBio\":\"Spotify and Apple Music bio 200 words\",\"photoCaption\":\"press photo caption\"}}"));
+      const raw = await hwAI("You are a senior music industry publicist with 20 years experience. You write EPKs that get opened by A&R reps, journalists, sync supervisors and booking agents. Every sentence earns its place. For AI artists: celebrate the innovation honestly — no fake hometowns or backstories, frame as the future of music. For human artists: find the specific detail that makes them different from every other artist in their genre. No clichés. Respond ONLY with valid JSON. No apostrophes in any string value.", "Build a complete EPK for:\nArtist: ".concat(form.artistName, " | Genre: ").concat(form.genre, " | Artist Type: ").concat(form.isAI ? "AI-GENERATED ARTIST — write honest transparent bios celebrating AI nature, never misleading fans" : "HUMAN ARTIST — write warm personal authentic bios", "\nHometown: ").concat(form.hometown || "Not specified", " | Influences: ").concat(form.influences || "Not specified", "\nAchievements: ").concat(form.achievements || "Independent artist", " | Featured Song: ").concat(form.songHighlight || "Not specified", "\nSong Story: ").concat(form.songStory || "Not specified", " | Press Angle: ").concat(form.pressAngle || "Not specified", "\nWebsite: ").concat(form.website || "Not specified", " | Socials: ").concat(form.socialLinks || "Not specified").concat(lb, "\nReturn ONLY this JSON:\n{\"bio\":{\"short\":\"50-word punchy bio\",\"medium\":\"150-word press bio\",\"long\":\"300-word full narrative bio\",\"firstPerson\":\"100-word first-person artist statement\"},\"press\":{\"release\":\"complete 300-word press release\",\"headline\":\"press release headline\",\"quote\":\"compelling artist quote\",\"angle\":\"unique newsworthy angle\"},\"pitch\":{\"blog\":\"100-word music blog pitch\",\"magazine\":\"100-word magazine pitch\",\"podcast\":\"100-word podcast pitch\",\"sync\":\"100-word sync licensing pitch\"},\"social\":{\"instagram\":\"Instagram bio under 150 chars\",\"twitter\":\"Twitter bio under 160 chars\",\"youtube\":\"YouTube channel description 200 words\",\"tiktok\":\"TikTok bio under 80 chars\"},\"assets\":{\"oneliner\":\"one sentence that defines this artist forever\",\"streamingBio\":\"Spotify and Apple Music bio 200 words\",\"photoCaption\":\"press photo caption\"}}"));
       const p = parseJ(raw);
       setResults(p);
       setTab("bio");
@@ -3509,6 +3537,7 @@ function HookLab(_ref44) {
       songTitle: "",
       artist: "",
       genre: "",
+      isAI: false,
       platform: "tiktok",
       lyrics: "",
       story: ""
@@ -3583,7 +3612,7 @@ function HookLab(_ref44) {
       marginBottom: 16,
       lineHeight: 1.6
     }
-  }, "The first 3 seconds decide everything. Paste your lyrics and get 8 completely different hooks \u2014 written from your actual words. The one that makes someone stop their thumb at 2am is in here."), /*#__PURE__*/React.createElement(ErrBox, {
+  }, "The first 3 seconds decide everything. Paste your lyrics and get 8 completely different hooks \u2014 written from your actual words. The one that makes someone stop their thumb at 2am is in here."), /*#__PURE__*/React.createElement(LinkAutopilot, {onFetched:(meta)=>{if(meta.songTitle)f("songTitle",meta.songTitle);if(meta.artist)f("artist",meta.artist);if(meta.genre)f("genre",meta.genre);if(meta.mood)f("mood",meta.mood);if(meta.lyrics)f("lyrics",meta.lyrics);st("Song loaded!","⚡");},showToast:st}), React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
     msg: err
   }), /*#__PURE__*/React.createElement("div", {
     className: "g2"
