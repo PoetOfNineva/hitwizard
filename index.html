@@ -2119,40 +2119,91 @@ function LinkAutopilot({ onFetched, showToast }) {
     setFetched(null);
 
     try {
-      // Use AI to simulate metadata fetch — real Spotify API requires OAuth
-      // Phase 2: replace with direct Spotify API once OAuth approved
+      let rawTitle = "";
+      let rawAuthor = "";
+      let artworkUrl = "";
+      let fetchedReal = false;
+
+      // ── REAL FETCH: YouTube oEmbed (no API key needed) ──
+      if (platform === "youtube") {
+        try {
+          const videoId = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})/)?.[1];
+          if (videoId) {
+            const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+            const resp = await fetch(oembedUrl);
+            if (resp.ok) {
+              const data = await resp.json();
+              rawTitle = data.title || "";
+              rawAuthor = data.author_name || "";
+              artworkUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+              fetchedReal = true;
+            }
+          }
+        } catch(e) { console.warn("YouTube oEmbed failed:", e); }
+      }
+
+      // ── REAL FETCH: Spotify oEmbed (no API key needed) ──
+      if (platform === "spotify") {
+        try {
+          const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+          const resp = await fetch(oembedUrl);
+          if (resp.ok) {
+            const data = await resp.json();
+            rawTitle = data.title || "";
+            // Spotify oEmbed title format: "Song Name" or "Song Name by Artist"
+            artworkUrl = data.thumbnail_url || "";
+            fetchedReal = true;
+          }
+        } catch(e) { console.warn("Spotify oEmbed failed:", e); }
+      }
+
+      // ── AI PARSES what we fetched OR infers from URL ──
+      const aiPrompt = fetchedReal
+        ? `Parse this real song metadata and return enriched details.\nTitle from platform: "${rawTitle}"\nAuthor/Channel: "${rawAuthor}"\nPlatform: ${platform}\nURL: ${url}\n\nReturn ONLY this JSON (no apostrophes in string values, use contractions spelled out):\n{"songTitle":"","artist":"","genre":"","mood":"","bpm":0,"energy":"Low/Medium/High","key":"","confidence":"high/medium/low"}`
+        : `You are a music expert. Based ONLY on this URL, extract what you can with confidence. Do NOT guess or hallucinate details you cannot know from the URL alone.\nURL: ${url}\nPlatform: ${platform}\n\nReturn ONLY this JSON (no apostrophes, mark unknown fields as empty string):\n{"songTitle":"","artist":"","genre":"","mood":"","bpm":0,"energy":"","key":"","confidence":"low"}`;
+
       const songData = await hwAI(
-        "You are a music metadata expert. Extract and infer song details from the URL provided. Return ONLY valid JSON with no apostrophes in string values.",
-        `Extract metadata for this ${platform} link: ${url}\n\nReturn ONLY this JSON (no apostrophes in values):\n{"songTitle":"","artist":"","genre":"","mood":"","bpm":0,"energy":"","key":"","artworkEmoji":"🎵","platform":"${platform}","lyricsHint":""}`
+        "You are a music metadata expert. Parse real song data accurately. If you do not know a field with confidence, return an empty string — never guess. Respond ONLY with valid JSON.",
+        aiPrompt
       );
+
       const meta = parseJ(songData);
 
+      // Build result — only include fields we actually know
       const result = {
-        songTitle: meta.songTitle || "",
-        artist: meta.artist || "",
+        songTitle: meta.songTitle || rawTitle || "",
+        artist: meta.artist || rawAuthor || "",
         genre: meta.genre || "",
         mood: meta.mood || "",
         bpm: meta.bpm || "",
         energy: meta.energy || "",
         key: meta.key || "",
-        artworkEmoji: meta.artworkEmoji || "🎵",
+        artworkUrl: artworkUrl || "",
+        artworkEmoji: "🎵",
         platform,
         spotifyUrl: url,
-        lyrics: ""
+        lyrics: "",
+        fetchedReal,
+        confidence: meta.confidence || "low"
       };
 
       setFetched(result);
 
-      // Auto-save to Song Vault
+      // Save to Song Vault
       if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) {
         await window.HW_SONGS.save(result);
         const updated = await window.HW_SONGS.load();
         setSavedSongs(updated || []);
       }
 
-      showToast("Song detected — review and confirm below", "🎵");
+      if (fetchedReal) {
+        showToast("Song fetched from " + platform + "! Review and confirm.", "🎵");
+      } else {
+        showToast("Partial data only — fill in missing fields below.", "⚠️");
+      }
     } catch(e) {
-      showToast("Could not fetch song data — fill in manually below", "⚠️");
+      showToast("Fetch failed — paste your song details manually below.", "⚠️");
+      console.error("LinkAutopilot fetch error:", e);
     }
     setLoading(false);
   };
@@ -2160,7 +2211,7 @@ function LinkAutopilot({ onFetched, showToast }) {
   const confirmAndFire = () => {
     if (!fetched) return;
     onFetched(fetched);
-    showToast("Song loaded — all fields filled automatically!", "⚡");
+    showToast("Song loaded — fields filled automatically!", "⚡");
   };
 
   const loadFromVault = (song) => {
@@ -2242,21 +2293,39 @@ function LinkAutopilot({ onFetched, showToast }) {
 
     // Fetched result preview + confirm
     fetched && React.createElement("div", {style:{background:"rgba(0,229,153,.06)",border:"1px solid rgba(0,229,153,.25)",borderRadius:12,padding:"16px"}},
-      React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--ok)",marginBottom:10,letterSpacing:1,fontFamily:"JetBrains Mono,monospace"}}, "✓ SONG DETECTED — REVIEW BEFORE FIRING"),
-      React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:12}},
-        [["🎵 Title",fetched.songTitle],["🎤 Artist",fetched.artist],["🎸 Genre",fetched.genre],["💭 Mood",fetched.mood],["⚡ BPM",fetched.bpm],["🔑 Key",fetched.key]].map(([l,v],i) =>
-          React.createElement("div", {key:i, style:{background:"rgba(0,0,0,.3)",borderRadius:8,padding:"8px 10px"}},
-            React.createElement("div", {style:{fontSize:9,color:"var(--muted)",letterSpacing:1,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}, l),
-            React.createElement("div", {style:{fontSize:13,fontWeight:600,color:"var(--txt)"}}, v||"—")
+      React.createElement("div", {style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
+        fetched.artworkUrl
+          ? React.createElement("img", {src:fetched.artworkUrl, style:{width:56,height:56,borderRadius:8,objectFit:"cover",flexShrink:0}, onError:e=>e.target.style.display="none"})
+          : React.createElement("div", {style:{width:56,height:56,borderRadius:8,background:"rgba(0,229,153,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}, "🎵"),
+        React.createElement("div", null,
+          React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"var(--ok)",letterSpacing:1,fontFamily:"JetBrains Mono,monospace"}},
+            fetched.fetchedReal ? "✓ FETCHED FROM " + fetched.platform.toUpperCase() : "⚠️ PARTIAL DATA — FILL MISSING FIELDS"
+          ),
+          React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:2}},
+            fetched.fetchedReal
+              ? "Real data pulled from platform. Review and add genre/mood/BPM below."
+              : "We could not reach this platform directly. Fill in the missing fields manually."
           )
         )
       ),
-      React.createElement("div", {style:{fontSize:11,color:"rgba(255,184,0,.7)",marginBottom:10}}, "⚠️ Lyrics not auto-fetched yet — paste them in the field below for best results."),
+      React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:12}},
+        [["🎵 Title",fetched.songTitle],["🎤 Artist",fetched.artist],["🎸 Genre",fetched.genre||"Fill in below"],["💭 Mood",fetched.mood||"Fill in below"],["⚡ BPM",fetched.bpm||"Optional"],["🔑 Key",fetched.key||"Optional"]].map(([l,v],i) =>
+          React.createElement("div", {key:i, style:{background:"rgba(0,0,0,.3)",borderRadius:8,padding:"8px 10px",border: (!fetched.songTitle&&i===0)||(!fetched.artist&&i===1) ? "1px solid rgba(255,100,100,.3)" : "none"}},
+            React.createElement("div", {style:{fontSize:9,color:"var(--muted)",letterSpacing:1,fontFamily:"JetBrains Mono,monospace",marginBottom:2}}, l),
+            React.createElement("div", {style:{fontSize:13,fontWeight:600,color:v&&v!=="Fill in below"&&v!=="Optional"?"var(--txt)":"var(--muted)"}}, v||"—")
+          )
+        )
+      ),
+      React.createElement("div", {style:{fontSize:11,color:"rgba(255,184,0,.7)",marginBottom:12}}, "💡 Paste your lyrics in the field below for best AI results — lyrics are the most important input."),
       React.createElement("button", {
         className:"btn btn-gold",
         style:{width:"100%",fontWeight:800,fontSize:14,padding:"12px"},
-        onClick:confirmAndFire
-      }, "⚡ Load This Song — Fill All Fields Automatically")
+        onClick:confirmAndFire,
+        disabled: !fetched.songTitle && !fetched.artist
+      }, fetched.songTitle || fetched.artist
+        ? "⚡ Load " + (fetched.songTitle || "This Song") + " — Fill All Fields"
+        : "⚠️ Add song title and artist name first"
+      )
     )
   );
 }
