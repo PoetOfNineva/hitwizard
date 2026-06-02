@@ -2124,22 +2124,53 @@ function LinkAutopilot({ onFetched, showToast }) {
       let artworkUrl = "";
       let fetchedReal = false;
 
-      // ── REAL FETCH: YouTube oEmbed (no API key needed) ──
+      // ── REAL FETCH: YouTube via our edge function (YouTube Data API v3) ──
       if (platform === "youtube") {
         try {
-          const videoId = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})/)?.[1];
-          if (videoId) {
-            const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-            const resp = await fetch(oembedUrl);
-            if (resp.ok) {
-              const data = await resp.json();
-              rawTitle = data.title || "";
-              rawAuthor = data.author_name || "";
-              artworkUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-              fetchedReal = true;
+          const resp = await fetch("/api/youtube-fetch", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({url})
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.songTitle) {
+              const result = {
+                songTitle:   data.songTitle,
+                artist:      data.artist,
+                genre:       data.genre || "",
+                mood:        data.mood || "",
+                bpm:         data.bpm || "",
+                energy:      data.energy || "",
+                key:         data.key || "",
+                artworkUrl:  data.artworkUrl,
+                duration:    data.duration,
+                youtubeUrl:  data.youtubeUrl,
+                geniusUrl:   data.geniusUrl || "",
+                lyricsFound: data.lyricsFound || false,
+                platform:    "youtube",
+                spotifyUrl:  url,
+                lyrics:      "",
+                fetchedReal: true,
+                confidence:  "medium"
+              };
+              setFetched(result);
+              if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) {
+                await window.HW_SONGS.save(result);
+                const updated = await window.HW_SONGS.load();
+                setSavedSongs(updated || []);
+              }
+              showToast(
+                data.lyricsFound
+                  ? "Song fetched from YouTube! Lyrics found on Genius."
+                  : "Song fetched from YouTube! Paste lyrics below for best results.",
+                "▶️"
+              );
+              setLoading(false);
+              return;
             }
           }
-        } catch(e) { console.warn("YouTube oEmbed failed:", e); }
+        } catch(e) { console.warn("YouTube edge fetch failed:", e); }
       }
 
       // ── REAL FETCH: Spotify via our edge function (Client Credentials — no Premium needed) ──
