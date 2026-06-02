@@ -1083,7 +1083,8 @@ function CharacterVault(_ref9) {
 function VideoEngine(_ref0) {
   var _results$clips;
   let showToast = _ref0.showToast;
-  const _useState19 = useState(DEFAULT_CHARACTERS),
+  const getVaultChars = () => { try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} };
+  const _useState19 = useState(getVaultChars),
     _useState20 = _slicedToArray(_useState19, 2),
     chars = _useState20[0],
     setChars = _useState20[1];
@@ -1573,6 +1574,10 @@ function Dashboard(_ref1) {
     id: "vault", icon: "🧬", title: "Character Vault",
     desc: "Store your characters. DNA auto-injects into every video prompt.",
     badge: "Your Characters", bc: "b-pur", color: "#C084FC", glow: "rgba(192,132,252,.25)"
+  }, {
+    id: "social", icon: "🌐", title: "Social Autopilot",
+    desc: "Connect once. HitWizard posts everywhere automatically. Industry first.",
+    badge: "Industry First", bc: "b-ok", color: "#00E599", glow: "rgba(0,229,153,.25)"
   }];
   const done = t => history.some(h => h.type === t);
   const cl = [{
@@ -1707,51 +1712,7 @@ function Dashboard(_ref1) {
     }
   }, s.ic)), /*#__PURE__*/React.createElement("div", {
     className: "sl"
-  }, s.l)))), /*#__PURE__*/React.createElement("div", {
-    className: "sh"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "st"
-  }, "All Eight Weapons")), /*#__PURE__*/React.createElement("div", {
-    className: "g3",
-    style: {
-      marginBottom: 22
-    }
-  }, weapons.map(w => /*#__PURE__*/React.createElement("div", {
-    key: w.id,
-    className: "card",
-    style: {
-      cursor: "pointer"
-    },
-    onClick: () => onNav(w.id)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 26,
-      marginBottom: 9
-    }
-  }, w.icon), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "Cinzel,serif",
-      fontSize: 13,
-      fontWeight: 700,
-      color: "var(--txt)",
-      marginBottom: 5
-    }
-  }, w.title), /*#__PURE__*/React.createElement("span", {
-    className: "badge ".concat(w.bc),
-    style: {
-      marginBottom: 9,
-      display: "inline-flex"
-    }
-  }, w.badge), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: "var(--muted)",
-      lineHeight: 1.6,
-      marginBottom: 12
-    }
-  }, w.desc), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-out btn-sm"
-  }, "Open \u2192")))),
+  }, s.l)))),
 
   React.createElement("div", {style:{marginBottom:32}},
 
@@ -1793,7 +1754,7 @@ function Dashboard(_ref1) {
     )
   ),
 
-  React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "All Eight Weapons")),
+  React.createElement("div", {className:"sh"}, React.createElement("div", {className:"st"}, "All Nine Weapons")),
   React.createElement("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:14,marginBottom:32}},
     weapons.map(w => React.createElement("div", {
       key: w.id, onClick:()=>onNav(w.id),
@@ -1906,38 +1867,6 @@ function Dashboard(_ref1) {
           ),
           React.createElement("div", {style:{fontSize:13,color:"var(--txt)",lineHeight:1.7,fontStyle:"italic"}},"\"HitWizard wrote my entire campaign in 2 minutes. My last release hit 40K streams in the first week alone.\"")
         )
-      )
-    ),
-    React.createElement("div", {className:"sh", style:{marginTop:28}}, React.createElement("div", {className:"st"}, "How It Works"), React.createElement("span", {className:"badge b-gold"}, "Live Demo")),
-    React.createElement("div", {style:{overflow:"hidden",borderRadius:14,padding:"4px 0",marginBottom:8}},
-      React.createElement("div", {id:"hw-howit",style:{display:"flex",gap:20,animation:"hwScrollR 40s linear infinite",width:"max-content"}},
-        ["Campaign Forge","Playlist Pitcher","EPK Builder","Hook Lab","Video Engine","Content Factory","Smart Links","Budget Planner"].map(function(name, i) {
-          const icons = ["⚡","🎯","📄","🎣","🎬","✦","🔗","💰"];
-          const descs = [
-            "Paste your lyrics → AI builds your full ad campaign in seconds",
-            "Auto-generates personalised pitch emails to 50+ playlist curators",
-            "Professional Electronic Press Kit ready to send to labels & press",
-            "Extracts your most viral hooks — TikTok-ready in one click",
-            "AI writes cinematic video scripts tailored to your song's story",
-            "30 days of social media content generated from a single song",
-            "One link to all platforms — track every click in real time",
-            "Optimise your ad spend across Meta, TikTok & YouTube"
-          ];
-          const colors = ["var(--gold)","var(--ok)","#9B4FDE","#FF6B6B","#FF4466","#00CCFF","var(--gold)","var(--ok)"];
-          return React.createElement("div", {key:i, style:{background:"rgba(15,15,25,0.95)",border:"1px solid "+colors[i%colors.length],borderRadius:16,padding:"0",width:320,flexShrink:0,overflow:"hidden"}},
-            React.createElement("div", {style:{background:"linear-gradient(135deg,rgba(255,184,0,.12),rgba(0,0,0,0))",padding:"20px 20px 0"}},
-              React.createElement("div", {style:{fontSize:32,marginBottom:8}}, icons[i]),
-              React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:16,fontWeight:800,color:colors[i%colors.length],marginBottom:6}}, name),
-              React.createElement("div", {style:{fontSize:12,color:"var(--muted)",lineHeight:1.6,marginBottom:16}}, descs[i])
-            ),
-            React.createElement("div", {style:{background:"rgba(0,0,0,.4)",margin:"0 12px 12px",borderRadius:10,padding:"14px",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:"var(--ok)",lineHeight:1.8}},
-              React.createElement("div", {style:{color:"var(--muted)",marginBottom:4}}, "// "+name.toUpperCase()+" OUTPUT"),
-              React.createElement("div", {style:{color:colors[i%colors.length]}}, "✓ Generated in 2.3s"),
-              React.createElement("div", null, "✓ AI confidence: 98%"),
-              React.createElement("div", null, "✓ Ready to deploy")
-            )
-          );
-        })
       )
     ),
     React.createElement("div", {className:"sh", style:{marginTop:28}}, React.createElement("div", {className:"st"}, "Choose Your Arsenal"), React.createElement("span", {className:"badge b-gold"}, "Start Free")),
