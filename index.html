@@ -2153,6 +2153,17 @@ function LinkAutopilot({ onFetched, showToast }) {
           if (resp.ok) {
             const data = await resp.json();
             if (data.songTitle) {
+              // Auto-fetch lyrics from Genius
+              let lyricsData = null;
+              try {
+                const geniusResp = await fetch("/api/genius-fetch", {
+                  method: "POST",
+                  headers: {"Content-Type":"application/json"},
+                  body: JSON.stringify({songTitle: data.songTitle, artist: data.artist})
+                });
+                if (geniusResp.ok) lyricsData = await geniusResp.json();
+              } catch(e) { console.warn("Genius fetch:", e); }
+
               const result = {
                 songTitle:    data.songTitle,
                 artist:       data.artist,
@@ -2161,7 +2172,7 @@ function LinkAutopilot({ onFetched, showToast }) {
                 bpm:          data.bpm,
                 energy:       data.energy,
                 key:          data.key,
-                artworkUrl:   data.artworkUrl,
+                artworkUrl:   data.artworkUrl || (lyricsData?.found ? lyricsData.artworkUrl : ""),
                 danceability: data.danceability,
                 duration:     data.duration,
                 popularity:   data.popularity,
@@ -2169,6 +2180,8 @@ function LinkAutopilot({ onFetched, showToast }) {
                 platform:     "spotify",
                 spotifyUrl:   url,
                 lyrics:       "",
+                geniusUrl:    lyricsData?.found ? lyricsData.geniusUrl : "",
+                lyricsFound:  lyricsData?.found || false,
                 fetchedReal:  true,
                 confidence:   "high"
               };
@@ -2187,6 +2200,22 @@ function LinkAutopilot({ onFetched, showToast }) {
       }
 
       // ── AI PARSES what we fetched OR infers from URL ──
+      // Also search Genius for lyrics if we got title/artist
+      let geniusUrl = "";
+      let lyricsFound = false;
+      if (fetchedReal && (rawTitle || rawAuthor)) {
+        try {
+          const geniusResp = await fetch("/api/genius-fetch", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({songTitle: rawTitle, artist: rawAuthor})
+          });
+          if (geniusResp.ok) {
+            const gd = await geniusResp.json();
+            if (gd.found) { geniusUrl = gd.geniusUrl; lyricsFound = true; if(!artworkUrl && gd.artworkUrl) artworkUrl = gd.artworkUrl; }
+          }
+        } catch(e) { console.warn("Genius:", e); }
+      }
       const aiPrompt = fetchedReal
         ? `Parse this real song metadata and return enriched details.\nTitle from platform: "${rawTitle}"\nAuthor/Channel: "${rawAuthor}"\nPlatform: ${platform}\nURL: ${url}\n\nReturn ONLY this JSON (no apostrophes in string values, use contractions spelled out):\n{"songTitle":"","artist":"","genre":"","mood":"","bpm":0,"energy":"Low/Medium/High","key":"","confidence":"high/medium/low"}`
         : `You are a music expert. Based ONLY on this URL, extract what you can with confidence. Do NOT guess or hallucinate details you cannot know from the URL alone.\nURL: ${url}\nPlatform: ${platform}\n\nReturn ONLY this JSON (no apostrophes, mark unknown fields as empty string):\n{"songTitle":"","artist":"","genre":"","mood":"","bpm":0,"energy":"","key":"","confidence":"low"}`;
@@ -2212,6 +2241,8 @@ function LinkAutopilot({ onFetched, showToast }) {
         platform,
         spotifyUrl: url,
         lyrics: "",
+        geniusUrl,
+        lyricsFound,
         fetchedReal,
         confidence: meta.confidence || "low"
       };
@@ -2225,11 +2256,16 @@ function LinkAutopilot({ onFetched, showToast }) {
         setSavedSongs(updated || []);
       }
 
-      if (fetchedReal) {
-        showToast("Song fetched from " + platform + "! Review and confirm.", "🎵");
-      } else {
-        showToast("Partial data only — fill in missing fields below.", "⚠️");
-      }
+              if (fetchedReal) {
+                showToast(
+                  result.lyricsFound 
+                    ? "Song fetched! BPM, key, mood loaded. Lyrics found on Genius — copy them below." 
+                    : "Song fetched from Spotify! Paste lyrics below for best results.",
+                  "🎵"
+                );
+              } else {
+                showToast("Partial data only — fill in missing fields below.", "⚠️");
+              }
     } catch(e) {
       showToast("Fetch failed — paste your song details manually below.", "⚠️");
       console.error("LinkAutopilot fetch error:", e);
@@ -2346,6 +2382,12 @@ function LinkAutopilot({ onFetched, showToast }) {
         )
       ),
       React.createElement("div", {style:{fontSize:11,color:"rgba(255,184,0,.7)",marginBottom:12}}, "💡 Paste your lyrics in the field below for best AI results — lyrics are the most important input."),
+      fetched.geniusUrl && React.createElement("a", {
+        href: fetched.geniusUrl,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        style:{display:"flex",alignItems:"center",gap:8,background:"rgba(255,184,0,.08)",border:"1px solid rgba(255,184,0,.25)",borderRadius:8,padding:"10px 14px",marginBottom:12,textDecoration:"none",color:"var(--gold)",fontSize:12,fontWeight:600}
+      }, "🎵 Lyrics found on Genius — click to copy them →"),
       React.createElement("button", {
         className:"btn btn-gold",
         style:{width:"100%",fontWeight:800,fontSize:14,padding:"12px"},

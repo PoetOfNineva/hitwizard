@@ -29,6 +29,10 @@
   path = "/api/spotify-fetch"
   function = "spotify-fetch"
 
+[[edge_functions]]
+  path = "/api/genius-fetch"
+  function = "genius-fetch"
+
 # Serve TikTok verification file as plain text
 [[headers]]
   for = "/*.txt"
