@@ -2142,19 +2142,48 @@ function LinkAutopilot({ onFetched, showToast }) {
         } catch(e) { console.warn("YouTube oEmbed failed:", e); }
       }
 
-      // ── REAL FETCH: Spotify oEmbed (no API key needed) ──
+      // ── REAL FETCH: Spotify via our edge function (Client Credentials — no Premium needed) ──
       if (platform === "spotify") {
         try {
-          const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
-          const resp = await fetch(oembedUrl);
+          const resp = await fetch("/api/spotify-fetch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+          });
           if (resp.ok) {
             const data = await resp.json();
-            rawTitle = data.title || "";
-            // Spotify oEmbed title format: "Song Name" or "Song Name by Artist"
-            artworkUrl = data.thumbnail_url || "";
-            fetchedReal = true;
+            if (data.songTitle) {
+              const result = {
+                songTitle:    data.songTitle,
+                artist:       data.artist,
+                genre:        data.genre,
+                mood:         data.mood,
+                bpm:          data.bpm,
+                energy:       data.energy,
+                key:          data.key,
+                artworkUrl:   data.artworkUrl,
+                danceability: data.danceability,
+                duration:     data.duration,
+                popularity:   data.popularity,
+                releaseDate:  data.releaseDate,
+                platform:     "spotify",
+                spotifyUrl:   url,
+                lyrics:       "",
+                fetchedReal:  true,
+                confidence:   "high"
+              };
+              setFetched(result);
+              if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) {
+                await window.HW_SONGS.save(result);
+                const updated = await window.HW_SONGS.load();
+                setSavedSongs(updated || []);
+              }
+              showToast("Song fetched from Spotify! BPM, key, mood — all loaded.", "🎵");
+              setLoading(false);
+              return;
+            }
           }
-        } catch(e) { console.warn("Spotify oEmbed failed:", e); }
+        } catch(e) { console.warn("Spotify edge fetch failed:", e); }
       }
 
       // ── AI PARSES what we fetched OR infers from URL ──
