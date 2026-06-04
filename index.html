@@ -2063,7 +2063,8 @@ function LinkAutopilot({ onFetched, showToast }) {
   const confirmAndFire = () => {
     if (!fetched) return;
     onFetched(fetched);
-    showToast("Song loaded — fields filled automatically!", "⚡");
+    // Keep fetched visible so Genius link stays accessible
+    showToast("Song loaded — fill in mood/BPM if needed, then generate!", "⚡");
   };
 
   const loadFromVault = (song) => {

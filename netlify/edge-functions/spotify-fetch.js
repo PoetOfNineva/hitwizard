@@ -69,7 +69,13 @@ export default async function handler(request, context) {
     ]);
 
     if (!trackResp.ok) {
-      return new Response(JSON.stringify({ error: "Track not found on Spotify" }), { status: 404, headers });
+      const errText = await trackResp.text();
+      console.error("Spotify track error:", trackResp.status, errText.substring(0,200));
+      return new Response(JSON.stringify({ 
+        error: "Track not found on Spotify",
+        status: trackResp.status,
+        detail: errText.substring(0,200)
+      }), { status: 404, headers });
     }
 
     const track    = await trackResp.json();
