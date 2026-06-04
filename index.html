@@ -1883,61 +1883,31 @@ function LinkAutopilot({ onFetched, showToast }) {
         } catch(e) { console.warn("YouTube edge fetch failed:", e); }
       }
 
-      // ── REAL FETCH: Spotify via our edge function (Client Credentials — no Premium needed) ──
+      // ── REAL FETCH: Spotify oEmbed — browser-side (Spotify blocks server calls) ──
       if (platform === "spotify") {
         try {
-          const resp = await fetch("/api/spotify-fetch", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url })
-          });
+          const trackId = url.match(/track\/([a-zA-Z0-9]+)/)?.[1];
+          if (!trackId) throw new Error("No track ID");
+          const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
+          const resp = await fetch(oembedUrl);
           if (resp.ok) {
             const data = await resp.json();
-            if (data.songTitle) {
-              // Auto-fetch lyrics from Genius
-              let lyricsData = null;
-              try {
-                const geniusResp = await fetch("/api/genius-fetch", {
-                  method: "POST",
-                  headers: {"Content-Type":"application/json"},
-                  body: JSON.stringify({songTitle: data.songTitle, artist: data.artist})
-                });
-                if (geniusResp.ok) lyricsData = await geniusResp.json();
-              } catch(e) { console.warn("Genius fetch:", e); }
-
-              const result = {
-                songTitle:    data.songTitle,
-                artist:       data.artist,
-                genre:        data.genre,
-                mood:         data.mood,
-                bpm:          data.bpm,
-                energy:       data.energy,
-                key:          data.key,
-                artworkUrl:   data.artworkUrl || (lyricsData?.found ? lyricsData.artworkUrl : ""),
-                danceability: data.danceability,
-                duration:     data.duration,
-                popularity:   data.popularity,
-                releaseDate:  data.releaseDate,
-                platform:     "spotify",
-                spotifyUrl:   url,
-                lyrics:       "",
-                geniusUrl:    lyricsData?.found ? lyricsData.geniusUrl : "",
-                lyricsFound:  lyricsData?.found || false,
-                fetchedReal:  true,
-                confidence:   "high"
-              };
-              setFetched(result);
-              if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) {
-                await window.HW_SONGS.save(result);
-                const updated = await window.HW_SONGS.load();
-                setSavedSongs(updated || []);
-              }
-              showToast("Song fetched from Spotify! BPM, key, mood — all loaded.", "🎵");
-              setLoading(false);
-              return;
-            }
+            const title = data.title || "";
+            let songTitle = title, artist = "";
+            if (title.includes(" · ")) { const p = title.split(" · "); songTitle = p[0].trim(); artist = p[1].trim(); }
+            else if (title.includes(" - ")) { const p = title.split(" - "); songTitle = p[0].trim(); artist = p[1].trim(); }
+            let geniusUrl = "", lyricsFound = false;
+            try {
+              const gResp = await fetch("/api/genius-fetch", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({songTitle,artist})});
+              if (gResp.ok) { const gd = await gResp.json(); if (gd.found) { geniusUrl = gd.geniusUrl; lyricsFound = true; } }
+            } catch(e) {}
+            const result = {songTitle,artist,artworkUrl:data.thumbnail_url||"",genre:"",mood:"",bpm:"",energy:"",key:"",platform:"spotify",spotifyUrl:url,lyrics:"",geniusUrl,lyricsFound,fetchedReal:true,confidence:"medium"};
+            setFetched(result);
+            if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) { await window.HW_SONGS.save(result); const updated = await window.HW_SONGS.load(); setSavedSongs(updated||[]); }
+            showToast(lyricsFound ? "Spotify song fetched! Lyrics found on Genius." : "Spotify song fetched! Add genre and mood below.", "🟢");
+            setLoading(false); return;
           }
-        } catch(e) { console.warn("Spotify edge fetch failed:", e); }
+        } catch(e) { console.warn("Spotify browser fetch failed:", e); }
       }
 
       // ── REAL FETCH: Apple Music via our edge function ──
