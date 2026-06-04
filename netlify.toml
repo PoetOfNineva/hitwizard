@@ -37,6 +37,10 @@
   path = "/api/youtube-fetch"
   function = "youtube-fetch"
 
+[[edge_functions]]
+  path = "/api/apple-fetch"
+  function = "apple-fetch"
+
 # Serve TikTok verification file as plain text
 [[headers]]
   for = "/*.txt"

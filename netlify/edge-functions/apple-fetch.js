@@ -1,0 +1,170 @@
+// HitWizard — Apple Music Metadata Edge Function
+// Uses MusicKit JWT (Team ID + Key ID + Private Key) — no user auth needed
+// Fetches: title, artist, artwork, genre from Apple Music links
+
+export default async function handler(request, context) {
+  const headers = {
+    "Access-Control-Allow-Origin": "https://hitwizardai.com",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json"
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers });
+  }
+
+  if (request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  }
+
+  try {
+    const TEAM_ID    = Deno.env.get("APPLE_TEAM_ID");
+    const KEY_ID     = Deno.env.get("APPLE_KEY_ID");
+    const PRIVATE_KEY = Deno.env.get("APPLE_PRIVATE_KEY");
+    const GENIUS_TOKEN = Deno.env.get("GENIUS_ACCESS_TOKEN");
+
+    if (!TEAM_ID || !KEY_ID || !PRIVATE_KEY) {
+      return new Response(JSON.stringify({ error: "Apple credentials not configured" }), { status: 500, headers });
+    }
+
+    const body = await request.json();
+    const { url } = body;
+
+    if (!url) {
+      return new Response(JSON.stringify({ error: "No URL provided" }), { status: 400, headers });
+    }
+
+    // ── Extract Apple Music song ID from URL ──
+    // Formats: /album/song-name/123456789 or /song/song-name/123456789
+    const idMatch = url.match(/\/(?:album|song)\/[^\/]+\/(\d+)/);
+    const songId = idMatch?.[1];
+
+    if (!songId) {
+      return new Response(JSON.stringify({ error: "Could not extract song ID from Apple Music URL" }), { status: 400, headers });
+    }
+
+    // ── Generate MusicKit JWT ──
+    const token = await generateMusicKitJWT(TEAM_ID, KEY_ID, PRIVATE_KEY);
+
+    // ── Detect storefront from URL ──
+    const storefrontMatch = url.match(/music\.apple\.com\/([a-z]{2})\//);
+    const storefront = storefrontMatch?.[1] || "us";
+
+    // ── Fetch song from Apple Music API ──
+    const apiUrl = `https://api.music.apple.com/v1/catalog/${storefront}/songs/${songId}`;
+    const apiResp = await fetch(apiUrl, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Music-User-Token": "" // Not needed for catalog requests
+      }
+    });
+
+    if (!apiResp.ok) {
+      const errText = await apiResp.text();
+      console.error("Apple Music API error:", apiResp.status, errText);
+      return new Response(JSON.stringify({
+        error: "Apple Music API request failed",
+        status: apiResp.status
+      }), { status: 502, headers });
+    }
+
+    const apiData = await apiResp.json();
+    const song    = apiData?.data?.[0];
+
+    if (!song) {
+      return new Response(JSON.stringify({ error: "Song not found on Apple Music" }), { status: 404, headers });
+    }
+
+    const attrs = song.attributes || {};
+
+    // ── Format artwork URL ──
+    const artworkUrl = attrs.artwork
+      ? attrs.artwork.url
+          .replace("{w}", "1000")
+          .replace("{h}", "1000")
+      : "";
+
+    // ── Search Genius for lyrics ──
+    let geniusUrl   = "";
+    let lyricsFound = false;
+    if (GENIUS_TOKEN && attrs.name) {
+      try {
+        const query  = encodeURIComponent(`${attrs.name} ${attrs.artistName || ""}`);
+        const gResp  = await fetch(`https://api.genius.com/search?q=${query}`, {
+          headers: { "Authorization": `Bearer ${GENIUS_TOKEN}`, "User-Agent": "HitWizard/1.0" }
+        });
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          const hit   = gData?.response?.hits?.[0];
+          if (hit) { geniusUrl = hit.result.url; lyricsFound = true; }
+        }
+      } catch(e) { console.warn("Genius search:", e.message); }
+    }
+
+    return new Response(JSON.stringify({
+      songTitle:   attrs.name || "",
+      artist:      attrs.artistName || "",
+      album:       attrs.albumName || "",
+      genre:       attrs.genreNames?.[0] || "",
+      artworkUrl,
+      bpm:         attrs.tempo || null,
+      key:         attrs.keySignature || "",
+      mood:        "",
+      energy:      "",
+      duration:    attrs.durationInMillis ? Math.round(attrs.durationInMillis / 1000) : null,
+      releaseDate: attrs.releaseDate || "",
+      isrc:        attrs.isrc || "",
+      explicit:    attrs.contentRating === "explicit",
+      appleUrl:    url,
+      geniusUrl,
+      lyricsFound,
+      fetchedReal: true,
+      platform:    "apple",
+      confidence:  "high"
+    }), { status: 200, headers });
+
+  } catch (err) {
+    console.error("Apple Music fetch error:", err.message);
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+  }
+}
+
+// ── Generate MusicKit Developer JWT ──
+async function generateMusicKitJWT(teamId, keyId, privateKeyPem) {
+  const now     = Math.floor(Date.now() / 1000);
+  const payload = { iss: teamId, iat: now, exp: now + 3600 };
+
+  const header  = { alg: "ES256", kid: keyId };
+
+  const enc     = new TextEncoder();
+  const b64url  = (obj) => btoa(JSON.stringify(obj))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+  const sigInput = `${b64url(header)}.${b64url(payload)}`;
+
+  // Import the private key
+  const pemBody   = privateKeyPem
+    .replace(/-----BEGIN PRIVATE KEY-----/, "")
+    .replace(/-----END PRIVATE KEY-----/, "")
+    .replace(/\s/g, "");
+
+  const keyData   = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8", keyData,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false, ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    cryptoKey,
+    enc.encode(sigInput)
+  );
+
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+  return `${sigInput}.${sigB64}`;
+}
+
+export const config = { path: "/api/apple-fetch" };

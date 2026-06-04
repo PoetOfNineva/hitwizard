@@ -1940,7 +1940,53 @@ function LinkAutopilot({ onFetched, showToast }) {
         } catch(e) { console.warn("Spotify edge fetch failed:", e); }
       }
 
-      // ── AI PARSES what we fetched OR infers from URL ──
+      // ── REAL FETCH: Apple Music via our edge function ──
+      if (platform === "apple") {
+        try {
+          const resp = await fetch("/api/apple-fetch", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({url})
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.songTitle) {
+              const result = {
+                songTitle:   data.songTitle,
+                artist:      data.artist,
+                genre:       data.genre || "",
+                mood:        data.mood || "",
+                bpm:         data.bpm || "",
+                energy:      data.energy || "",
+                key:         data.key || "",
+                artworkUrl:  data.artworkUrl,
+                duration:    data.duration,
+                geniusUrl:   data.geniusUrl || "",
+                lyricsFound: data.lyricsFound || false,
+                platform:    "apple",
+                spotifyUrl:  url,
+                lyrics:      "",
+                fetchedReal: true,
+                confidence:  "high"
+              };
+              setFetched(result);
+              if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) {
+                await window.HW_SONGS.save(result);
+                const updated = await window.HW_SONGS.load();
+                setSavedSongs(updated || []);
+              }
+              showToast(
+                data.lyricsFound
+                  ? "Song fetched from Apple Music! Lyrics found on Genius."
+                  : "Song fetched from Apple Music! Paste lyrics below for best results.",
+                "🍎"
+              );
+              setLoading(false);
+              return;
+            }
+          }
+        } catch(e) { console.warn("Apple Music edge fetch failed:", e); }
+      }
       // Also search Genius for lyrics if we got title/artist
       let geniusUrl = "";
       let lyricsFound = false;
