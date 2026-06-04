@@ -40,10 +40,21 @@ export default async function handler(request, context) {
 
     // ── Fetch Video Details ──
     const ytUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails,statistics&key=${YOUTUBE_API_KEY}`;
-    const ytResp = await fetch(ytUrl);
+    const ytResp = await fetch(ytUrl, {
+      headers: {
+        "Referer": "https://hitwizardai.com",
+        "Origin": "https://hitwizardai.com"
+      }
+    });
 
     if (!ytResp.ok) {
-      return new Response(JSON.stringify({ error: "YouTube API request failed" }), { status: 502, headers });
+      const errText = await ytResp.text();
+      console.error("YouTube API error:", ytResp.status, errText.substring(0, 200));
+      return new Response(JSON.stringify({
+        error: "YouTube API request failed",
+        status: ytResp.status,
+        detail: errText.substring(0, 200)
+      }), { status: 502, headers });
     }
 
     const ytData = await ytResp.json();
