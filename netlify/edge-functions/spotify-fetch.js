@@ -62,7 +62,7 @@ export default async function handler(request, context) {
       }), { status: 502, headers });
     }
 
-    // Search Genius for lyrics
+    // Search Genius for lyrics AND artist name
     let geniusUrl = "", lyricsFound = false;
     if (GENIUS_TOKEN && songTitle) {
       try {
@@ -73,7 +73,18 @@ export default async function handler(request, context) {
         if (gResp.ok) {
           const gData = await gResp.json();
           const hit = gData?.response?.hits?.[0];
-          if (hit) { geniusUrl = hit.result.url; lyricsFound = true; }
+          if (hit) {
+            geniusUrl = hit.result.url;
+            lyricsFound = true;
+            // Use Genius artist name if Spotify oEmbed didn't return one
+            if (!artist && hit.result.primary_artist?.name) {
+              artist = hit.result.primary_artist.name;
+            }
+            // Use Genius artwork if Spotify didn't provide one
+            if (!artworkUrl && hit.result.song_art_image_url) {
+              artworkUrl = hit.result.song_art_image_url;
+            }
+          }
         }
       } catch(e) { console.warn("Genius:", e.message); }
     }

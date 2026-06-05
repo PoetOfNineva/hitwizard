@@ -998,7 +998,7 @@ function VideoEngine(_ref0) {
       const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
       const aiToolName = {grok:"Grok AI",veo3:"Veo 3",kling:"Kling AI",runway:"Runway ML",pika:"Pika Labs"}[form.aiTool||"grok"]||"Grok AI";
       // ── CHUNKED VIDEO GENERATION — batches of 10 clips to prevent JSON breaks ──
-      const BATCH_SIZE = 10;
+      const BATCH_SIZE = 5;
       const totalBatches = Math.ceil(totalClips / BATCH_SIZE);
       const allClips = [];
 
@@ -1007,7 +1007,7 @@ function VideoEngine(_ref0) {
         const bEnd = Math.min(bStart + BATCH_SIZE - 1, totalClips);
         const batchRaw = await hwAI(
           "You are an expert AI music video director. DOCTRINE: Full character DNA every clip. TRACKING CAMERA always moving. 3-4 spatial anchors with distances. 5-7 micro-movements per clip. Eye level camera. 18-inch formula for close-ups. Warm golden lighting. EXACTLY N PEOPLE declaration for multi-character scenes. Consistency tags last. No apostrophes. Under 300 words per grokPrompt. Respond ONLY with valid JSON.",
-          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\n" + (form.lyricsTimestamps ? "LYRICS WITH TIMESTAMPS — map each clip to its exact moment:\n" + form.lyricsTimestamps + "\n\nEach clip must reference its exact timestamp range and the lyric being sung at that moment." : "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips")) + "\n\nSPATIAL DOCTRINE: Every grokPrompt must include 3-4 physical objects with exact distances (e.g. mirror 2 feet left, window 6 feet ahead). CAMERA always tracking and moving. 5-7 specific micro-movements (jaw tightens, eyebrow arches, breath visible). Never aerial view. Eye level always.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"lyricMoment\":\"exact lyric line at this timestamp\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
+          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\n" + (form.lyricsTimestamps ? "LYRICS WITH TIMESTAMPS AND EMOTIONAL ENERGY — this is your bible for every clip:\n" + form.lyricsTimestamps + "\n\nCRITICAL: Each clip must match its timestamp range AND reflect the emotional energy described. If section says 'she is humming softly' — the visual must be quiet and intimate. If it says 'outburst' — the visual must be explosive and urgent. If it says 'breaking' or 'devastated' — the visual must show physical emotional collapse. The mood description IS the visual direction." : "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips")) + "\n\nSPATIAL DOCTRINE: Every grokPrompt must include 3-4 physical objects with exact distances (e.g. mirror 2 feet left, window 6 feet ahead). CAMERA always tracking and moving. 5-7 specific micro-movements (jaw tightens, eyebrow arches, breath visible, shoulders drop). Never aerial view. Eye level always. 18-inch formula for close-ups.\n\nReturn ONLY this JSON (no apostrophes in any string value):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"lyricMoment\":\"exact lyric or section at this timestamp\",\"emotionalEnergy\":\"the emotional tone from the timestamps\",\"sceneDescription\":\"scene matching emotional energy\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements reflecting emotional energy\"}]}"
         );
         const batchData = parseJ(batchRaw);
         if (batchData && batchData.clips) allClips.push(...batchData.clips);
@@ -1212,12 +1212,13 @@ function VideoEngine(_ref0) {
     className: "lbl"
   }, "Lyrics with Timestamps ", /*#__PURE__*/React.createElement("span", {
     className: "lbl-n"
-  }, "\u2014 required for accurate clip mapping. One line per section.")), /*#__PURE__*/React.createElement("div", {
+  }, "\u2014 required for accurate clip mapping. Include mood and energy per section.")), /*#__PURE__*/React.createElement("div", {
     style:{background:"rgba(255,184,0,.05)",border:"1px solid rgba(255,184,0,.2)",borderRadius:8,padding:"10px 12px",marginBottom:8,fontSize:11,color:"var(--muted)",lineHeight:1.7}
-  }, "Format each line as: ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}}, "0:00-0:14 \u2014 [Intro] Piano only"), /*#__PURE__*/React.createElement("br", null), "Then: ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}}, "0:14-0:42 \u2014 Driving through the city lights at midnight"), /*#__PURE__*/React.createElement("br", null), "This tells the AI exactly which lyric plays at which moment so every clip is perfectly matched."),
+  }, "Format: ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}}, "0:00-0:12 \u2014 [Intro] Instrumental, melancholic piano"), /*#__PURE__*/React.createElement("br", null),
+  "Include the ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)"}}, "emotional energy"), " per section — humming, soft, building, outburst, defiant, breaking, devastated. This is what tells the AI the visual tone for each clip."),
   /*#__PURE__*/React.createElement("textarea", {
     className: "txa",
-    placeholder: "0:00-0:14 \u2014 [Intro] Instrumental only\n0:14-0:42 \u2014 [Verse 1] First lyric line here\n0:42-1:03 \u2014 [Pre-Chorus] Building lyric line\n1:03-1:38 \u2014 [Chorus] Main hook line here\n1:38-2:05 \u2014 [Verse 2] Second verse lyric\n...",
+    placeholder: "0:00-0:12 \u2014 [Intro] Instrumental only, melancholic piano, no vocals\n0:12-0:39 \u2014 [Verse 1] She sings softly, intimate and vulnerable, slow tempo\n0:40-0:53 \u2014 [Pre-Chorus] Tension building, voice rising with urgency\n0:54-1:25 \u2014 [Chorus] Full emotional outburst, powerful and raw\n1:26-1:53 \u2014 [Verse 2] Defiant tone, medium tempo, controlled pain\n1:54-2:07 \u2014 [Pre-Chorus] Building again, strings enter\n2:08-2:38 \u2014 [Chorus] Even more intense than first chorus\n2:39-2:53 \u2014 [Bridge] Most emotional moment, she is breaking\n2:54-3:40 \u2014 [Final Chorus] Peak of song, full power\n3:41-4:11 \u2014 [Outro] Devastated, barely singing, fading",
     value: form.lyricsTimestamps || "",
     onChange: e => f("lyricsTimestamps", e.target.value),
     style: {
@@ -2265,9 +2266,9 @@ function CampaignForge(_ref10) {
     setForm(p => _objectSpread(_objectSpread({}, p), {}, {
       songTitle: meta.songTitle || p.songTitle,
       artist: meta.artist || p.artist,
-      genre: meta.genre || p.genre,
-      mood: meta.mood || p.mood,
-      lyrics: meta.lyrics || p.lyrics
+      // Always overwrite genre/mood — never carry over from previous song
+      genre: meta.genre || "",
+      mood: meta.mood || ""
     }));
   };
   const genres = ["Pop", "Hip-Hop/Rap", "R&B/Soul", "Rock", "Electronic/EDM", "Country", "Latin", "Afrobeats", "Jazz", "Indie", "Gospel", "Other"];
