@@ -971,7 +971,14 @@ function VideoEngine(_ref0) {
   }];
   const getSeconds = () => {
     const vt = videoTypes.find(v => v.id === form.videoType);
-    return (vt === null || vt === void 0 ? void 0 : vt.secs) || parseInt(form.duration) || 210;
+    return (vt === null || vt === void 0 ? void 0 : vt.secs) || (function(){
+      const val = form.duration || "210";
+      if (val.includes(":")) {
+        const p = val.split(":");
+        return parseInt(p[0]||0)*60 + parseInt(p[1]||0);
+      }
+      return parseInt(val) || 210;
+    })();
   };
   const getClipCount = () => Math.ceil(getSeconds() / parseInt(form.clipLength || 10));
   const selectedCharData = (function(){ try{ var s=localStorage.getItem("hw_characters"); return s?JSON.parse(s):DEFAULT_CHARACTERS; }catch(e){return DEFAULT_CHARACTERS;} })().filter(c => form.selectedChars.includes(c.id));
@@ -999,7 +1006,9 @@ function VideoEngine(_ref0) {
     try {
       const totalSecs = getSeconds();
       const clipLen = parseInt(form.clipLength || 10);
-      const totalClips = Math.ceil(totalSecs / clipLen);
+      const rawClips = Math.ceil(totalSecs / clipLen);
+      // Cap at 30 clips max to prevent JSON failures — Full Music Video uses 5s clips for longer songs
+      const totalClips = Math.min(rawClips, 30);
       const arollCount = Math.ceil(totalClips * 0.65);
       const brollCount = totalClips - arollCount;
       const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
@@ -1133,14 +1142,35 @@ function VideoEngine(_ref0) {
     className: "field"
   }, /*#__PURE__*/React.createElement("label", {
     className: "lbl"
-  }, "Song Duration (seconds) ", /*#__PURE__*/React.createElement("span", {
+  }, "Song Duration ", /*#__PURE__*/React.createElement("span", {
     className: "lbl-n"
-  }, "\u2014 e.g. 210 for a 3:30 song")), /*#__PURE__*/React.createElement("input", {
+  }, "\u2014 type 4:11 or 251 (seconds)")), /*#__PURE__*/React.createElement("input", {
     className: "inp",
-    type: "number",
+    type: "text",
+    placeholder: "e.g. 4:11 or 251",
     value: form.duration,
-    onChange: e => f("duration", e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
+    onChange: e => {
+      const val = e.target.value;
+      f("duration", val);
+    }
+  }), (function(){
+    const val = form.duration || "";
+    let secs = 0;
+    if (val.includes(":")) {
+      const parts = val.split(":");
+      secs = parseInt(parts[0]||0)*60 + parseInt(parts[1]||0);
+    } else {
+      secs = parseInt(val)||0;
+    }
+    if (secs > 0) {
+      const mins = Math.floor(secs/60);
+      const s = secs%60;
+      return /*#__PURE__*/React.createElement("div", {
+        style:{fontSize:11,color:"var(--ok)",marginTop:4,fontFamily:"JetBrains Mono,monospace"}
+      }, "\u2713 " + secs + " seconds = " + mins + ":" + String(s).padStart(2,"0") + " song");
+    }
+    return null;
+  })()), /*#__PURE__*/React.createElement("div", {
     className: "field"
   }, /*#__PURE__*/React.createElement("label", {
     className: "lbl"
@@ -1172,7 +1202,7 @@ function VideoEngine(_ref0) {
     style: {
       color: "var(--gold)"
     }
-  }, getClipCount(), " clips"), " (", Math.ceil(getClipCount() * 0.65), " performance + ", getClipCount() - Math.ceil(getClipCount() * 0.65), " story)")), /*#__PURE__*/React.createElement("div", {
+  }, Math.min(getClipCount(), 30), " clips"), " (", Math.ceil(Math.min(getClipCount(),30) * 0.65), " performance + ", Math.min(getClipCount(),30) - Math.ceil(Math.min(getClipCount(),30) * 0.65), " story)", getClipCount() > 30 ? /*#__PURE__*/React.createElement("span", {style:{color:"rgba(255,184,0,.6)",fontSize:11,marginLeft:8}}, "— capped at 30 for reliability") : null)), /*#__PURE__*/React.createElement("div", {
     className: "field"
   }, /*#__PURE__*/React.createElement("label", {
     className: "lbl"
