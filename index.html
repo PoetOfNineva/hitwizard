@@ -907,6 +907,13 @@ function VideoEngine(_ref0) {
       duration: "210",
       lyrics: "",
       lyricsTimestamps: "",
+      sectionRows: [
+        {ts:"0:00-0:12", section:"Intro", lyrics:"", energy:""},
+        {ts:"0:12-0:39", section:"Verse 1", lyrics:"", energy:""},
+        {ts:"0:39-0:53", section:"Pre-Chorus", lyrics:"", energy:""},
+        {ts:"0:53-1:25", section:"Chorus", lyrics:"", energy:""}
+      ],
+      charRoles: {},
       videoType: "60s-ad",
       selectedChars: [],
       clipLength: "10"
@@ -1007,7 +1014,24 @@ function VideoEngine(_ref0) {
         const bEnd = Math.min(bStart + BATCH_SIZE - 1, totalClips);
         const batchRaw = await hwAI(
           "You are an expert AI music video director. DOCTRINE: Full character DNA every clip. TRACKING CAMERA always moving. 3-4 spatial anchors with distances. 5-7 micro-movements per clip. Eye level camera. 18-inch formula for close-ups. Warm golden lighting. EXACTLY N PEOPLE declaration for multi-character scenes. Consistency tags last. No apostrophes. Under 300 words per grokPrompt. Respond ONLY with valid JSON.",
-          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\n" + (form.lyricsTimestamps ? "LYRICS WITH TIMESTAMPS AND EMOTIONAL ENERGY — this is your bible for every clip:\n" + form.lyricsTimestamps + "\n\nCRITICAL: Each clip must match its timestamp range AND reflect the emotional energy described. If section says 'she is humming softly' — the visual must be quiet and intimate. If it says 'outburst' — the visual must be explosive and urgent. If it says 'breaking' or 'devastated' — the visual must show physical emotional collapse. The mood description IS the visual direction." : "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips")) + "\n\nSPATIAL DOCTRINE: Every grokPrompt must include 3-4 physical objects with exact distances (e.g. mirror 2 feet left, window 6 feet ahead). CAMERA always tracking and moving. 5-7 specific micro-movements (jaw tightens, eyebrow arches, breath visible, shoulders drop). Never aerial view. Eye level always. 18-inch formula for close-ups.\n\nReturn ONLY this JSON (no apostrophes in any string value):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"lyricMoment\":\"exact lyric or section at this timestamp\",\"emotionalEnergy\":\"the emotional tone from the timestamps\",\"sceneDescription\":\"scene matching emotional energy\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements reflecting emotional energy\"}]}"
+          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\nCHARACTER ROLES — who performs and who acts:\n" + (function(){
+            const vaultChars = (function(){ try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} })();
+            return (form.selectedChars||[]).map(function(cid){
+              const char = vaultChars.find(function(c){return c.id===cid;})||{name:cid};
+              const role = (form.charRoles||{})[cid]||"lead";
+              const roleMap = {lead:"LEAD SINGER — A-Roll performance shots, singing to camera",love:"LOVE INTEREST — B-Roll story scenes only, no singing",rival:"RIVAL — B-Roll conflict scenes only",support:"SUPPORTING — B-Roll background only",both:"BOTH A-Roll performance AND B-Roll story scenes"};
+              return char.name + ": " + (roleMap[role]||"Lead Singer");
+            }).join("\n");
+          })() + "\n\n" + (function(){
+            const rows = form.sectionRows||[];
+            const filledRows = rows.filter(function(r){return r.ts||r.section;});
+            if(filledRows.length > 0){
+              return "SONG SECTIONS — your visual bible:\n" + filledRows.map(function(r){
+                return r.ts + " | [" + (r.section||"Section") + "] " + (r.lyrics||"") + (r.energy ? " | ENERGY: " + r.energy : "");
+              }).join("\n") + "\n\nCRITICAL: Match every clip to its timestamp section. Use the ENERGY description as the exact visual tone.";
+            }
+            return "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips");
+          })() + "\n\nSPATIAL DOCTRINE: 3-4 physical objects with exact distances. TRACKING CAMERA always moving. 5-7 micro-movements per clip. Eye level always. 18-inch formula for close-ups. Warm golden lighting.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"section\":\"section name\",\"lyricMoment\":\"exact lyric\",\"emotionalEnergy\":\"energy tone\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
         );
         const batchData = parseJ(batchRaw);
         if (batchData && batchData.clips) allClips.push(...batchData.clips);
@@ -1189,45 +1213,127 @@ function VideoEngine(_ref0) {
     style: { fontSize: 11, color: "var(--muted)", marginTop: 2 }
   }, c.role || "Artist"), form.selectedChars.includes(c.id) ? /*#__PURE__*/React.createElement("div", {
     style:{fontSize:10,color:c.color,marginTop:3,fontWeight:700}
-  }, "✓ SELECTED") : null))))), /*#__PURE__*/React.createElement("div", {
+  }, "✓ SELECTED") : null))))),
+
+  // ── CHARACTER ROLE ASSIGNMENT ──
+  form.selectedChars.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "field"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "lbl"
-  }, "Song Lyrics ", /*#__PURE__*/React.createElement("span", {
-    className: "lbl-n"
-  }, "— required. The AI reads these to plan your video.")), /*#__PURE__*/React.createElement("textarea", {
-    className: "txa",
-    placeholder: "Paste your full lyrics here. Include section labels like [Verse 1], [Chorus], [Bridge] if you have them.",
-    value: form.lyrics,
-    onChange: e => f("lyrics", e.target.value),
-    style: {
-      minHeight: 160,
-      fontFamily: "JetBrains Mono,monospace",
-      fontSize: 12,
-      lineHeight: 1.8
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "field"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "lbl"
-  }, "Lyrics with Timestamps ", /*#__PURE__*/React.createElement("span", {
-    className: "lbl-n"
-  }, "\u2014 required for accurate clip mapping. Include mood and energy per section.")), /*#__PURE__*/React.createElement("div", {
-    style:{background:"rgba(255,184,0,.05)",border:"1px solid rgba(255,184,0,.2)",borderRadius:8,padding:"10px 12px",marginBottom:8,fontSize:11,color:"var(--muted)",lineHeight:1.7}
-  }, "Format: ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}}, "0:00-0:12 \u2014 [Intro] Instrumental, melancholic piano"), /*#__PURE__*/React.createElement("br", null),
-  "Include the ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)"}}, "emotional energy"), " per section — humming, soft, building, outburst, defiant, breaking, devastated. This is what tells the AI the visual tone for each clip."),
-  /*#__PURE__*/React.createElement("textarea", {
-    className: "txa",
-    placeholder: "0:00-0:12 \u2014 [Intro] Instrumental only, melancholic piano, no vocals\n0:12-0:39 \u2014 [Verse 1] She sings softly, intimate and vulnerable, slow tempo\n0:40-0:53 \u2014 [Pre-Chorus] Tension building, voice rising with urgency\n0:54-1:25 \u2014 [Chorus] Full emotional outburst, powerful and raw\n1:26-1:53 \u2014 [Verse 2] Defiant tone, medium tempo, controlled pain\n1:54-2:07 \u2014 [Pre-Chorus] Building again, strings enter\n2:08-2:38 \u2014 [Chorus] Even more intense than first chorus\n2:39-2:53 \u2014 [Bridge] Most emotional moment, she is breaking\n2:54-3:40 \u2014 [Final Chorus] Peak of song, full power\n3:41-4:11 \u2014 [Outro] Devastated, barely singing, fading",
-    value: form.lyricsTimestamps || "",
-    onChange: e => f("lyricsTimestamps", e.target.value),
-    style: {
-      minHeight: 180,
-      fontFamily: "JetBrains Mono,monospace",
-      fontSize: 12,
-      lineHeight: 1.8
-    }
-  })), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Character Roles ", /*#__PURE__*/React.createElement("span", {className:"lbl-n"}, "— who performs and who acts?")),
+  /*#__PURE__*/React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:8}},
+    (function(){
+      const vaultChars = (function(){ try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} })();
+      return form.selectedChars.map(function(cid) {
+        const char = vaultChars.find(function(c){return c.id===cid;}) || {id:cid,name:cid,color:"#FFB800"};
+        const role = (form.charRoles||{})[cid] || "lead";
+        return /*#__PURE__*/React.createElement("div", {
+          key: cid,
+          style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10}
+        },
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:20}}, char.emoji||"🎤"),
+          /*#__PURE__*/React.createElement("div", {style:{flex:1,fontSize:13,fontWeight:700,color:char.color||"var(--gold)"}}, char.name),
+          /*#__PURE__*/React.createElement("select", {
+            className:"sel",
+            style:{width:"auto",minWidth:220,fontSize:12,padding:"6px 10px"},
+            value: role,
+            onChange: function(e){ f("charRoles", Object.assign({}, form.charRoles||{}, {[cid]: e.target.value})); }
+          },
+            /*#__PURE__*/React.createElement("option", {value:"lead"}, "🎤 Lead Singer — A-Roll (performance)"),
+            /*#__PURE__*/React.createElement("option", {value:"love"}, "💑 Love Interest — B-Roll (story scenes)"),
+            /*#__PURE__*/React.createElement("option", {value:"rival"}, "⚡ Rival — B-Roll (conflict scenes)"),
+            /*#__PURE__*/React.createElement("option", {value:"support"}, "🎬 Supporting — B-Roll (background)"),
+            /*#__PURE__*/React.createElement("option", {value:"both"}, "🔄 Both A-Roll and B-Roll")
+          )
+        );
+      });
+    })()
+  )),
+
+  // ── STRUCTURED TIMESTAMP TABLE ──
+  /*#__PURE__*/React.createElement("div", {className:"field"},
+    /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Song Sections with Timestamps ",
+      /*#__PURE__*/React.createElement("span", {className:"lbl-n"}, "— the AI uses this as its visual bible")),
+    /*#__PURE__*/React.createElement("div", {
+      style:{background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.15)",borderRadius:8,padding:"10px 14px",marginBottom:10,fontSize:11,color:"var(--muted)",lineHeight:1.7}
+    },
+      "Fill in each section. The ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)"}}, "Emotional Energy"),
+      " column is critical — it tells the AI the visual tone: humming, soft, building, outburst, defiant, breaking, devastated, powerful, tender, etc."
+    ),
+    // Table header
+    /*#__PURE__*/React.createElement("div", {
+      style:{display:"grid",gridTemplateColumns:"120px 130px 1fr 1fr 36px",gap:6,marginBottom:6}
+    },
+      ["Timestamp","Section","Lyrics / Description","Emotional Energy",""].map(function(h,i){
+        return /*#__PURE__*/React.createElement("div", {
+          key:i,
+          style:{fontSize:10,fontWeight:700,color:"var(--muted)",letterSpacing:1,fontFamily:"JetBrains Mono,monospace",padding:"4px 8px"}
+        }, h);
+      })
+    ),
+    // Rows
+    (form.sectionRows || [{ts:"0:00-0:12",section:"Intro",lyrics:"",energy:""},{ts:"0:12-0:39",section:"Verse 1",lyrics:"",energy:""},{ts:"0:39-0:53",section:"Pre-Chorus",lyrics:"",energy:""},{ts:"0:53-1:25",section:"Chorus",lyrics:"",energy:""}]).map(function(row, idx){
+      const rows = form.sectionRows || [{ts:"0:00-0:12",section:"Intro",lyrics:"",energy:""},{ts:"0:12-0:39",section:"Verse 1",lyrics:"",energy:""},{ts:"0:39-0:53",section:"Pre-Chorus",lyrics:"",energy:""},{ts:"0:53-1:25",section:"Chorus",lyrics:"",energy:""}];
+      const updateRow = function(field, val){
+        const updated = rows.map(function(r,i){ return i===idx ? Object.assign({},r,{[field]:val}) : r; });
+        f("sectionRows", updated);
+      };
+      return /*#__PURE__*/React.createElement("div", {
+        key:idx,
+        style:{display:"grid",gridTemplateColumns:"120px 130px 1fr 1fr 36px",gap:6,marginBottom:6}
+      },
+        /*#__PURE__*/React.createElement("input", {
+          className:"inp",style:{fontSize:12,padding:"8px 10px",fontFamily:"JetBrains Mono,monospace"},
+          placeholder:"0:00-0:12",value:row.ts||"",
+          onChange:function(e){updateRow("ts",e.target.value);}
+        }),
+        /*#__PURE__*/React.createElement("input", {
+          className:"inp",style:{fontSize:12,padding:"8px 10px"},
+          placeholder:"Intro",value:row.section||"",
+          onChange:function(e){updateRow("section",e.target.value);}
+        }),
+        /*#__PURE__*/React.createElement("input", {
+          className:"inp",style:{fontSize:12,padding:"8px 10px"},
+          placeholder:"She's humming, piano only...",value:row.lyrics||"",
+          onChange:function(e){updateRow("lyrics",e.target.value);}
+        }),
+        /*#__PURE__*/React.createElement("input", {
+          className:"inp",style:{fontSize:12,padding:"8px 10px"},
+          placeholder:"Melancholic, intimate, soft...",value:row.energy||"",
+          onChange:function(e){updateRow("energy",e.target.value);}
+        }),
+        /*#__PURE__*/React.createElement("button", {
+          style:{background:"rgba(255,100,100,.15)",border:"1px solid rgba(255,100,100,.3)",borderRadius:8,cursor:"pointer",color:"#FF6B6B",fontSize:16,fontWeight:700},
+          onClick:function(e){
+            e.preventDefault();
+            const updated = rows.filter(function(_,i){return i!==idx;});
+            f("sectionRows", updated.length ? updated : [{ts:"",section:"",lyrics:"",energy:""}]);
+          }
+        }, "×")
+      );
+    }),
+    // Add row button
+    /*#__PURE__*/React.createElement("button", {
+      className:"btn btn-out btn-sm",
+      style:{marginTop:4,width:"100%"},
+      onClick:function(e){
+        e.preventDefault();
+        const rows = form.sectionRows || [];
+        f("sectionRows", [...rows, {ts:"",section:"",lyrics:"",energy:""}]);
+      }
+    }, "+ Add Section")
+  ),
+
+  // ── SONG LYRICS (still needed for weapons other than video) ──
+  /*#__PURE__*/React.createElement("div", {className:"field"},
+    /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Full Lyrics ",
+      /*#__PURE__*/React.createElement("span", {className:"lbl-n"}, "— optional if sections above are filled")),
+    /*#__PURE__*/React.createElement("textarea", {
+      className:"txa",
+      placeholder:"Paste your full lyrics here for additional AI context.",
+      value:form.lyrics,
+      onChange:e=>f("lyrics",e.target.value),
+      style:{minHeight:120,fontFamily:"JetBrains Mono,monospace",fontSize:12,lineHeight:1.8}
+    })
+  ), /*#__PURE__*/React.createElement("div", {
     className: "field"
   }, /*#__PURE__*/React.createElement("label", {
     className: "lbl"
