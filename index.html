@@ -916,6 +916,7 @@ const buildSinglePrompt = c => "".concat(c.dna, ", ").concat(c.tag);
 function VideoEngine(_ref0) {
   var _results$clips;
   let showToast = _ref0.showToast;
+  let addHistory = _ref0.addHistory || function() {};
   const getVaultChars = () => { try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} };
   const _useState19 = useState(getVaultChars),
     _useState20 = _slicedToArray(_useState19, 2),
@@ -5119,7 +5120,8 @@ function HitWizard() {
         return /*#__PURE__*/React.createElement(BudgetPlanner, props);
       case "video":
         return /*#__PURE__*/React.createElement(VideoEngine, {
-          showToast: st
+          showToast: st,
+          addHistory: addHistory
         });
       case "vault":
         return /*#__PURE__*/React.createElement(CharacterVault, {
