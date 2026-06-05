@@ -239,7 +239,27 @@ function toText(r, title) {
       var _ref2 = _slicedToArray(_ref, 2);
       const k = _ref2[0];
       const v = _ref2[1];
-      if (typeof v === "string") o += "[".concat(k.toUpperCase(), "]\n").concat(v, "\n\n");else if (Array.isArray(v)) o += "[".concat(k.toUpperCase(), "]\n").concat(v.join("\n"), "\n\n");else if (v && typeof v === "object") {
+      if (typeof v === "string") {
+        o += "[".concat(k.toUpperCase(), "]\n").concat(v, "\n\n");
+      } else if (Array.isArray(v)) {
+        // Check if it's an array of objects (clips) or strings
+        if (v.length > 0 && typeof v[0] === "object") {
+          o += "[".concat(k.toUpperCase(), "]\n");
+          v.forEach((item, idx) => {
+            o += "\n" + "─".repeat(50) + "\n";
+            o += "CLIP " + (item.number || idx + 1) + " | " + (item.timestamp || "") + " | " + (item.type || "") + "\n";
+            if (item.section) o += "SECTION: " + item.section + "\n";
+            if (item.lyricMoment) o += "LYRIC: " + item.lyricMoment + "\n";
+            if (item.emotionalEnergy) o += "ENERGY: " + item.emotionalEnergy + "\n";
+            if (item.sceneDescription) o += "SCENE: " + item.sceneDescription + "\n";
+            if (item.characters && item.characters.length) o += "CHARACTERS: " + item.characters.join(", ") + "\n";
+            if (item.grokPrompt) o += "\nGROK PROMPT:\n" + item.grokPrompt + "\n";
+          });
+          o += "\n";
+        } else {
+          o += "[".concat(k.toUpperCase(), "]\n").concat(v.join("\n"), "\n\n");
+        }
+      } else if (v && typeof v === "object") {
         o += "\n--- ".concat(k.toUpperCase(), " ---\n");
         walk(v);
       }
@@ -1007,8 +1027,8 @@ function VideoEngine(_ref0) {
       const totalSecs = getSeconds();
       const clipLen = parseInt(form.clipLength || 10);
       const rawClips = Math.ceil(totalSecs / clipLen);
-      // Cap at 30 clips max to prevent JSON failures — Full Music Video uses 5s clips for longer songs
-      const totalClips = Math.min(rawClips, 30);
+      // Cap at 50 clips — 10 batches of 5 — handles songs up to ~8 minutes at 10s clips
+      const totalClips = Math.min(rawClips, 50);
       const arollCount = Math.ceil(totalClips * 0.65);
       const brollCount = totalClips - arollCount;
       const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
@@ -1057,9 +1077,16 @@ function VideoEngine(_ref0) {
         capCutGuide: "Import clips in numbered order. A-roll on main track. B-roll as overlays. Match cuts to lyric beats. Color grade warm golden throughout.",
         clips: allClips
       });
-      const p = parseJ(raw);
+      const p = JSON.parse(raw);
       setResults(p);
-      showToast("Shooting script ready! ".concat(p.totalClips, " clips generated."), "🎬");
+      addHistory({
+        type: "video",
+        weapon: "Video Engine",
+        title: p.songTitle || "Video Script",
+        preview: (p.clips ? p.clips.length : p.totalClips) + " clips — " + (p.songTitle || "Video Script"),
+        result: p
+      });
+      showToast("Shooting script ready! ".concat(p.clips ? p.clips.length : p.totalClips, " clips generated."), "🎬");
     } catch (e) {
       setErr("Script generation failed: ".concat(e.message));
     }
@@ -1138,7 +1165,7 @@ function VideoEngine(_ref0) {
       color: "var(--muted)",
       marginTop: 2
     }
-  }, vt.desc))))), form.videoType === "full-mv" && /*#__PURE__*/React.createElement("div", {
+  }, vt.desc))))), /*#__PURE__*/React.createElement("div", {
     className: "field"
   }, /*#__PURE__*/React.createElement("label", {
     className: "lbl"
