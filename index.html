@@ -1037,14 +1037,16 @@ function VideoEngine(_ref0) {
       // ── CHUNKED VIDEO GENERATION — batches of 10 clips to prevent JSON breaks ──
       const BATCH_SIZE = 5;
       const totalBatches = Math.ceil(totalClips / BATCH_SIZE);
-      const allClips = [];
 
-      for (let batch = 0; batch < totalBatches; batch++) {
+      showToast("Generating " + totalClips + " clips in parallel — should take 30-60 seconds...", "\u26A1");
+
+      // ── PARALLEL GENERATION — all batches fire simultaneously ──
+      const batchPromises = Array.from({length: totalBatches}, function(_, batch) {
         const bStart = batch * BATCH_SIZE + 1;
         const bEnd = Math.min(bStart + BATCH_SIZE - 1, totalClips);
-        const batchRaw = await hwAI(
+        return hwAI(
           "You are an expert AI music video director who has produced thousands of music video clips. You follow the COMPLETE MASTER SCROLL doctrine every single prompt.\n\n═══ CLOTHING RULES — NON-NEGOTIABLE ═══\n- Every character FULLY CLOTHED at all times. No exceptions.\n- CELINE outfits: always specify FULL garment with explicit coverage — dress length (midi, maxi, mini with tights), neckline (high neck, cowl, v-neck modest), sleeves or straps. NEVER vague.\n- Example good outfit: deep burgundy velvet midi dress, modest cowl neckline, thin straps, fitted through waist, skirt falling to mid-calf\n- Example bad outfit: red dress (too vague — Grok invents exposure)\n- NO bare midriff, NO plunging necklines, NO lingerie unless explicitly bedroom scene with pajamas fully specified\n- KIKO outfits: always specify shirt type, collar, trousers or jeans. Never shirtless.\n- WARDROBE FOLLOWS THE STORY — not a clip timer. If the entire song is set at a gym, CELINE wears gym wear throughout. If the story moves from bedroom to rooftop to street, the outfit changes with the location and scene. NEVER change outfit mid-scene or mid-location for no story reason.\n- Outfits are determined by the song section timestamps and scene descriptions provided. Read them and dress accordingly.\n- For ballads with multiple settings: outfit changes happen when the STORY moves to a new location or time of day — not randomly.\n- One song can have one outfit if the entire song is one continuous scene. That is correct storytelling.\n\n═══ LOCATION RULES ═══\n- Locations follow the STORY and the section timestamps provided. If the song is at a gym, every clip is at the gym. If the story moves from bedroom to rooftop, the location changes when the SCENE changes — not on a timer.\n- Available locations when story calls for them: luxury bedroom, living room with fireplace, penthouse with city views, rooftop terrace at golden hour, hallway with art, kitchen marble counters, walk-in closet, garden at dusk, urban street at night, hotel suite, bathroom vanity, balcony with skyline, gym, cafe, restaurant, park\n- ALWAYS describe location in detail regardless of how many clips use it: furniture, floor type, window views, lighting fixtures\n- For bedroom scenes: always describe the bed in full — king-size upholstered bed frame, velvet headboard, silk duvet in [color], matching pillows, bedside lamp with warm amber glow\n- CONTRAST outfit against setting when possible: dark dress on light bedding, light dress in dark moody room\n\n═══ A-ROLL RULES (performance clips) ═══\n- EXACTLY 1 PERSON always — lead singer only\n- Mouth: lips PARTED SLIGHTLY as if mid-breath — NOT open talking, NOT closed shut\n- NO talking. NO mouthing words exaggeratedly. Grok animates the singing — just position lips naturally parted\n- Body facing camera with slight angle — not robotically straight\n- Eye contact: direct to camera lens, NOT looking off to side\n- NEVER describe singing as talking, speaking, or mouthing\n\n═══ B-ROLL RULES (story clips) ═══\n- READ THE LYRIC LITERALLY — the lyric is the shot list\n- Count every human mentioned in the lyric — that is your person count\n- One person in lyric = EXACTLY 1 PERSON. Two people = EXACTLY 2 PEOPLE.\n- Objects mentioned must appear: car, phone, gym, fireplace — show it\n- B-roll CAN have characters talking to each other naturally in conversation scenes\n- Two-person scenes: CELINE described FIRST always, then second character\n\n═══ PROMPT STRUCTURE every clip ═══\n1. EXACTLY N PERSON/PEOPLE in scene\n2. FULL CHARACTER DNA — never just names, Grok ignores names\n3. COMPLETE OUTFIT with explicit coverage and length\n4. LOCATION fully described with furniture and floor type\n5. SPATIAL ANCHORING — 3-4 objects with exact distances and directions\n6. TRACKING CAMERA always moving, eye level, 18-inch formula for close-ups\n7. 5-7 MICRO-MOVEMENTS — jaw tightens, eyebrow arches, breath visible, hips shift, finger traces collarbone\n8. WARM GOLDEN LIGHTING — direction and source described\n9. Consistency tags LAST\n\n═══ BANNED WORDS ═══\npowerful, fierce, intense, passionate power, vulnerable, yearning, sultry, seductive\nUSE INSTEAD: specific physical descriptions — eyebrows raised slightly, head tilts 3 degrees, shoulders drop half an inch, slight smirk left corner\n\n═══ LIGHTING RULES ═══\n- Always warm golden — mandatory every single clip\n- Specify source: fireplace glow, pendant lamp amber, afternoon sun through sheer curtain, candlelight\n- Never cold blue lighting for performance shots\n- Bedroom lighting: layered — bedside lamp warm amber + moonlight or city glow through window\n\nNo apostrophes in string values. Under 300 words per grokPrompt. Respond ONLY with valid JSON.",
-          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\nCHARACTER ROLES — who performs and who acts:\n" + (function(){
+                    "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\nCHARACTER ROLES — who performs and who acts:\n" + (function(){
             const vaultChars = (function(){ try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} })();
             return (form.selectedChars||[]).map(function(cid){
               const char = vaultChars.find(function(c){return c.id===cid;})||{name:cid};
@@ -1062,10 +1064,22 @@ function VideoEngine(_ref0) {
             }
             return "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips");
           })() + "\n\nSPATIAL DOCTRINE: 3-4 physical objects with exact distances. TRACKING CAMERA always moving. 5-7 micro-movements per clip. Eye level always. 18-inch formula for close-ups. Warm golden lighting.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"section\":\"section name\",\"lyricMoment\":\"exact lyric\",\"emotionalEnergy\":\"energy tone\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
-        );
-        const batchData = parseJ(batchRaw);
-        if (batchData && batchData.clips) allClips.push(...batchData.clips);
-      }
+        ).then(function(batchRaw) {
+          try {
+            const batchData = parseJ(batchRaw);
+            return (batchData && batchData.clips) ? batchData.clips : [];
+          } catch(e) {
+            console.warn("Batch " + bStart + "-" + bEnd + " parse failed:", e.message);
+            return [];
+          }
+        }).catch(function(e) {
+          console.warn("Batch " + bStart + "-" + bEnd + " failed:", e.message);
+          return [];
+        });
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      const allClips = batchResults.flat().sort(function(a, b) { return (a.number||0) - (b.number||0); });
 
       const raw = JSON.stringify({
         songTitle: form.songTitle || "My Song",
