@@ -906,6 +906,7 @@ function VideoEngine(_ref0) {
       songTitle: "",
       duration: "210",
       lyrics: "",
+      lyricsTimestamps: "",
       videoType: "60s-ad",
       selectedChars: [],
       clipLength: "10"
@@ -1006,7 +1007,7 @@ function VideoEngine(_ref0) {
         const bEnd = Math.min(bStart + BATCH_SIZE - 1, totalClips);
         const batchRaw = await hwAI(
           "You are an expert AI music video director. DOCTRINE: Full character DNA every clip. TRACKING CAMERA always moving. 3-4 spatial anchors with distances. 5-7 micro-movements per clip. Eye level camera. 18-inch formula for close-ups. Warm golden lighting. EXACTLY N PEOPLE declaration for multi-character scenes. Consistency tags last. No apostrophes. Under 300 words per grokPrompt. Respond ONLY with valid JSON.",
-          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\nLYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips") + "\n\nSPATIAL DOCTRINE: Every grokPrompt must include 3-4 physical objects with exact distances (e.g. mirror 2 feet left, window 6 feet ahead). CAMERA always tracking and moving. 5-7 specific micro-movements (jaw tightens, eyebrow arches, breath visible). Never aerial view. Eye level always.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"lyricMoment\":\"lyric line\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
+          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\n" + (form.lyricsTimestamps ? "LYRICS WITH TIMESTAMPS — map each clip to its exact moment:\n" + form.lyricsTimestamps + "\n\nEach clip must reference its exact timestamp range and the lyric being sung at that moment." : "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips")) + "\n\nSPATIAL DOCTRINE: Every grokPrompt must include 3-4 physical objects with exact distances (e.g. mirror 2 feet left, window 6 feet ahead). CAMERA always tracking and moving. 5-7 specific micro-movements (jaw tightens, eyebrow arches, breath visible). Never aerial view. Eye level always.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"lyricMoment\":\"exact lyric line at this timestamp\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
         );
         const batchData = parseJ(batchRaw);
         if (batchData && batchData.clips) allClips.push(...batchData.clips);
@@ -1194,13 +1195,33 @@ function VideoEngine(_ref0) {
     className: "lbl"
   }, "Song Lyrics ", /*#__PURE__*/React.createElement("span", {
     className: "lbl-n"
-  }, "\u2014 required. The AI reads these to plan your video.")), /*#__PURE__*/React.createElement("textarea", {
+  }, "— required. The AI reads these to plan your video.")), /*#__PURE__*/React.createElement("textarea", {
     className: "txa",
     placeholder: "Paste your full lyrics here. Include section labels like [Verse 1], [Chorus], [Bridge] if you have them.",
     value: form.lyrics,
     onChange: e => f("lyrics", e.target.value),
     style: {
       minHeight: 160,
+      fontFamily: "JetBrains Mono,monospace",
+      fontSize: 12,
+      lineHeight: 1.8
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "lbl"
+  }, "Lyrics with Timestamps ", /*#__PURE__*/React.createElement("span", {
+    className: "lbl-n"
+  }, "\u2014 required for accurate clip mapping. One line per section.")), /*#__PURE__*/React.createElement("div", {
+    style:{background:"rgba(255,184,0,.05)",border:"1px solid rgba(255,184,0,.2)",borderRadius:8,padding:"10px 12px",marginBottom:8,fontSize:11,color:"var(--muted)",lineHeight:1.7}
+  }, "Format each line as: ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}}, "0:00-0:14 \u2014 [Intro] Piano only"), /*#__PURE__*/React.createElement("br", null), "Then: ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)",fontFamily:"JetBrains Mono,monospace"}}, "0:14-0:42 \u2014 Driving through the city lights at midnight"), /*#__PURE__*/React.createElement("br", null), "This tells the AI exactly which lyric plays at which moment so every clip is perfectly matched."),
+  /*#__PURE__*/React.createElement("textarea", {
+    className: "txa",
+    placeholder: "0:00-0:14 \u2014 [Intro] Instrumental only\n0:14-0:42 \u2014 [Verse 1] First lyric line here\n0:42-1:03 \u2014 [Pre-Chorus] Building lyric line\n1:03-1:38 \u2014 [Chorus] Main hook line here\n1:38-2:05 \u2014 [Verse 2] Second verse lyric\n...",
+    value: form.lyricsTimestamps || "",
+    onChange: e => f("lyricsTimestamps", e.target.value),
+    style: {
+      minHeight: 180,
       fontFamily: "JetBrains Mono,monospace",
       fontSize: 12,
       lineHeight: 1.8
@@ -1909,31 +1930,49 @@ function LinkAutopilot({ onFetched, showToast }) {
         } catch(e) { console.warn("YouTube edge fetch failed:", e); }
       }
 
-      // ── REAL FETCH: Spotify oEmbed — browser-side (Spotify blocks server calls) ──
+      // ── REAL FETCH: Spotify via proxy edge function (bypasses CORS) ──
       if (platform === "spotify") {
         try {
           const trackId = url.match(/track\/([a-zA-Z0-9]+)/)?.[1];
           if (!trackId) throw new Error("No track ID");
-          const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
-          const resp = await fetch(oembedUrl);
+          // Route through our edge function as CORS proxy
+          const resp = await fetch("/api/spotify-fetch", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({url, trackId})
+          });
           if (resp.ok) {
             const data = await resp.json();
-            const title = data.title || "";
-            let songTitle = title, artist = "";
-            if (title.includes(" · ")) { const p = title.split(" · "); songTitle = p[0].trim(); artist = p[1].trim(); }
-            else if (title.includes(" - ")) { const p = title.split(" - "); songTitle = p[0].trim(); artist = p[1].trim(); }
-            let geniusUrl = "", lyricsFound = false;
-            try {
-              const gResp = await fetch("/api/genius-fetch", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({songTitle,artist})});
-              if (gResp.ok) { const gd = await gResp.json(); if (gd.found) { geniusUrl = gd.geniusUrl; lyricsFound = true; } }
-            } catch(e) {}
-            const result = {songTitle,artist,artworkUrl:data.thumbnail_url||"",genre:"",mood:"",bpm:"",energy:"",key:"",platform:"spotify",spotifyUrl:url,lyrics:"",geniusUrl,lyricsFound,fetchedReal:true,confidence:"medium"};
-            setFetched(result);
-            if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) { await window.HW_SONGS.save(result); const updated = await window.HW_SONGS.load(); setSavedSongs(updated||[]); }
-            showToast(lyricsFound ? "Spotify song fetched! Lyrics found on Genius." : "Spotify song fetched! Add genre and mood below.", "🟢");
-            setLoading(false); return;
+            if (data.songTitle) {
+              const result = {
+                songTitle:   data.songTitle,
+                artist:      data.artist,
+                artworkUrl:  data.artworkUrl || "",
+                genre:       "",
+                mood:        "",
+                bpm:         "",
+                energy:      "",
+                key:         "",
+                platform:    "spotify",
+                spotifyUrl:  url,
+                lyrics:      "",
+                geniusUrl:   data.geniusUrl || "",
+                lyricsFound: data.lyricsFound || false,
+                fetchedReal: true,
+                confidence:  "medium"
+              };
+              setFetched(result);
+              if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_SONGS) {
+                await window.HW_SONGS.save(result);
+                const updated = await window.HW_SONGS.load();
+                setSavedSongs(updated || []);
+              }
+              showToast(data.lyricsFound ? "Spotify fetched! Lyrics found on Genius." : "Spotify song fetched! Add genre and mood below.", "🟢");
+              setLoading(false);
+              return;
+            }
           }
-        } catch(e) { console.warn("Spotify browser fetch failed:", e); }
+        } catch(e) { console.warn("Spotify fetch failed:", e); }
       }
 
       // ── REAL FETCH: Apple Music via our edge function ──
