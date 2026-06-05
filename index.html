@@ -996,7 +996,33 @@ function VideoEngine(_ref0) {
       const brollCount = totalClips - arollCount;
       const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
       const aiToolName = {grok:"Grok AI",veo3:"Veo 3",kling:"Kling AI",runway:"Runway ML",pika:"Pika Labs"}[form.aiTool||"grok"]||"Grok AI";
-      const raw = await hwAI("You are an expert AI music video director. You understand that ".concat(aiToolName," generates ").concat(clipLen,"-second video clips. You must plan the exact number of clips needed and write complete ready-to-use ").concat(aiToolName," prompts for each one. Always use FULL character description tags \u2014 never just a name. Always include warm golden lighting. Always use TRACKING CAMERA that moves, never static. Always include micro-movements. Always start multi-character prompts with EXACTLY N PEOPLE in this scene. Describe the lead artist character CELINE first always. Include all consistency tags at the end. Respond ONLY with valid JSON."), "Create a complete video shooting script.\n\nSong: \"".concat(form.songTitle || "My Song", "\"\nVideo type: ").concat(form.videoType, " (").concat(totalSecs, " seconds)\nClip length: ").concat(clipLen, " seconds each\nTotal clips needed: ").concat(totalClips, " (").concat(arollCount, " A-roll performance clips, ").concat(brollCount, " B-roll story clips)\nAI Video Tool: ").concat(aiToolName,"\n\nCHARACTER DNA TO USE IN EVERY PROMPT:\n").concat(charDNA, "\n\nLYRICS:\n").concat(form.lyrics, "\n\nRULES FOR EVERY PROMPT:\n- Full character DNA tags every time \u2014 never just use the name\n- TRACKING CAMERA always moving \u2014 never static\n- Warm golden lighting every clip\n- Micro-movements: head tilts, eye shifts, breathing visible\n- EXACTLY N PEOPLE declaration for multi-character scenes\n- CELINE always described first\n- All consistency tags at end of every prompt\n- 9:16 vertical format\n- 250-300 words per prompt maximum\n\nDetect A-roll vs B-roll automatically:\n- A-roll = artist performing/singing to camera\n- B-roll = story scene acting out lyric narrative (third person language, action events, location references)\n\nReturn ONLY this JSON:\n{\n  \"songTitle\": \"title\",\n  \"totalClips\": ").concat(totalClips, ",\n  \"arollCount\": ").concat(arollCount, ",\n  \"brollCount\": ").concat(brollCount, ",\n  \"totalSeconds\": ").concat(totalSecs, ",\n  \"clipLength\": ").concat(clipLen, ",\n  \"grokInstructions\": \"plain English instructions for the artist about how to use these prompts in ").concat(aiToolName,"\",\n  \"capCutGuide\": \"plain English CapCut assembly instructions\",\n  \"clips\": [\n    {\n      \"number\": 1,\n      \"timestamp\": \"0:00 - 0:").concat(clipLen, "\",\n      \"type\": \"A-ROLL\",\n      \"characters\": [\"CELINE\"],\n      \"lyricMoment\": \"the lyric line this clip covers\",\n      \"sceneDescription\": \"what happens visually\",\n      \"grokPrompt\": \"the complete ready-to-paste ").concat(aiToolName," prompt with full character DNA\"\n    }\n  ]\n}"));
+      // ── CHUNKED VIDEO GENERATION — batches of 10 clips to prevent JSON breaks ──
+      const BATCH_SIZE = 10;
+      const totalBatches = Math.ceil(totalClips / BATCH_SIZE);
+      const allClips = [];
+
+      for (let batch = 0; batch < totalBatches; batch++) {
+        const bStart = batch * BATCH_SIZE + 1;
+        const bEnd = Math.min(bStart + BATCH_SIZE - 1, totalClips);
+        const batchRaw = await hwAI(
+          "You are an expert AI music video director. DOCTRINE: Full character DNA every clip. TRACKING CAMERA always moving. 3-4 spatial anchors with distances. 5-7 micro-movements per clip. Eye level camera. 18-inch formula for close-ups. Warm golden lighting. EXACTLY N PEOPLE declaration for multi-character scenes. Consistency tags last. No apostrophes. Under 300 words per grokPrompt. Respond ONLY with valid JSON.",
+          "Create clips " + bStart + " to " + bEnd + " of " + totalClips + " total.\n\nSong: \"" + (form.songTitle || "My Song") + "\"\nVideo type: " + form.videoType + " (" + totalSecs + "s total)\nClip length: " + clipLen + "s each\nAI Tool: " + aiToolName + "\n\nCHARACTER DNA (use in full every clip):\n" + charDNA + "\n\nLYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips") + "\n\nSPATIAL DOCTRINE: Every grokPrompt must include 3-4 physical objects with exact distances (e.g. mirror 2 feet left, window 6 feet ahead). CAMERA always tracking and moving. 5-7 specific micro-movements (jaw tightens, eyebrow arches, breath visible). Never aerial view. Eye level always.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"lyricMoment\":\"lyric line\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
+        );
+        const batchData = parseJ(batchRaw);
+        if (batchData && batchData.clips) allClips.push(...batchData.clips);
+      }
+
+      const raw = JSON.stringify({
+        songTitle: form.songTitle || "My Song",
+        totalClips,
+        arollCount,
+        brollCount,
+        totalSeconds: totalSecs,
+        clipLength: clipLen,
+        grokInstructions: "Open " + aiToolName + " and start ONE new chat. Paste ALL clips in order in the SAME chat — never start a new chat mid-video. Use the Extend button after each clip. Character consistency requires same session.",
+        capCutGuide: "Import clips in numbered order. A-roll on main track. B-roll as overlays. Match cuts to lyric beats. Color grade warm golden throughout.",
+        clips: allClips
+      });
       const p = parseJ(raw);
       setResults(p);
       showToast("Shooting script ready! ".concat(p.totalClips, " clips generated."), "🎬");
