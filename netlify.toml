@@ -3,6 +3,10 @@
   functions = "functions"
   edge_functions = "netlify/edge-functions"
 
+# ── SCHEDULED FUNCTIONS ──
+[functions."supabase-keepalive"]
+  schedule = "0 9 */3 * *"
+
 [[redirects]]
   from = "/auth/callback"
   to = "/auth/callback/index.html"
