@@ -4,8 +4,13 @@
 // Supabase pauses after 7 days — we ping every 3 days = always safe
 
 const handler = async (event) => {
-  const SUPABASE_URL = process.env.SUPABASE_URL || "https://vklwiqbglmhyjuenysal.supabase.co";
+  const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SUPABASE_URL) {
+    console.error("Keep-alive: SUPABASE_URL not set");
+    return { statusCode: 500, body: "Missing Supabase URL" };
+  }
 
   if (!SUPABASE_KEY) {
     console.error("Keep-alive: SUPABASE_SERVICE_ROLE_KEY not set");
