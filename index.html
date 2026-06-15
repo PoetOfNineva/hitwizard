@@ -2579,11 +2579,47 @@ function CampaignForge(_ref10) {
       "Spiritual": ["spiritual", "soulful", "meditative"],
       "Nostalgic": ["nostalgic", "wistful", "bittersweet", "cinematic"]
     };
+    let best = null;
+    let bestIndex = Infinity;
     for (const opt of options) {
       const keywords = keywordMap[opt] || [opt.toLowerCase()];
-      if (keywords.some(kw => lower.includes(kw))) return opt;
+      for (const kw of keywords) {
+        const idx = lower.indexOf(kw);
+        if (idx !== -1 && idx < bestIndex) {
+          bestIndex = idx;
+          best = opt;
+        }
+      }
     }
-    return fallback;
+    return best || fallback;
+  };
+
+  const [storyLoading, setStoryLoading] = React.useState(false);
+
+  // When the user finishes pasting/editing lyrics, analyze them with AI
+  // and auto-fill "What Is This Song About" if it's currently empty —
+  // saves the user from having to articulate it themselves.
+  const lastAnalyzedLyrics = React.useRef("");
+  const analyzeLyricsForStory = async () => {
+    const lyrics = form.lyrics.trim();
+    if (!lyrics || lyrics.length < 20) return;
+    if (form.story && form.story.trim()) return; // don't overwrite user's own text
+    if (lyrics === lastAnalyzedLyrics.current) return; // avoid re-analyzing unchanged lyrics
+    lastAnalyzedLyrics.current = lyrics;
+    setStoryLoading(true);
+    try {
+      const raw = await hwAI(
+        "You are a music analyst. Read song lyrics and describe in 1-2 sentences what the song is about and what feeling it conveys — written as if the artist is describing their own song. Respond with plain text only, no JSON, no quotes.",
+        "Read these lyrics and describe what this song is about and what a listener should feel:\n\n".concat(lyrics)
+      );
+      const cleaned = raw.trim().replace(/^["']|["']$/g, "");
+      if (cleaned && (!form.story || !form.story.trim())) {
+        setForm(p => _objectSpread(_objectSpread({}, p), {}, { story: cleaned }));
+      }
+    } catch (e) {
+      console.warn("Lyrics analysis failed:", e);
+    }
+    setStoryLoading(false);
   };
 
   const onAutopilotFetch = (meta) => {
@@ -2747,6 +2783,7 @@ function CampaignForge(_ref10) {
     placeholder: "Paste your full or partial lyrics here. This is what makes HitWizard different \u2014 your ad copy comes directly from your actual words.",
     value: form.lyrics,
     onChange: e => f("lyrics", e.target.value),
+    onBlur: () => analyzeLyricsForStory(),
     style: {
       minHeight: 120,
       fontFamily: "JetBrains Mono,monospace",
@@ -2759,7 +2796,7 @@ function CampaignForge(_ref10) {
     className: "lbl"
   }, "What Is This Song About ", /*#__PURE__*/React.createElement("span", {
     className: "lbl-n"
-  }, "\u2014 optional but helps")), /*#__PURE__*/React.createElement("textarea", {
+  }, storyLoading ? "\u2014 analyzing your lyrics..." : "\u2014 optional but helps, auto-filled from lyrics")), /*#__PURE__*/React.createElement("textarea", {
     className: "txa",
     placeholder: "What inspired this song? What should a listener feel?",
     value: form.story,
