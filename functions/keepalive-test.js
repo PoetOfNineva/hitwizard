@@ -5,13 +5,16 @@
 exports.handler = async (event) => {
   // Security: only allow from hitwizardai.com or with secret header
   const authHeader = event.headers["x-keepalive-secret"];
-  const EXPECTED_SECRET = process.env.KEEPALIVE_SECRET || "hw-keepalive-2026";
-  
-  if (authHeader !== EXPECTED_SECRET) {
+  const EXPECTED_SECRET = process.env.KEEPALIVE_SECRET;
+
+  if (!EXPECTED_SECRET || authHeader !== EXPECTED_SECRET) {
     return { statusCode: 401, body: "Unauthorized" };
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL || "https://vklwiqbglmhyjuenysal.supabase.co";
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  if (!SUPABASE_URL) {
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: "SUPABASE_URL not configured" }) };
+  }
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_KEY) {
