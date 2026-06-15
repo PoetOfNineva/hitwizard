@@ -331,21 +331,15 @@ function DownloadModal(_ref3) {
 // ── AI CALL ──
 async function hwAI(sys, usr) {
   let retries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 2;
-  const API_KEY = await fetch("/api/key").then(r=>r.text()).catch(()=>null) || window.__HW_KEY__;
   for (let i = 0; i <= retries; i++) {
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/claude", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-api-key": API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
           max_tokens: 4000,
-          stream: true,
           system: sys,
           messages: [{role: "user", content: usr}]
         })
