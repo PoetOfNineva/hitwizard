@@ -2515,8 +2515,8 @@ function CampaignForge(_ref10) {
   let addHistory = _ref10.addHistory,
     st = _ref10.st;
   const _useState31 = useState(() => {
-      try { const s = localStorage.getItem("hw_cf"); return s ? JSON.parse(s) : {songTitle:"",artist:"",genre:"",mood:"",isAI:false,similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
-      catch { return {songTitle:"",artist:"",genre:"",mood:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
+      try { const s = localStorage.getItem("hw_cf"); return s ? JSON.parse(s) : {songTitle:"",artist:"",genre:"",mood:"",genreDetail:"",moodDetail:"",isAI:false,similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
+      catch { return {songTitle:"",artist:"",genre:"",mood:"",genreDetail:"",moodDetail:"",similar:"",audience:"",budget:"100",goal:"More Spotify Streams",lyrics:"",story:""}; }
     }),
     _useState32 = _slicedToArray(_useState31, 2),
     form = _useState32[0],
@@ -2547,17 +2547,58 @@ function CampaignForge(_ref10) {
   const f = (k, v) => setForm(p => _objectSpread(_objectSpread({}, p), {}, {
     [k]: v
   }));
-  const onAutopilotFetch = (meta) => {
-    setForm(p => _objectSpread(_objectSpread({}, p), {}, {
-      songTitle: meta.songTitle || p.songTitle,
-      artist: meta.artist || p.artist,
-      // Always overwrite genre/mood — never carry over from previous song
-      genre: meta.genre || "",
-      mood: meta.mood || ""
-    }));
-  };
   const genres = ["Pop", "Hip-Hop/Rap", "R&B/Soul", "Rock", "Electronic/EDM", "Country", "Latin", "Afrobeats", "Jazz", "Indie", "Gospel", "Other"];
   const moods = ["Energetic / Upbeat", "Romantic / Love", "Sad / Melancholic", "Motivational", "Party / Club", "Chill / Relaxed", "Intense / Aggressive", "Spiritual", "Nostalgic"];
+
+  // Map a free-text AI genre/mood description to the closest dropdown option.
+  // The AI returns rich descriptions (e.g. "Baroque Pop, Dream Pop, Indie Pop")
+  // but the <select> only accepts exact values from a fixed list — so we
+  // keyword-match to find the best fit, falling back to "Other"/first option.
+  const mapToOption = (text, options, fallback) => {
+    if (!text) return "";
+    const lower = text.toLowerCase();
+    const keywordMap = {
+      "Pop": ["pop"],
+      "Hip-Hop/Rap": ["hip-hop", "hip hop", "rap", "trap"],
+      "R&B/Soul": ["r&b", "rnb", "soul", "neo soul"],
+      "Rock": ["rock", "punk", "metal", "grunge"],
+      "Electronic/EDM": ["electronic", "edm", "house", "techno", "synth", "dance"],
+      "Country": ["country", "folk", "americana"],
+      "Latin": ["latin", "reggaeton", "salsa", "bachata"],
+      "Afrobeats": ["afrobeat", "afro"],
+      "Jazz": ["jazz", "blues"],
+      "Indie": ["indie", "alternative", "dream pop", "baroque pop", "art pop"],
+      "Gospel": ["gospel", "christian", "worship"],
+      "Energetic / Upbeat": ["energetic", "upbeat", "happy", "feel good", "uplifting"],
+      "Romantic / Love": ["romantic", "love", "sensual"],
+      "Sad / Melancholic": ["sad", "melancholic", "melancholy", "heartbreak", "somber"],
+      "Motivational": ["motivational", "inspiring", "empowering", "anthemic"],
+      "Party / Club": ["party", "club", "festival"],
+      "Chill / Relaxed": ["chill", "relaxed", "calm", "mellow", "dreamy"],
+      "Intense / Aggressive": ["intense", "aggressive", "angry", "dark"],
+      "Spiritual": ["spiritual", "soulful", "meditative"],
+      "Nostalgic": ["nostalgic", "wistful", "bittersweet", "cinematic"]
+    };
+    for (const opt of options) {
+      const keywords = keywordMap[opt] || [opt.toLowerCase()];
+      if (keywords.some(kw => lower.includes(kw))) return opt;
+    }
+    return fallback;
+  };
+
+  const onAutopilotFetch = (meta) => {
+    setForm(p => _objectSpread(_objectSpread({}, p), {}, {
+      songTitle: meta.songTitle || "",
+      artist: meta.artist || "",
+      // Always overwrite — never carry over from previous song
+      genre: mapToOption(meta.genre, genres, "Other"),
+      mood: mapToOption(meta.mood, moods, ""),
+      genreDetail: meta.genre || "",
+      moodDetail: meta.mood || "",
+      lyrics: meta.lyrics || "",
+      similar: meta.similar || ""
+    }));
+  };
   const forge = async () => {
     if (!form.songTitle || !form.artist || !form.genre) {
       setErr("Please fill in Song Title, Artist Name and Genre before continuing.");
@@ -2894,12 +2935,12 @@ function PlaylistStrike(_ref19) {
     }
   }, "Your Song Details"), /*#__PURE__*/React.createElement(LinkAutopilot, {
     onFetched: (meta) => {
-      if(meta.songTitle) f("songTitle", meta.songTitle);
-      if(meta.artist) f("artist", meta.artist);
-      if(meta.genre) f("genre", meta.genre);
-      if(meta.mood) f("mood", meta.mood);
-      if(meta.lyrics) f("lyrics", meta.lyrics);
-      st("Song loaded automatically!", "⚡");
+      f("songTitle", meta.songTitle || "");
+      f("artist", meta.artist || "");
+      f("genre", meta.genre || "");
+      f("mood", meta.mood || "");
+      f("lyrics", meta.lyrics || "");
+      st("Song loaded — all fields updated!", "⚡");
     },
     showToast: st
   }), /*#__PURE__*/React.createElement(ErrBox, {
