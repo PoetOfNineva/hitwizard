@@ -2352,11 +2352,40 @@ function LinkAutopilot({ onFetched, showToast }) {
     setLoading(false);
   };
 
-  const confirmAndFire = () => {
+  const confirmAndFire = async () => {
     if (!fetched) return;
-    onFetched(fetched);
-    // Keep fetched visible so Genius link stays accessible
-    showToast("Song loaded — fill in mood/BPM if needed, then generate!", "⚡");
+
+    let enriched = fetched;
+
+    // If genre/mood/bpm/key are missing, ask the AI to research and fill them
+    // based on the real title + artist we fetched.
+    const needsEnrichment = !fetched.genre || !fetched.mood;
+    if (needsEnrichment && fetched.songTitle && fetched.artist) {
+      showToast("Researching genre, mood, BPM...", "🔍");
+      try {
+        const enrichPrompt = `You are a music metadata expert. For the real song "${fetched.songTitle}" by "${fetched.artist}", provide accurate genre, mood, BPM, key, and similar artists based on your knowledge of this actual song. If you are not confident about a field, return an empty string for it rather than guessing.\n\nReturn ONLY this JSON (no extra text):\n{"genre":"","mood":"","bpm":0,"key":"","similar":""}`;
+        const raw = await hwAI(
+          "You are a music metadata expert with deep knowledge of real songs, genres, moods, and chart history. Never invent details for songs you do not recognize — return empty strings instead. Respond ONLY with valid JSON.",
+          enrichPrompt
+        );
+        const meta = parseJ(raw);
+        enriched = {
+          ...fetched,
+          genre: fetched.genre || meta.genre || "",
+          mood: fetched.mood || meta.mood || "",
+          bpm: fetched.bpm || meta.bpm || "",
+          key: fetched.key || meta.key || "",
+          similar: fetched.similar || meta.similar || ""
+        };
+        setFetched(enriched);
+      } catch (e) {
+        console.warn("Enrichment failed:", e);
+        // Fall through with whatever we already had
+      }
+    }
+
+    onFetched(enriched);
+    showToast("Song loaded — all fields updated!", "⚡");
   };
 
   const loadFromVault = (song) => {
@@ -3214,7 +3243,7 @@ function ContentArsenal(_ref20) {
     style: {
       marginBottom: 16
     }
-  }, "Your Song Details"), /*#__PURE__*/React.createElement(LinkAutopilot, {onFetched:(meta)=>{if(meta.songTitle)f("songTitle",meta.songTitle);if(meta.artist)f("artist",meta.artist);if(meta.genre)f("genre",meta.genre);if(meta.mood)f("mood",meta.mood);if(meta.lyrics)f("lyrics",meta.lyrics);st("Song loaded!","⚡");},showToast:st}), React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
+  }, "Your Song Details"), /*#__PURE__*/React.createElement(LinkAutopilot, {onFetched:(meta)=>{f("songTitle",meta.songTitle||"");f("artist",meta.artist||"");f("genre",meta.genre||"");f("mood",meta.mood||"");f("lyrics",meta.lyrics||"");f("similar",meta.similar||"");st("Song loaded — all fields updated!","⚡");},showToast:st}), React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
     msg: err
   }), /*#__PURE__*/React.createElement("div", {
     className: "g2"
@@ -3832,7 +3861,7 @@ function HookLab(_ref44) {
       marginBottom: 16,
       lineHeight: 1.6
     }
-  }, "The first 3 seconds decide everything. Paste your lyrics and get 8 completely different hooks \u2014 written from your actual words. The one that makes someone stop their thumb at 2am is in here."), /*#__PURE__*/React.createElement(LinkAutopilot, {onFetched:(meta)=>{if(meta.songTitle)f("songTitle",meta.songTitle);if(meta.artist)f("artist",meta.artist);if(meta.genre)f("genre",meta.genre);if(meta.mood)f("mood",meta.mood);if(meta.lyrics)f("lyrics",meta.lyrics);st("Song loaded!","⚡");},showToast:st}), React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
+  }, "The first 3 seconds decide everything. Paste your lyrics and get 8 completely different hooks \u2014 written from your actual words. The one that makes someone stop their thumb at 2am is in here."), /*#__PURE__*/React.createElement(LinkAutopilot, {onFetched:(meta)=>{f("songTitle",meta.songTitle||"");f("artist",meta.artist||"");f("genre",meta.genre||"");f("lyrics",meta.lyrics||"");st("Song loaded — all fields updated!","⚡");},showToast:st}), React.createElement(ArtistTypeSelector, {form:form, f:f}), React.createElement(ErrBox, {
     msg: err
   }), /*#__PURE__*/React.createElement("div", {
     className: "g2"
