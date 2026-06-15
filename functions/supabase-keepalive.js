@@ -1,9 +1,7 @@
 // HitWizard — Supabase Keep-Alive Scheduled Function
-// Runs every 3 days via Netlify scheduled functions
+// Runs every 3 days via Netlify scheduled functions (config in netlify.toml)
 // Prevents Supabase free tier from pausing due to inactivity
 // Supabase pauses after 7 days — we ping every 3 days = always safe
-
-const { schedule } = require("@netlify/functions");
 
 const handler = async (event) => {
   const SUPABASE_URL = process.env.SUPABASE_URL || "https://vklwiqbglmhyjuenysal.supabase.co";
@@ -29,7 +27,7 @@ const handler = async (event) => {
       const timestamp = new Date().toISOString();
       console.log(`✅ Supabase keep-alive ping successful at ${timestamp}`);
       console.log(`Status: ${pingResp.status}`);
-      
+
       // Also ping the characters table
       const charPing = await fetch(`${SUPABASE_URL}/rest/v1/characters?select=id&limit=1`, {
         headers: {
@@ -64,6 +62,5 @@ const handler = async (event) => {
   }
 };
 
-// Run every 3 days at 9am UTC
-// Cron: "0 9 */3 * *" = minute 0, hour 9, every 3rd day, any month, any weekday
-module.exports.handler = schedule("0 9 */3 * *", handler);
+// Schedule is configured in netlify.toml: [functions.supabase-keepalive] schedule = "0 9 */3 * *"
+module.exports.handler = handler;
