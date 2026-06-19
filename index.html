@@ -2358,14 +2358,18 @@ function LinkAutopilot({ onFetched, showToast }) {
     let enriched = fetched;
 
     // If genre/mood/bpm/key are missing, ask the AI to research and fill them
-    // based on the real title + artist we fetched.
+    // based on the real title + artist we fetched. We ask the AI to pick
+    // directly from our fixed dropdown option lists so the result always
+    // matches an actual <option> — no fragile keyword-matching needed.
     const needsEnrichment = !fetched.genre || !fetched.mood;
     if (needsEnrichment && fetched.songTitle && fetched.artist) {
       showToast("Researching genre, mood, BPM...", "🔍");
       try {
-        const enrichPrompt = `You are a music metadata expert. For the real song "${fetched.songTitle}" by "${fetched.artist}", provide accurate genre, mood, BPM, key, and similar artists based on your knowledge of this actual song. If you are not confident about a field, return an empty string for it rather than guessing.\n\nReturn ONLY this JSON (no extra text):\n{"genre":"","mood":"","bpm":0,"key":"","similar":""}`;
+        const genreOptions = ["Pop", "Hip-Hop/Rap", "R&B/Soul", "Rock", "Electronic/EDM", "Country", "Latin", "Afrobeats", "Jazz", "Indie", "Gospel", "Other"];
+        const moodOptions = ["Energetic / Upbeat", "Romantic / Love", "Sad / Melancholic", "Motivational", "Party / Club", "Chill / Relaxed", "Intense / Aggressive", "Spiritual", "Nostalgic"];
+        const enrichPrompt = `You are a music metadata expert. For the real song "${fetched.songTitle}" by "${fetched.artist}", determine accurate metadata based on your knowledge of this actual song.\n\nFor "genre", you MUST pick exactly one value from this list: ${JSON.stringify(genreOptions)}\nFor "mood", you MUST pick exactly one value from this list: ${JSON.stringify(moodOptions)}\nPick whichever option is the closest fit — never invent a new value, never leave it blank if you recognize the song.\nFor "bpm" and "key", give your best real estimate. For "similar", list 3-5 real similar artists.\nIf you genuinely do not recognize this song, return empty strings for all fields instead of guessing.\n\nReturn ONLY this JSON (no extra text):\n{"genre":"","mood":"","bpm":0,"key":"","similar":""}`;
         const raw = await hwAI(
-          "You are a music metadata expert with deep knowledge of real songs, genres, moods, and chart history. Never invent details for songs you do not recognize — return empty strings instead. Respond ONLY with valid JSON.",
+          "You are a music metadata expert with deep knowledge of real songs, genres, moods, and chart history. You must pick from the exact option lists provided — never invent your own genre or mood labels. Respond ONLY with valid JSON.",
           enrichPrompt
         );
         const meta = parseJ(raw);
@@ -2626,14 +2630,18 @@ function CampaignForge(_ref10) {
     setForm(p => _objectSpread(_objectSpread({}, p), {}, {
       songTitle: meta.songTitle || "",
       artist: meta.artist || "",
-      // Always overwrite — never carry over from previous song
-      genre: mapToOption(meta.genre, genres, "Other"),
-      mood: mapToOption(meta.mood, moods, ""),
+      // Always overwrite — never carry over from previous song.
+      // The AI is asked to return an exact option match; if it returns one,
+      // use it directly. Otherwise fall back to keyword-based mapping.
+      genre: genres.includes(meta.genre) ? meta.genre : mapToOption(meta.genre, genres, "Other"),
+      mood: moods.includes(meta.mood) ? meta.mood : mapToOption(meta.mood, moods, ""),
       genreDetail: meta.genre || "",
       moodDetail: meta.mood || "",
       lyrics: meta.lyrics || "",
-      similar: meta.similar || ""
+      similar: meta.similar || "",
+      story: "" // clear so analyzeLyricsForStory can auto-fill for the new song
     }));
+    lastAnalyzedLyrics.current = ""; // reset so new lyrics get analyzed fresh
   };
   const forge = async () => {
     if (!form.songTitle || !form.artist || !form.genre) {
