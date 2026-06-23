@@ -5270,34 +5270,39 @@ function HitWizard() {
   // ── AUTH GATE ──
   const [authReady, setAuthReady] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
-  // If coming from landing page after sign-in, give Supabase extra time
-  const fromLanding = window.location.search.includes('from=landing');
 
   React.useEffect(() => {
-    // Give extra time if coming from landing page sign-in
-    const delay = fromLanding ? 1500 : 0;
-    const check = () => {
+    const handleReady = () => {
+      setIsLoggedIn(!!window.HW_AUTH.user);
+      setAuthReady(true);
+    };
+
+    // Poll until HW_AUTH initializes
+    const poll = setInterval(() => {
       if (window.HW_AUTH && window.HW_AUTH.ready) {
-        setIsLoggedIn(window.HW_AUTH.isLoggedIn());
+        clearInterval(poll);
+        setIsLoggedIn(!!window.HW_AUTH.user);
         setAuthReady(true);
-        // Clean up URL param
-        if (fromLanding) {
-          window.history.replaceState({}, '', '/');
-        }
-      } else {
-        setTimeout(check, 100);
+      }
+    }, 50);
+
+    // Also listen for auth state changes — covers post-login redirect
+    window.addEventListener("hw_auth_ready", handleReady);
+
+    // Listen for ongoing auth changes (login/logout)
+    const unsubscribe = () => {
+      if (window.HW_AUTH) {
+        window.HW_AUTH.onChange((user) => {
+          setIsLoggedIn(!!user);
+        });
       }
     };
-    setTimeout(check, delay);
-    window.addEventListener("hw_auth_ready", () => {
-      setIsLoggedIn(window.HW_AUTH.isLoggedIn());
-      setAuthReady(true);
-    });
-    if (window.HW_AUTH) {
-      window.HW_AUTH.onChange(() => {
-        setIsLoggedIn(window.HW_AUTH.isLoggedIn());
-      });
-    }
+    unsubscribe();
+
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener("hw_auth_ready", handleReady);
+    };
   }, []);
 
   // Show loading while auth initializes
@@ -5312,17 +5317,8 @@ function HitWizard() {
     }, "⚡ LOADING...");
   }
 
-  // Logged-out users → redirect to landing page
-  // But NOT if we just came from landing (give session time to settle)
-  if (!isLoggedIn && !fromLanding) {
-    if (!window.location.pathname.includes('landing')) {
-      window.location.replace('/landing.html');
-    }
-    return null;
-  }
-
-  // If fromLanding but still not logged in after waiting, send back
-  if (!isLoggedIn && fromLanding) {
+  // Not logged in — redirect to landing
+  if (!isLoggedIn) {
     window.location.replace('/landing.html');
     return null;
   }
