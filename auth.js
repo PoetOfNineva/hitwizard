@@ -40,6 +40,7 @@ window.HW_AUTH = {
   session: null,
   listeners: [],
   ready: false,
+  _initCalled: false,
 
   onChange(fn) { this.listeners.push(fn); },
   emit() { this.listeners.forEach(fn => fn(this.user, this.profile)); },
@@ -392,6 +393,8 @@ window.HW_ANALYTICS = {
 
 // ── INIT ON LOAD ──
 document.addEventListener("DOMContentLoaded", () => {
+  if (window.HW_AUTH._initCalled) return; // already called directly
+  window.HW_AUTH._initCalled = true;
   window.HW_AUTH.init().then(() => {
     window.dispatchEvent(new CustomEvent("hw_auth_ready"));
   });
