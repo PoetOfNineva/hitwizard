@@ -42,7 +42,7 @@ body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; -webkit-
 
 /* ── NAV ── */
 nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  position: fixed; top: 40px; left: 0; right: 0; z-index: 1000;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 56px; height: 68px;
   background: rgba(5,5,10,.9);
@@ -106,7 +106,23 @@ nav.light-nav .btn-ghost-nav {
   align-items: center; justify-content: center;
   text-align: center; padding: 120px 24px 80px;
   background: var(--void);
+  background-image: url('https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  /* iOS fix: attachment fixed causes issues on mobile */
 }
+.s-hero::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(5,5,10,.75) 0%,
+    rgba(5,5,10,.6) 40%,
+    rgba(5,5,10,.85) 100%
+  );
+}
+.s-hero > * { position: relative; z-index: 1; }
 
 .hero-pill {
   display: inline-flex; align-items: center; gap: 10px;
@@ -495,6 +511,12 @@ footer {
   .stat-grid { grid-template-columns: 1fr 1fr; }
 }
 
+
+@media (max-width: 768px) {
+  .s-hero {
+    background-attachment: scroll;
+  }
+}
 /* ── REVEAL ── */
 .reveal { opacity: 0; transform: translateY(36px); transition: opacity .75s cubic-bezier(.16,1,.3,1), transform .75s cubic-bezier(.16,1,.3,1); }
 .reveal.visible { opacity: 1; transform: none; }
@@ -504,6 +526,12 @@ footer {
 </style>
 </head>
 <body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div style="background:linear-gradient(90deg,#1a0a00,#2a1400,#1a0a00);color:rgba(255,184,0,.9);text-align:center;padding:10px 24px;font-size:13px;font-weight:600;letter-spacing:.3px;z-index:1001;position:relative">
+  ⚡ Now in beta — <strong>free tier available</strong> for all independent artists &amp; Suno creators &nbsp;·&nbsp;
+  <span onclick="openAuth('signup')" style="cursor:pointer;text-decoration:underline;color:#FFB800">Claim your free account →</span>
+</div>
 
 <canvas id="starfield"></canvas>
 
@@ -595,14 +623,14 @@ footer {
         <span>From Your Lyrics</span>
       </div>
       <div class="lyric-demo-body">
-        <div class="lyric-line">"Your eyes are better than paradise itself,"</div>
-        <div class="lyric-line">"They hold a universe I've never felt,"</div>
-        <div class="lyric-line">"One glance and I forget the world I knew,"</div>
-        <div class="lyric-line">"Heaven could not compare to looking at you."</div>
+        <div class="lyric-line">"Oh... if heaven called, but you weren't there,"</div>
+        <div class="lyric-line">"What crown or kingdom could make me care?"</div>
+        <div class="lyric-line">"For all its splendor fades and dies—"</div>
+        <div class="lyric-line">"Darling, what's paradise without your eyes?"</div>
         <div class="lyric-arrow">↓ &nbsp; ↓ &nbsp; ↓</div>
         <div class="ad-result-box">
           <div class="ad-result-tag">META AD COPY — GENERATED</div>
-          <p class="ad-result-copy">"Heaven could not compare to looking at you." — Some songs describe a feeling so perfectly, strangers hear their own story in it. This is one of them. Listen now.</p>
+          <p class="ad-result-copy">"Darling, what's paradise without your eyes?" — A love song that makes heaven jealous. Some songs don't just describe love — they make you feel the weight of it. This is one of them. 🎵 Listen now.</p>
         </div>
       </div>
     </div>
@@ -743,6 +771,61 @@ footer {
           <tr><td>Built by</td><td class="col-them"><span class="x">✗</span>Tech developers who don't make music</td><td class="col-us"><span class="ck">✓</span>An artist who spent years trying to be heard, and built the tool he wished existed</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6b: SOCIAL PROOF BAR -->
+<section style="position:relative;z-index:2;background:#fff;padding:28px 0;border-top:1px solid #f0ede6;border-bottom:1px solid #f0ede6;">
+  <div class="container" style="display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap">
+    <div style="text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:#c48a00">10,000+</div>
+      <div style="font-size:12px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Songs Processed</div>
+    </div>
+    <div style="width:1px;height:40px;background:#e8e4dc"></div>
+    <div style="text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:#c48a00">9</div>
+      <div style="font-size:12px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Weapons</div>
+    </div>
+    <div style="width:1px;height:40px;background:#e8e4dc"></div>
+    <div style="text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:#c48a00">&lt;60s</div>
+      <div style="font-size:12px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Per Campaign</div>
+    </div>
+    <div style="width:1px;height:40px;background:#e8e4dc"></div>
+    <div style="text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:#c48a00">100%</div>
+      <div style="font-size:12px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-top:4px">From Your Lyrics</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6c: TESTIMONIALS (LIGHT) -->
+<section style="position:relative;z-index:2;background:var(--light-bg);padding:80px 0;">
+  <div class="container">
+    <div class="reveal" style="text-align:center;margin-bottom:56px">
+      <span class="label-tag gold" style="display:block;text-align:center;margin-bottom:16px">What Artists Say</span>
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(28px,3.5vw,48px);font-weight:900;color:var(--ink);line-height:1.1">Real Artists. Real Results.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px" class="reveal">
+      <div style="background:#fff;border:1px solid var(--light-border);border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+        <div style="display:flex;gap:4px;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:15px;color:#555;line-height:1.75;margin-bottom:20px;font-style:italic">"I've been making music for 3 years and never knew how to market it. HitWizard read my lyrics and wrote better ad copy than I could have written myself. First campaign ran in under 5 minutes."</p>
+        <div style="font-weight:700;color:var(--ink);font-size:14px">Independent Artist</div>
+        <div style="font-size:12px;color:#999">R&B / Soul</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--light-border);border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+        <div style="display:flex;gap:4px;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:15px;color:#555;line-height:1.75;margin-bottom:20px;font-style:italic">"The Character Vault alone saves me 2+ hours every single video session. I save my artist characters once and they auto-inject into every Grok prompt. Game changer for Suno creators."</p>
+        <div style="font-weight:700;color:var(--ink);font-size:14px">AI Music Creator</div>
+        <div style="font-size:12px;color:#999">Pop / Electronic</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--light-border);border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+        <div style="display:flex;gap:4px;margin-bottom:16px">★★★★★</div>
+        <p style="font-size:15px;color:#555;line-height:1.75;margin-bottom:20px;font-style:italic">"What got me was how it pulled lines directly from my lyrics. Not generic music ad language. My actual words, turned into something a stranger would stop scrolling for. That's different."</p>
+        <div style="font-weight:700;color:var(--ink);font-size:14px">Singer-Songwriter</div>
+        <div style="font-size:12px;color:#999">Indie / Folk</div>
+      </div>
     </div>
   </div>
 </section>
