@@ -5268,44 +5268,32 @@ function HitWizard() {
   var _titles$page, _titles$page2;
 
   // ── AUTH GATE ──
+  // Wait for auth to initialize, then gate logged-out users
   const [authReady, setAuthReady] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
-    const handleReady = () => {
-      setIsLoggedIn(!!window.HW_AUTH.user);
-      setAuthReady(true);
-    };
-
-    // Poll until HW_AUTH initializes
-    const poll = setInterval(() => {
+    const check = () => {
       if (window.HW_AUTH && window.HW_AUTH.ready) {
-        clearInterval(poll);
-        setIsLoggedIn(!!window.HW_AUTH.user);
+        setIsLoggedIn(window.HW_AUTH.isLoggedIn());
         setAuthReady(true);
-      }
-    }, 50);
-
-    // Also listen for auth state changes — covers post-login redirect
-    window.addEventListener("hw_auth_ready", handleReady);
-
-    // Listen for ongoing auth changes (login/logout)
-    const unsubscribe = () => {
-      if (window.HW_AUTH) {
-        window.HW_AUTH.onChange((user) => {
-          setIsLoggedIn(!!user);
-        });
+      } else {
+        setTimeout(check, 100);
       }
     };
-    unsubscribe();
-
-    return () => {
-      clearInterval(poll);
-      window.removeEventListener("hw_auth_ready", handleReady);
-    };
+    check();
+    window.addEventListener("hw_auth_ready", () => {
+      setIsLoggedIn(window.HW_AUTH.isLoggedIn());
+      setAuthReady(true);
+    });
+    if (window.HW_AUTH) {
+      window.HW_AUTH.onChange(() => {
+        setIsLoggedIn(window.HW_AUTH.isLoggedIn());
+      });
+    }
   }, []);
 
-  // Show loading while auth initializes
+  // Show nothing while auth initializes (prevents flash)
   if (!authReady) {
     return React.createElement("div", {
       style: {
@@ -5317,11 +5305,24 @@ function HitWizard() {
     }, "⚡ LOADING...");
   }
 
-  // Not logged in — redirect to landing
+  // Logged-out users → redirect to cinematic landing page
   if (!isLoggedIn) {
-    window.location.replace('/landing.html');
+    // Only redirect if not already on the landing page
+    if (!window.location.pathname.includes('landing')) {
+      window.location.replace('/landing.html');
+    }
     return null;
   }
+  React.useEffect(() => {
+    // Pick up auth intent from landing page redirect
+    const intent = sessionStorage.getItem('hw_auth_intent');
+    if (intent && isLoggedIn === false && authReady) {
+      sessionStorage.removeItem('hw_auth_intent');
+      setTimeout(() => {
+        if (window.showAuthModal) window.showAuthModal(intent);
+      }, 500);
+    }
+  }, [authReady, isLoggedIn]);
     _useState100 = _slicedToArray(_useState99, 2),
     page = _useState100[0],
     setPage = _useState100[1];
@@ -5644,12 +5645,7 @@ ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getE
 </script>
 <script src="/auth.js"></script>
 <script>
-// Force init if DOMContentLoaded already fired before auth.js loaded
-if (window.HW_AUTH && !window.HW_AUTH.ready) {
-  window.HW_AUTH.init().then(() => {
-    window.dispatchEvent(new CustomEvent("hw_auth_ready"));
-  });
-}
+// AUTH UI INJECTION
 function getTierLabel(t){return{free:"Free",artist:"Artist",pro_artist:"Pro Artist",manager:"Manager",label:"Label"}[t]||"Free";}
 
 // Handle Stripe checkout return
