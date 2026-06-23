@@ -5506,19 +5506,44 @@ function updateUserCard(){
       soBtn.onclick=function(){
         soBtn.textContent="Signing out...";
         soBtn.disabled=true;
-        var doSignOut=function(){
-          try{
-            var keys=Object.keys(localStorage);
-            keys.forEach(function(k){if(k.startsWith("sb-")||k==="hw_session"||k==="hw_user")localStorage.removeItem(k);});
-          }catch(e){}
-          document.cookie.split(";").forEach(function(c){document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date(0).toUTCString()+";path=/");});
-          window.location.href=window.location.origin+"?signedout=1";
-        };
         if(window.HW_AUTH&&window.HW_AUTH.signOut){
-          window.HW_AUTH.signOut().then(doSignOut).catch(doSignOut);
-        }else{doSignOut();}
+          window.HW_AUTH.signOut().catch(function(){
+            window.location.href=window.location.origin+"?signedout=1";
+          });
+        }else{
+          window.location.href=window.location.origin+"?signedout=1";
+        }
       };
       card.parentElement.appendChild(soBtn);
+
+      // Delete Account button — danger zone
+      var existingDel=document.getElementById("hw-delete-account-btn");
+      if(!existingDel){
+        var delBtn=document.createElement("button");
+        delBtn.id="hw-delete-account-btn";
+        delBtn.textContent="🗑 Delete Account";
+        delBtn.style.cssText="width:100%;margin-top:6px;padding:8px;border-radius:10px;background:transparent;border:1px solid rgba(255,60,60,.2);color:rgba(255,107,107,.5);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;font-family:inherit;transition:all .2s;";
+        delBtn.onmouseover=function(){this.style.background="rgba(255,60,60,.08)";this.style.color="#FF6B6B";this.style.borderColor="rgba(255,60,60,.5)";};
+        delBtn.onmouseout=function(){this.style.background="transparent";this.style.color="rgba(255,107,107,.5)";this.style.borderColor="rgba(255,60,60,.2)";};
+        delBtn.onclick=function(){
+          var confirmed=window.confirm("⚠️ Permanently delete your HitWizard account?\n\nThis will erase ALL your history, characters, and saved data. This cannot be undone.");
+          if(!confirmed)return;
+          var doubleConfirm=window.confirm("Are you absolutely sure? Type OK to confirm permanent deletion.");
+          if(!doubleConfirm)return;
+          delBtn.textContent="Deleting...";
+          delBtn.disabled=true;
+          if(window.HW_AUTH&&window.HW_AUTH.deleteAccount){
+            window.HW_AUTH.deleteAccount().then(function(){
+              window.location.href=window.location.origin+"?deleted=1";
+            }).catch(function(e){
+              alert("Delete failed: "+e.message);
+              delBtn.textContent="🗑 Delete Account";
+              delBtn.disabled=false;
+            });
+          }
+        };
+        card.parentElement.appendChild(delBtn);
+      }
     }
   } else {
     card.style.cursor="pointer";card.innerHTML="";
@@ -5539,7 +5564,7 @@ function showAuthModal(mode){
   var switchText=mode==="signup"?"Already have an account? <a onclick=\"showAuthModal('signin')\">Sign In</a>":"New to HitWizard? <a onclick=\"showAuthModal('signup')\">Create Free Account</a>";
   var btnText=mode==="signup"?"Create Account":"Sign In";
   var titleText=mode==="signup"?"Create Your Account":"Welcome Back";
-  bg.innerHTML="<div class=\"auth-modal\" style=\"position:relative\"><button class=\"auth-close\" onclick=\"this.closest('.auth-modal-bg').remove()\">&#x2715;</button><div class=\"auth-logo\"><img src=\"/logo.jpg\" class=\"auth-logo-img\" alt=\"HitWizard\"></div><div class=\"auth-title\">"+titleText+"</div><div class=\"auth-sub\">Sign in to save your history and characters across all devices.</div><div class=\"auth-err\" id=\"hw-auth-err\"></div><button class=\"oauth-btn\" onclick=\"window.HW_AUTH.signInWithGoogle()\">&#x1F4F1; Continue with Google</button><button class=\"oauth-btn\" onclick=\"window.HW_AUTH.signInWithFacebook()\">&#x1F310; Continue with Facebook</button><button class=\"oauth-btn\" onclick=\"window.HW_AUTH.signInWithDiscord()\">&#x1F3AE; Continue with Discord</button><div class=\"auth-divider\"><span>or use email</span></div>"+nameField+"<div class=\"field\"><input class=\"inp\" id=\"hw-auth-email\" type=\"email\" placeholder=\"Email address\"></div><div class=\"field\"><input class=\"inp\" id=\"hw-auth-pass\" type=\"password\" placeholder=\"Password (min 8 characters)\"></div><button class=\"btn btn-gold btn-full\" id=\"hw-auth-submit\" style=\"margin-top:4px\">"+btnText+"</button>"+forgotLink+"<div class=\"auth-switch\">"+switchText+"</div></div>";
+  bg.innerHTML="<div class=\"auth-modal\" style=\"position:relative\"><button class=\"auth-close\" onclick=\"this.closest('.auth-modal-bg').remove()\">&#x2715;</button><div class=\"auth-logo\"><img src=\"/logo.jpg\" class=\"auth-logo-img\" alt=\"HitWizard\"></div><div class=\"auth-title\">"+titleText+"</div><div class=\"auth-sub\">Sign in to save your history and characters across all devices.</div><div class=\"auth-err\" id=\"hw-auth-err\"></div><button class=\"oauth-btn\" onclick=\"window.HW_AUTH.signInWithGoogle()\">&#x1F4F1; Continue with Google</button><button class=\"oauth-btn\" onclick=\"window.HW_AUTH.signInWithFacebook()\">&#x1F310; Continue with Facebook</button><button class=\"oauth-btn\" onclick=\"window.HW_AUTH.signInWithDiscord()\">&#x1F3AE; Continue with Discord</button><div class=\"auth-divider\"><span>or use email</span></div>"+nameField+"<div class=\"field\"><input class=\"inp\" id=\"hw-auth-email\" type=\"email\" placeholder=\"Email address\" autocomplete=\"email\"></div><div class=\"field\" style=\"position:relative\"><input class=\"inp\" id=\"hw-auth-pass\" type=\"password\" placeholder=\"Password (min 8 characters)\" autocomplete=\"current-password\" style=\"padding-right:44px\"><button type=\"button\" onclick=\"var i=document.getElementById('hw-auth-pass');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈'\" style=\"position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:0;line-height:1\">👁</button></div><button class=\"btn btn-gold btn-full\" id=\"hw-auth-submit\" style=\"margin-top:4px\">"+btnText+"</button>"+forgotLink+"<div class=\"auth-switch\">"+switchText+"</div></div>";
   document.body.appendChild(bg);
   document.getElementById("hw-auth-submit").onclick=function(){handleAuthSubmit(mode);};
   var fg=document.getElementById("hw-forgot");if(fg)fg.onclick=handleForgotPassword;
@@ -5597,13 +5622,41 @@ window.addEventListener("hw_auth_ready",function(){
   updateUserCard();
   window.HW_AUTH.onChange(function(){
     updateUserCard();
-    // Hide hero auth banner if logged in
     var banner=document.getElementById("hw-hero-auth");
     if(banner){banner.style.display=window.HW_AUTH.isLoggedIn()?"none":"flex";}
   });
-  // Initial banner state
   var banner=document.getElementById("hw-hero-auth");
   if(banner&&window.HW_AUTH.isLoggedIn()){banner.style.display="none";}
+});
+
+// When user signs IN — reload cloud history and characters into the UI
+window.addEventListener("hw_user_signed_in", async function() {
+  try {
+    // Reload cloud history
+    if (window.HW_HISTORY) {
+      const cloudHistory = await window.HW_HISTORY.load(50);
+      if (cloudHistory && cloudHistory.length > 0) {
+        // Store to localStorage so React state picks it up on next render
+        const meta = cloudHistory.map(function(item) {
+          var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest;
+        });
+        localStorage.setItem("hw_history", JSON.stringify(meta));
+        cloudHistory.forEach(function(item) {
+          if (item.result) {
+            try { localStorage.setItem("hw_result_" + item.id, JSON.stringify(item.result)); } catch(e) {}
+          }
+        });
+        // Reload the page to reflect cloud data in React state
+        window.location.reload();
+      }
+    }
+  } catch(e) { console.warn("Cloud reload on sign-in failed:", e); }
+});
+
+// When user signs OUT — clear all local data from UI
+window.addEventListener("hw_user_signed_out", function() {
+  // Page reload will reinitialize with empty localStorage (already cleared in auth.js)
+  window.location.reload();
 });
 setTimeout(bootAuth,700);
 </script>
