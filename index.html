@@ -1660,6 +1660,41 @@ function VideoEngine(_ref0) {
 function Dashboard(_ref1) {
   let onNav = _ref1.onNav,
     history = _ref1.history;
+
+  // Show onboarding overlay once for new users who have never generated anything
+  const [showOnboarding, setShowOnboarding] = React.useState(() => {
+    return !localStorage.getItem("hw_onboarded") && (!history || history.length === 0);
+  });
+  const [onboardStep, setOnboardStep] = React.useState(0);
+
+  const dismissOnboarding = () => {
+    localStorage.setItem("hw_onboarded", "1");
+    setShowOnboarding(false);
+  };
+
+  const onboardSteps = [
+    {
+      icon: "⚡",
+      title: "Welcome to your forge, Captain.",
+      body: "HitWizard turns your song lyrics into full marketing campaigns — ads, playlist pitches, video scripts, EPKs and more. Every weapon runs on your actual words, not generic templates.",
+      cta: "Show me how →"
+    },
+    {
+      icon: "🎯",
+      title: "Autopilot does the heavy lifting.",
+      body: "Paste any Spotify, Apple Music, YouTube or SoundCloud link. We fetch your song title, genre, mood, BPM and find your lyrics automatically. Zero manual entry.",
+      cta: "Got it, what's next? →"
+    },
+    {
+      icon: "🚀",
+      title: "One link. Nine weapons. Fired.",
+      body: "Once your song is loaded, pick any weapon — Campaign Launcher, Playlist Strike, Hook Lab, Video Engine — and generate professional marketing content in seconds. Start with Campaign Launcher.",
+      cta: "Launch my first campaign ⚡"
+    }
+  ];
+
+  const currentStep = onboardSteps[onboardStep];
+
   const weapons = [{
     id: "campaigns", icon: "⚡", title: "Campaign Launcher",
     desc: "Generate complete Meta, TikTok and YouTube ad campaigns from your lyrics.",
@@ -1720,7 +1755,62 @@ function Dashboard(_ref1) {
     label: "Generate a video shooting script",
     done: done("video")
   }];
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null,
+
+  // ── ONBOARDING OVERLAY ──
+  showOnboarding && React.createElement("div", {
+    style: {
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+      background: "rgba(0,0,0,.85)", zIndex: 9999,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 20
+    }
+  }, React.createElement("div", {
+    style: {
+      background: "#13131a", border: "1px solid rgba(255,184,0,.3)",
+      borderRadius: 20, padding: "40px 36px", maxWidth: 460, width: "100%",
+      textAlign: "center", boxShadow: "0 0 60px rgba(255,184,0,.15)"
+    }
+  },
+    React.createElement("div", { style: { fontSize: 48, marginBottom: 16 } }, currentStep.icon),
+    React.createElement("div", {
+      style: { fontFamily: "Cinzel,serif", fontSize: 20, fontWeight: 900,
+        color: "var(--txt)", marginBottom: 14, lineHeight: 1.3 }
+    }, currentStep.title),
+    React.createElement("div", {
+      style: { fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 28 }
+    }, currentStep.body),
+    // Progress dots
+    React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 } },
+      onboardSteps.map((_, i) => React.createElement("div", {
+        key: i,
+        style: {
+          width: i === onboardStep ? 24 : 8, height: 8, borderRadius: 4,
+          background: i === onboardStep ? "var(--gold)" : "rgba(255,255,255,.15)",
+          transition: "all .3s"
+        }
+      }))
+    ),
+    React.createElement("button", {
+      className: "btn btn-gold",
+      style: { width: "100%", padding: "14px", fontSize: 15, fontWeight: 800, marginBottom: 12 },
+      onClick: () => {
+        if (onboardStep < onboardSteps.length - 1) {
+          setOnboardStep(s => s + 1);
+        } else {
+          dismissOnboarding();
+          onNav("campaigns");
+        }
+      }
+    }, currentStep.cta),
+    React.createElement("button", {
+      style: { background: "none", border: "none", color: "var(--muted)",
+        fontSize: 12, cursor: "pointer", padding: 8 },
+      onClick: dismissOnboarding
+    }, "Skip intro")
+  )),
+
+  /*#__PURE__*/React.createElement("div", {
     className: "hero"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2006,7 +2096,32 @@ function Dashboard(_ref1) {
         );
       })
     )
-  ), /*#__PURE__*/React.createElement("div", {
+  ), /*#__PURE__*/React.createElement("div", null,
+
+  // ── EMPTY STATE — shown only to new users with zero generations ──
+  history.length === 0 && React.createElement("div", {
+    style: {
+      background: "linear-gradient(135deg,rgba(255,184,0,.1),rgba(255,140,0,.05))",
+      border: "1px solid rgba(255,184,0,.35)", borderRadius: 16,
+      padding: "28px 24px", marginBottom: 24, textAlign: "center"
+    }
+  },
+    React.createElement("div", { style: { fontSize: 32, marginBottom: 10 } }, "🎵"),
+    React.createElement("div", {
+      style: { fontFamily: "Cinzel,serif", fontSize: 17, fontWeight: 800,
+        color: "var(--txt)", marginBottom: 8 }
+    }, "Your first campaign is one link away."),
+    React.createElement("div", {
+      style: { fontSize: 13, color: "var(--muted)", lineHeight: 1.6, marginBottom: 20, maxWidth: 400, margin: "0 auto 20px" }
+    }, "Paste your Spotify, Apple Music, YouTube or SoundCloud link. We fetch everything automatically — title, genre, mood, lyrics. Then generate a full ad campaign in seconds."),
+    React.createElement("button", {
+      className: "btn btn-gold",
+      style: { fontSize: 15, fontWeight: 800, padding: "14px 32px", borderRadius: 12 },
+      onClick: () => onNav("campaigns")
+    }, "⚡ Launch My First Campaign")
+  ),
+
+  /*#__PURE__*/React.createElement("div", {
     className: "sh"
   }, /*#__PURE__*/React.createElement("div", {
     className: "st"
@@ -2046,7 +2161,7 @@ function Dashboard(_ref1) {
       color: item.done ? "var(--muted)" : "var(--txt)",
       textDecoration: item.done ? "line-through" : "none"
     }
-  }, item.label)))));
+  }, item.label))))))
 }
 
 // ── CAMPAIGN FORGE ──
