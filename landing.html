@@ -13,7 +13,7 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; background: #05050a; }
+body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; background: #000000; }
 
 /* ── TOKENS ── */
 :root {
@@ -248,7 +248,7 @@ nav.light-nav .btn-ghost-nav {
 .s-diff::before {
   content: "";
   position: absolute; inset: 0; z-index: 0;
-  background: rgba(2,2,6,.72);
+  background: rgba(0,0,2,.65);
   pointer-events: none;
 }
 .s-diff > * { position: relative; z-index: 1; }
@@ -368,7 +368,7 @@ nav.light-nav .btn-ghost-nav {
 .s-weapons::before {
   content: "";
   position: absolute; inset: 0; z-index: 0;
-  background: rgba(2,2,6,.72);
+  background: rgba(0,0,2,.65);
   pointer-events: none;
 }
 .s-weapons > .container { position: relative; z-index: 1; }
@@ -448,7 +448,7 @@ table.ctable {
 .s-faq::before {
   content: "";
   position: absolute; inset: 0; z-index: 0;
-  background: rgba(2,2,6,.72);
+  background: rgba(0,0,2,.65);
   pointer-events: none;
 }
 .s-faq > .container { position: relative; z-index: 1; }
@@ -727,7 +727,7 @@ footer {
         <p>Curator pitch emails written for your specific song — its genre, mood and most compelling lyric lines. Not a template. A real pitch.</p>
       </div>
       <div class="weapon-card reveal rd2">
-        <div class="weapon-icon">✦</div>
+        <div class="weapon-icon">🎵</div>
         <div class="weapon-badge" style="background:rgba(139,92,246,.12);color:#A78BFA;border:1px solid rgba(139,92,246,.25)">Multi-Platform</div>
         <h3>Content Arsenal</h3>
         <p>Weeks of social captions, hooks and hashtags for TikTok, Instagram, YouTube and X — each from a different lyric angle.</p>
@@ -950,16 +950,18 @@ function resize() {
 
 function initStars() {
   stars = [];
-  const n = Math.floor(W * H / 3500);
+  const n = Math.floor(W * H / 2800);
   for (let i = 0; i < n; i++) {
+    const big = Math.random() < 0.12; // 12% are large bright stars
     stars.push({
       x: Math.random() * W,
       y: Math.random() * H,
-      r: Math.random() * 1.5 + 0.1,
-      a: Math.random() * 0.7 + 0.05,
-      da: (Math.random() - 0.5) * 0.008,
-      vy: -(Math.random() * 0.25 + 0.04),
-      vx: (Math.random() - 0.5) * 0.08,
+      r: big ? (Math.random() * 2.2 + 1.8) : (Math.random() * 1.2 + 0.4),
+      a: big ? (Math.random() * 0.4 + 0.6) : (Math.random() * 0.55 + 0.15),
+      da: (Math.random() - 0.5) * (big ? 0.012 : 0.007),
+      vy: -(Math.random() * 0.22 + 0.05),
+      vx: (Math.random() - 0.5) * 0.07,
+      big,
     });
   }
 }
@@ -967,16 +969,16 @@ function initStars() {
 function drawNebula(t) {
   // Three breathing nebula clouds in different colors
   const clouds = [
-    { x: W * 0.15, y: H * 0.25, r: W * 0.28, color: 'rgba(139,92,246,' },   // purple
-    { x: W * 0.82, y: H * 0.55, r: W * 0.22, color: 'rgba(0,184,255,' },     // blue
-    { x: W * 0.50, y: H * 0.78, r: W * 0.30, color: 'rgba(255,100,30,' },    // amber
+    { x: W * 0.15, y: H * 0.3,  r: W * 0.32, color: 'rgba(100,60,200,' },   // deep purple
+    { x: W * 0.80, y: H * 0.5,  r: W * 0.26, color: 'rgba(0,120,200,' },    // deep blue
+    { x: W * 0.48, y: H * 0.75, r: W * 0.35, color: 'rgba(180,60,10,' },    // deep amber
   ];
   clouds.forEach(({ x, y, r, color }) => {
-    const px = x + Math.sin(t * 0.7) * 18;
-    const py = y + Math.cos(t * 0.5) * 14;
+    const px = x + Math.sin(t * 0.6) * 22;
+    const py = y + Math.cos(t * 0.45) * 16;
     const g = ctx.createRadialGradient(px, py, 0, px, py, r);
-    g.addColorStop(0, color + '0.045)');
-    g.addColorStop(0.5, color + '0.02)');
+    g.addColorStop(0, color + '0.06)');
+    g.addColorStop(0.4, color + '0.025)');
     g.addColorStop(1, color + '0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
@@ -995,15 +997,26 @@ function drawStars() {
   // Draw drifting stars on top
   stars.forEach(s => {
     s.a += s.da;
-    if (s.a <= 0.03 || s.a >= 0.82) s.da *= -1;
+    if (s.a <= 0.08 || s.a >= 0.95) s.da *= -1;
     s.y += s.vy;
     s.x += s.vx;
     if (s.y < -2) { s.y = H + 2; s.x = Math.random() * W; }
     if (s.x < -2) s.x = W + 2;
     if (s.x > W + 2) s.x = -2;
+    if (s.big) {
+      // Large stars get a soft glow halo
+      const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
+      glow.addColorStop(0, `rgba(255,240,200,${s.a})`);
+      glow.addColorStop(0.4, `rgba(232,232,240,${s.a * 0.4})`);
+      glow.addColorStop(1, 'rgba(232,232,240,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(232,232,240,${s.a})`;
+    ctx.fillStyle = `rgba(245,240,225,${s.a})`;
     ctx.fill();
   });
 
