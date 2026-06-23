@@ -96,11 +96,11 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .hero-tag {
   display: inline-flex; align-items: center; gap: 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; font-weight: 700; letter-spacing: 3px;
+  font-size: 13px; font-weight: 700; letter-spacing: 3px;
   text-transform: uppercase; color: #FFB800;
-  background: rgba(255,184,0,.08);
-  border: 1px solid rgba(255,184,0,.3);
-  padding: 11px 22px; border-radius: 100px; margin-bottom: 48px;
+  background: rgba(255,184,0,.1);
+  border: 1px solid rgba(255,184,0,.4);
+  padding: 13px 26px; border-radius: 100px; margin-bottom: 48px;
 }
 .hero-tag-dot {
   width: 5px; height: 5px; border-radius: 50%;
@@ -177,7 +177,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
    THE SIGNAL — THE TRUTH (deep midnight navy shift)
    ══════════════════════════════════════════════ */
 .truth {
-  position: relative; z-index: 1; padding: 140px 0;
+  position: relative; z-index: 1; padding: 90px 0;
   background: linear-gradient(180deg,
     #050508 0%,
     #080818 40%,
@@ -194,8 +194,8 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 
 .eyebrow {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; font-weight: 700; letter-spacing: 4px;
-  text-transform: uppercase; color: #FFB800; margin-bottom: 20px;
+  font-size: 14px; font-weight: 700; letter-spacing: 4px;
+  text-transform: uppercase; color: #FFB800; margin-bottom: 24px;
 }
 
 .truth-grid {
@@ -242,7 +242,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
    THE DIFFERENCE (purple nebula shift)
    ══════════════════════════════════════════════ */
 .difference {
-  position: relative; z-index: 1; padding: 140px 0;
+  position: relative; z-index: 1; padding: 90px 0;
   text-align: center;
   background: linear-gradient(180deg,
     #0a0a20 0%,
@@ -286,10 +286,11 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
               inset 0 0 60px rgba(255,184,0,.02);
 }
 .lyric-card-label {
-  position: absolute; top: -13px; left: 40px;
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 700; letter-spacing: 4px;
-  color: #FFB800; background: #120830; padding: 0 14px;
+  font-size: 13px; font-weight: 700; letter-spacing: 4px;
+  color: #FFB800; background: #120830; padding: 4px 20px;
+  white-space: nowrap;
 }
 
 .lyric-lines { margin-bottom: 36px; }
@@ -343,8 +344,8 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 }
 .vs-tag {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; font-weight: 700; letter-spacing: 3px;
-  margin-bottom: 16px;
+  font-size: 14px; font-weight: 700; letter-spacing: 2px;
+  margin-bottom: 20px; display: block;
 }
 .vs-box.them .vs-tag { color: rgba(255,68,68,.6); }
 .vs-box.us .vs-tag { color: #FFB800; }
@@ -362,7 +363,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
    HOW IT WORKS (deep teal/blue shift)
    ══════════════════════════════════════════════ */
 .how {
-  position: relative; z-index: 1; padding: 140px 0;
+  position: relative; z-index: 1; padding: 90px 0;
   background: linear-gradient(180deg,
     #120830 0%,
     #081420 50%,
@@ -381,7 +382,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
   font-family: 'Cinzel', serif;
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 900; color: #fff; text-align: center;
-  margin-bottom: 80px; line-height: 1.1;
+  margin-bottom: 24px; line-height: 1.1;
 }
 
 .steps-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
@@ -415,7 +416,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
    9 WEAPONS (return to deep void, gold lit)
    ══════════════════════════════════════════════ */
 .weapons {
-  position: relative; z-index: 1; padding: 140px 0;
+  position: relative; z-index: 1; padding: 90px 0;
   background: linear-gradient(180deg,
     #051814 0%,
     #080818 50%,
@@ -431,9 +432,9 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 
 .section-sub {
   position: relative; z-index: 2;
-  text-align: center; font-size: 17px;
-  color: rgba(232,232,240,.55); max-width: 480px;
-  margin: -40px auto 80px; line-height: 1.7;
+  text-align: center; font-size: 18px;
+  color: rgba(232,232,240,.65); max-width: 480px;
+  margin: 0 auto 64px; line-height: 1.7;
 }
 
 .weapons-grid {
@@ -457,8 +458,8 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .weapon-badge {
   display: inline-block;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-  padding: 5px 14px; border-radius: 6px; margin-bottom: 16px;
+  font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+  padding: 6px 16px; border-radius: 6px; margin-bottom: 18px;
 }
 .weapon h3 {
   font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700;
@@ -470,7 +471,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
    COMPARE TABLE (purple shift return)
    ══════════════════════════════════════════════ */
 .compare {
-  position: relative; z-index: 1; padding: 140px 0;
+  position: relative; z-index: 1; padding: 90px 0;
   background: linear-gradient(180deg,
     #050508 0%,
     #0a0818 100%);
@@ -513,7 +514,7 @@ table.ctable {
    FAQ (return to void)
    ══════════════════════════════════════════════ */
 .faq {
-  position: relative; z-index: 1; padding: 140px 0;
+  position: relative; z-index: 1; padding: 90px 0;
   background: linear-gradient(180deg, #0a0818 0%, #050508 100%);
 }
 
@@ -521,10 +522,10 @@ table.ctable {
 .faq-group { margin-bottom: 56px; }
 .faq-group-name {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; font-weight: 700; letter-spacing: 4px;
+  font-size: 14px; font-weight: 700; letter-spacing: 3px;
   text-transform: uppercase; color: #FFB800;
-  padding-bottom: 14px; margin-bottom: 4px;
-  border-bottom: 1px solid rgba(255,184,0,.12);
+  padding-bottom: 16px; margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255,184,0,.2);
 }
 .faq-item { border-bottom: 1px solid rgba(255,255,255,.05); }
 .faq-btn {
@@ -548,7 +549,7 @@ table.ctable {
    ══════════════════════════════════════════════ */
 .signal-cta {
   position: relative; z-index: 1;
-  padding: 180px 24px; text-align: center; overflow: hidden;
+  padding: 110px 24px; text-align: center; overflow: hidden;
   background: #050508;
 }
 .signal-cta::before {
@@ -588,13 +589,14 @@ footer {
 }
 .footer-inner {
   max-width: 1200px; margin: 0 auto;
-  display: flex; align-items: center;
-  justify-content: space-between; flex-wrap: wrap; gap: 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  text-align: center;
 }
 .footer-brand {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; font-weight: 700; letter-spacing: 3px;
-  color: rgba(255,184,0,.8);
+  font-size: 15px; font-weight: 700; letter-spacing: 3px;
+  color: rgba(255,184,0,.9);
 }
 .footer-nav { display: flex; gap: 28px; flex-wrap: wrap; }
 .footer-nav a {
@@ -603,9 +605,9 @@ footer {
 }
 .footer-nav a:hover { color: rgba(232,232,240,.6); }
 .footer-copy {
-  width: 100%; font-size: 12px;
-  color: rgba(232,232,240,.35); margin-top: 16px;
-  text-align: center; letter-spacing: .3px;
+  font-size: 14px;
+  color: rgba(232,232,240,.55);
+  letter-spacing: .3px; line-height: 1.6;
 }
 
 /* ── RESPONSIVE ── */
@@ -764,7 +766,7 @@ footer {
   <div class="container">
     <div class="reveal">
       <div class="eyebrow" style="text-align:center">⚙️ How It Works</div>
-      <h2 class="section-title" style="margin-bottom:20px">Three Steps.<br>Nine Weapons. One Song.</h2>
+      <h2 class="section-title" style="margin-bottom:16px">Three Steps.<br>Nine Weapons. One Song.</h2>
       <p style="text-align:center;color:rgba(232,232,240,.35);font-size:16px;margin-bottom:80px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.75">From your first link paste to a fully structured campaign — no marketing experience, no ad account, no guesswork.</p>
     </div>
     <div class="steps-row">
@@ -792,9 +794,9 @@ footer {
   <div class="container">
     <div class="reveal">
       <div class="eyebrow" style="text-align:center">⚔️ The Arsenal</div>
-      <h2 class="section-title" style="margin-bottom:16px">Nine Weapons.<br>One Platform. Zero Templates.</h2>
+      <h2 class="section-title" style="margin-bottom:28px">Nine Weapons.<br>One Platform. Zero Templates.</h2>
     </div>
-    <p class="section-sub">Every tool powered by your lyrics. Every output unique to your song.</p>
+    <p class="section-sub" style="position:relative;z-index:3;margin-top:0">Every tool powered by your lyrics. Every output unique to your song.</p>
     <div class="weapons-grid">
 
       <div class="weapon reveal">
@@ -1046,23 +1048,6 @@ function initStars() {
 
 function drawStars() {
   ctx.clearRect(0, 0, W, H);
-
-  // Subtle nebula clouds
-  const t = Date.now() / 8000;
-  [
-    [W * 0.15, H * 0.3, 300, 'rgba(139,92,246,'],
-    [W * 0.85, H * 0.6, 250, 'rgba(0,184,255,'],
-    [W * 0.5, H * 0.8, 350, 'rgba(255,107,0,'],
-  ].forEach(([x, y, r, c]) => {
-    const g = ctx.createRadialGradient(
-      x + Math.sin(t) * 20, y + Math.cos(t) * 20, 0,
-      x, y, r
-    );
-    g.addColorStop(0, c + '0.035)');
-    g.addColorStop(1, c + '0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-  });
 
   // Stars
   stars.forEach(s => {
