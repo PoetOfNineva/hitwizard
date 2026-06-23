@@ -1142,8 +1142,9 @@ async function handleEmailAuth(mode) {
         </div>`;
       return;
     }
-    // Signed in successfully — enter the app
-    window.location.href = '/';
+    // Wait briefly for Supabase session to propagate, then enter app
+    await new Promise(r => setTimeout(r, 800));
+    window.location.href = '/?from=landing';
   } catch(e) {
     showAuthErr('Something went wrong. Please try again.');
     btn.textContent = mode === 'signup' ? '⚡ Create Free Account' : 'Sign In';
