@@ -1091,6 +1091,10 @@ function VideoEngine(_ref0) {
     return "EXACTLY ".concat(count, " ").concat(count === 1 ? "PERSON" : "PEOPLE", " in this scene,\n").concat(charDescs, ",\n...[scene details, camera, lighting]...\n").concat(tags, ",\n9:16 vertical format, photorealistic cinematic quality");
   };
   const generate = async () => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
     if (!form.lyrics) {
       setErr("Please paste your lyrics first — the AI needs them to plan your video.");
       return;
@@ -2759,6 +2763,10 @@ function CampaignForge(_ref10) {
     lastAnalyzedLyrics.current = ""; // reset so new lyrics get analyzed fresh
   };
   const forge = async () => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
     if (!form.songTitle || !form.artist || !form.genre) {
       setErr("Please fill in Song Title, Artist Name and Genre before continuing.");
       return;
@@ -3050,6 +3058,10 @@ function PlaylistStrike(_ref19) {
     [k]: v
   }));
   const strike = async () => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
     if (!form.songTitle || !form.artist || !form.genre) {
       setErr("Please fill in Song Title, Artist Name and Genre.");
       return;
@@ -3402,6 +3414,10 @@ function ContentArsenal(_ref20) {
     platforms: f.platforms.includes(p) ? f.platforms.filter(x => x !== p) : [...f.platforms, p]
   }));
   const generate = async () => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
     if (!form.songTitle || !form.artist) {
       setErr("Please fill in Song Title and Artist Name.");
       return;
@@ -3708,6 +3724,10 @@ function EPKGenerator(_ref33) {
     [k]: v
   }));
   const generate = async () => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
     if (!form.artistName || !form.genre) {
       setErr("Please fill in Artist Name and Genre.");
       return;
@@ -4015,6 +4035,10 @@ function HookLab(_ref44) {
     [k]: v
   }));
   const generate = async () => {
+    if (!window.HW_AUTH || !window.HW_AUTH.isLoggedIn()) {
+      if (window.showAuthModal) window.showAuthModal("signup");
+      return;
+    }
     if (!form.songTitle || !form.lyrics) {
       setErr("Song Title and Lyrics are both required for Hook Lab.");
       return;
@@ -5242,6 +5266,123 @@ function Pricing(_ref53) {
 // ── MAIN APP ──
 function HitWizard() {
   var _titles$page, _titles$page2;
+
+  // ── AUTH GATE ──
+  // Wait for auth to initialize, then gate logged-out users
+  const [authReady, setAuthReady] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    const check = () => {
+      if (window.HW_AUTH && window.HW_AUTH.ready) {
+        setIsLoggedIn(window.HW_AUTH.isLoggedIn());
+        setAuthReady(true);
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+    window.addEventListener("hw_auth_ready", () => {
+      setIsLoggedIn(window.HW_AUTH.isLoggedIn());
+      setAuthReady(true);
+    });
+    if (window.HW_AUTH) {
+      window.HW_AUTH.onChange(() => {
+        setIsLoggedIn(window.HW_AUTH.isLoggedIn());
+      });
+    }
+  }, []);
+
+  // Show nothing while auth initializes (prevents flash)
+  if (!authReady) {
+    return React.createElement("div", {
+      style: {
+        display: "flex", alignItems: "center", justifyContent: "center",
+        height: "100vh", background: "#0a0a0f",
+        color: "rgba(255,184,0,.6)", fontFamily: "JetBrains Mono,monospace",
+        fontSize: 13, letterSpacing: 2
+      }
+    }, "⚡ LOADING...");
+  }
+
+  // Logged-out users see the marketing gate — not the full app
+  if (!isLoggedIn) {
+    return React.createElement("div", {
+      style: {
+        minHeight: "100vh", background: "#0a0a0f",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20
+      }
+    }, React.createElement("div", {
+      style: { maxWidth: 520, width: "100%", textAlign: "center" }
+    },
+      // Logo
+      React.createElement("img", {
+        src: "/logo.jpg", alt: "HitWizard",
+        style: { width: 80, height: 80, borderRadius: 20, marginBottom: 24, objectFit: "cover" }
+      }),
+      // Headline
+      React.createElement("div", {
+        style: {
+          fontFamily: "Cinzel,serif", fontSize: 32, fontWeight: 900,
+          color: "#fff", marginBottom: 12, lineHeight: 1.2
+        }
+      }, "Your Music Deserves to", React.createElement("span", {
+        style: { display: "block", background: "linear-gradient(135deg,#FFB800,#FF8C00)",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }
+      }, "Be Heard.")),
+      // Subhead
+      React.createElement("div", {
+        style: { fontSize: 15, color: "#666680", lineHeight: 1.7, marginBottom: 32, maxWidth: 420, margin: "0 auto 32px" }
+      }, "HitWizard turns your lyrics into full marketing campaigns — ads, playlist pitches, video scripts, EPKs and more. Built for artists who refuse to be ordinary."),
+      // CTA buttons
+      React.createElement("div", { style: { display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 } },
+        React.createElement("button", {
+          style: {
+            background: "#FFB800", color: "#000", fontWeight: 800, fontSize: 16,
+            padding: "16px 36px", borderRadius: 12, border: "none", cursor: "pointer",
+            letterSpacing: 0.5, boxShadow: "0 0 40px rgba(255,184,0,.35)"
+          },
+          onClick: () => { if (window.showAuthModal) window.showAuthModal("signup"); }
+        }, "⚡ Get Started Free"),
+        React.createElement("button", {
+          style: {
+            background: "rgba(255,255,255,.06)", color: "#fff", fontWeight: 600,
+            fontSize: 15, padding: "16px 28px", borderRadius: 12,
+            border: "1px solid rgba(255,255,255,.12)", cursor: "pointer"
+          },
+          onClick: () => { if (window.showAuthModal) window.showAuthModal("signin"); }
+        }, "Sign In")
+      ),
+      React.createElement("div", {
+        style: { fontSize: 11, color: "#444466", letterSpacing: 1 }
+      }, "FREE FOREVER · NO CREDIT CARD · UPGRADE ANYTIME"),
+      // Weapons preview
+      React.createElement("div", {
+        style: {
+          display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12,
+          marginTop: 40, textAlign: "left"
+        }
+      }, [
+        ["⚡", "Campaign Launcher", "Meta, TikTok & YouTube ads from your lyrics"],
+        ["🎯", "Playlist Strike", "Pitch curators with emails that get opened"],
+        ["🎬", "Video Engine", "Shot-by-shot prompts with your characters"],
+        ["🧬", "Character Vault", "DNA auto-injects into every video prompt"],
+        ["🪝", "Hook Lab", "Viral TikTok hooks from your actual words"],
+        ["📋", "EPK Generator", "Press kit ready for labels and blogs"]
+      ].map(([icon, title, desc]) => React.createElement("div", {
+        key: title,
+        style: {
+          background: "#13131a", border: "1px solid rgba(255,184,0,.1)",
+          borderRadius: 12, padding: "16px 14px"
+        }
+      },
+        React.createElement("div", { style: { fontSize: 22, marginBottom: 6 } }, icon),
+        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "#fff", marginBottom: 4 } }, title),
+        React.createElement("div", { style: { fontSize: 11, color: "#666680", lineHeight: 1.4 } }, desc)
+      )))
+    ));
+  }
   const _useState99 = useState("dashboard"),
     _useState100 = _slicedToArray(_useState99, 2),
     page = _useState100[0],
