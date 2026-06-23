@@ -154,13 +154,63 @@
 
 ---
 
+## 💰 BUSINESS MODEL DECISION (locked June 23, 2026)
+
+### Phase 1 — NOW: OAuth/Subscription Model
+- Artists connect their OWN Meta ad account via OAuth
+- HitWizard generates campaigns, creates ad sets, uploads creative via Meta API
+- Artist reviews, approves, launches — their money goes directly to Meta
+- HitWizard revenue = subscription fees only
+- Zero financial liability, zero regulatory burden, buildable immediately
+- Serves technically capable early adopters
+
+### Phase 2 — 6-12 months: HitWizard Managed (premium tier)
+- Like Aura's model — artist pastes link, sets budget, HitWizard runs everything
+- HitWizard takes 20% of ad spend
+- Requires: revenue to cover float, legal structure for client funds, proven campaign ROI data
+- Only pursue after Phase 1 generates sustainable revenue
+
+### Core Differentiator vs Aura (NEVER lose sight of this)
+- Aura matches templates to genre/mood — they don't read lyrics
+- HitWizard writes campaigns FROM INSIDE THE SONG — every ad uses actual lyric lines
+- This is the headline. This is the hero. This is what no competitor can copy.
+
+---
+
+## 🌐 LANDING PAGE OVERHAUL (planned June 23, 2026)
+
+### Vision: "If Aura is from the moon, HitWizard is from an unknown galaxy"
+
+### Required Sections (in order):
+1. **Cinematic hero** — full-screen starfield/nebula background, Cinzel serif headline, "Your Lyrics Are The Weapon" theme, Trustpilot-style social proof, Get Started Free + Sign In buttons
+2. **The Problem** — "Spotify doesn't reward talent. It rewards velocity." Pain statement before the solution
+3. **The HitWizard Difference** — "We read your actual lyrics. Every ad written from inside your song." — this is the differentiator section
+4. **How It Works** — 3 steps: Paste your link → Autopilot fetches everything → Choose your weapon
+5. **All 9 Weapons** — full showcase, not 6
+6. **Results / Case Studies** — placeholder section, real data added as users generate results
+7. **Comparison Table** — "Generic AI Tools vs HitWizard" (NOT "vs Aura")
+8. **Testimonials** — placeholder, populated as real reviews come in
+9. **FAQ** — General / Weapons / Pricing / Campaign sections
+10. **Final CTA** — full-width epic banner, "The Future Of Music Marketing. From Inside Your Song."
+11. **Demo video placeholder** — space reserved for founder video (to be recorded)
+
+### Design DNA:
+- Background: deep space black (#0a0a0f) with nebula/star particle effects
+- Typography: Cinzel for headlines (already loaded), system-ui for body
+- Color: gold (#FFB800) as primary accent, dark cards with gold borders
+- Vibe: epic, cinematic, otherworldly — NOT corporate SaaS
+- Mobile-first responsive
+
+---
+
 ## 🗺️ BUILD QUEUE (priority order)
 
 ### 🔴 IMMEDIATE
-1. Add `RESEND_API_KEY` to Netlify (already have Resend account at hitwizard.ai@gmail.com)
-2. Email Jason personally from hitwizard.ai@gmail.com
-3. Verify onboarding overlay works on fresh session
-4. Verify mood/genre dropdown fills correctly on Link Autopilot
+1. **Landing page overhaul** — galaxy-tier, better than Aura (in progress)
+2. Add `RESEND_API_KEY` to Netlify (Resend account exists at hitwizard.ai@gmail.com, key: "HitWizard Production" re_FQnaFkt6...)
+3. Email Jason personally from hitwizard.ai@gmail.com
+4. Verify onboarding overlay works on fresh session
+5. Verify mood/genre dropdown fills correctly on Link Autopilot
 
 ### 🟡 NEXT SPRINT
 5. **Paywall enforcement** — usage counters, tier gates, upgrade modal
