@@ -5644,7 +5644,12 @@ ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getE
 </script>
 <script src="/auth.js"></script>
 <script>
-// AUTH UI INJECTION
+// Force init if DOMContentLoaded already fired before auth.js loaded
+if (window.HW_AUTH && !window.HW_AUTH.ready) {
+  window.HW_AUTH.init().then(() => {
+    window.dispatchEvent(new CustomEvent("hw_auth_ready"));
+  });
+}
 function getTierLabel(t){return{free:"Free",artist:"Artist",pro_artist:"Pro Artist",manager:"Manager",label:"Label"}[t]||"Free";}
 
 // Handle Stripe checkout return
