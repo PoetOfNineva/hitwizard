@@ -53,27 +53,27 @@
 
 ---
 
-## ⚙️ NETLIFY ENVIRONMENT VARIABLES
+## ⚙️ NETLIFY ENVIRONMENT VARIABLES (confirmed June 23, 2026)
 
-| Key | Purpose |
-|-----|---------|
-| ANTHROPIC_API_KEY | Claude API (rotated June 23, 2026) |
-| SUPABASE_URL | https://vklwiqbglmhyjuenysal.supabase.co |
-| SUPABASE_SERVICE_ROLE_KEY | Supabase admin access (sb_secret_RxXF3...) |
-| KEEPALIVE_SECRET | hw-keepalive-2026 |
-| SPOTIFY_CLIENT_ID | Spotify API |
-| SPOTIFY_CLIENT_SECRET | Spotify API |
-| GENIUS_ACCESS_TOKEN | Genius API |
-| GENIUS_CLIENT_ID | Genius API |
-| GENIUS_CLIENT_SECRET | Genius API |
-| YOUTUBE_API_KEY | YouTube Data API v3 |
-| APPLE_KEY_ID | Apple MusicKit |
-| APPLE_PRIVATE_KEY | Apple MusicKit |
-| APPLE_TEAM_ID | Apple MusicKit |
-| STRIPE_SECRET_KEY | Stripe payments |
-| STRIPE_WEBHOOK_SECRET | Stripe webhook verification |
-| ADMIN_SECRET | NectarStream-KikoImmortal-BlackTide2026 |
-| RESEND_API_KEY | ⚠️ NEEDS ADDING — get from resend.com API keys |
+| Key | Status | Purpose |
+|-----|--------|---------|
+| ADMIN_SECRET | ✅ Set | NectarStream-KikoImmortal-BlackTide2026 |
+| ANTHROPIC_API_KEY | ✅ Set | Claude API (rotated June 23, 2026) |
+| APPLE_KEY_ID | ✅ Set | Apple MusicKit |
+| APPLE_PRIVATE_KEY | ✅ Set | Apple MusicKit |
+| APPLE_TEAM_ID | ✅ Set | Apple MusicKit |
+| GENIUS_ACCESS_TOKEN | ✅ Set | Genius lyrics search |
+| GENIUS_CLIENT_ID | ✅ Set | Genius API |
+| GENIUS_CLIENT_SECRET | ✅ Set | Genius API |
+| KEEPALIVE_SECRET | ✅ Set | hw-keepalive-2026 |
+| SPOTIFY_CLIENT_ID | ✅ Set | Spotify oEmbed |
+| SPOTIFY_CLIENT_SECRET | ✅ Set | Spotify oEmbed |
+| STRIPE_SECRET_KEY | ✅ Set | Stripe payments |
+| STRIPE_WEBHOOK_SECRET | ✅ Set | Stripe webhook verification |
+| SUPABASE_SERVICE_ROLE_KEY | ✅ Set | Supabase admin (sb_secret_RxXF3...) |
+| SUPABASE_URL | ✅ Set | https://vklwiqbglmhyjuenysal.supabase.co |
+| YOUTUBE_API_KEY | ✅ Set | YouTube Data API v3 |
+| RESEND_API_KEY | ❌ MISSING | Add from resend.com — key named "HitWizard Production" (re_FQnaFkt6...) |
 
 ---
 
