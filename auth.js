@@ -7,6 +7,16 @@
 const HW_SUPABASE_URL = "https://vklwiqbglmhyjuenysal.supabase.co";
 const HW_SUPABASE_KEY = "sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS";
 
+// ── CLEAR LOCAL USER DATA ──
+// Called on sign-out to prevent data bleed between users on the same browser.
+function clearLocalUserData() {
+  const keys = Object.keys(localStorage).filter(k =>
+    k.startsWith("hw_") || k.startsWith("supabase.")
+  );
+  keys.forEach(k => localStorage.removeItem(k));
+  console.log("[HitWizard] Local user data cleared on sign-out.");
+}
+
 // ── SUPABASE CLIENT ──
 let _sb = null;
 function getSB() {
@@ -55,8 +65,13 @@ window.HW_AUTH = {
       this.user = session?.user || null;
       if (this.user) {
         await this.loadProfile();
+        await this.syncLocalDataToCloud();
+        // Fire event so React components reload their cloud data
+        window.dispatchEvent(new CustomEvent("hw_user_signed_in", { detail: { user: this.user } }));
       } else {
         this.profile = null;
+        // Fire event so React components clear their state
+        window.dispatchEvent(new CustomEvent("hw_user_signed_out"));
       }
       this.emit();
       if (event === "SIGNED_IN") {
@@ -170,7 +185,43 @@ window.HW_AUTH = {
     this.user = null;
     this.profile = null;
     this.session = null;
+    // Clear ALL user data from localStorage on sign-out
+    // so the next person who opens this browser sees a clean slate
+    clearLocalUserData();
     this.emit();
+  },
+
+  async deleteAccount() {
+    if (!this.user) throw new Error("Not signed in");
+    const sb = getSB();
+    const userId = this.user.id;
+    // Delete all user data from Supabase tables first
+    await Promise.all([
+      sb.from("history").delete().eq("user_id", userId),
+      sb.from("characters").delete().eq("user_id", userId),
+      sb.from("song_vault").delete().eq("user_id", userId),
+      sb.from("usage_logs").delete().eq("user_id", userId),
+      sb.from("campaign_tracking").delete().eq("user_id", userId),
+      sb.from("profiles").delete().eq("id", userId)
+    ]);
+    // Sign out and clear local data
+    await sb.auth.signOut();
+    this.user = null;
+    this.profile = null;
+    this.session = null;
+    clearLocalUserData();
+    this.emit();
+    // Note: deleting the Supabase Auth user itself requires the service role key
+    // which is server-side only. We handle this via a Netlify function call.
+    try {
+      await fetch("/.netlify/functions/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+    } catch(e) {
+      console.warn("Server-side account deletion failed:", e);
+    }
   },
 
   async resetPassword(email) {
