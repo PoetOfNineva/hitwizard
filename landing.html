@@ -46,16 +46,16 @@ nav {
 nav.scrolled { border-color: rgba(255,184,0,.18); }
 
 .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.nav-logo img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; }
+.nav-logo img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; }
 .nav-wordmark {
-  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
-  letter-spacing: 2.5px; color: #FFB800; text-transform: uppercase;
+  font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700;
+  letter-spacing: 2px; color: #FFB800; text-transform: uppercase;
 }
 
 .nav-links { display: flex; gap: 36px; list-style: none; }
 .nav-links a {
-  color: rgba(232,232,240,.45); text-decoration: none;
-  font-size: 13px; font-weight: 500; letter-spacing: .5px;
+  color: rgba(232,232,240,.65); text-decoration: none;
+  font-size: 14px; font-weight: 600; letter-spacing: .5px;
   transition: color .2s;
 }
 .nav-links a:hover { color: #e8e8f0; }
@@ -63,18 +63,18 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .nav-ctas { display: flex; gap: 10px; align-items: center; }
 
 .btn-nav-ghost {
-  padding: 9px 20px; border-radius: 8px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: transparent; color: rgba(232,232,240,.7);
-  font-size: 13px; font-weight: 600; cursor: pointer;
+  padding: 11px 22px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: transparent; color: rgba(232,232,240,.85);
+  font-size: 14px; font-weight: 600; cursor: pointer;
   font-family: 'Inter', sans-serif; transition: all .2s;
 }
 .btn-nav-ghost:hover { border-color: rgba(255,184,0,.5); color: #FFB800; }
 
 .btn-nav-gold {
-  padding: 9px 22px; border-radius: 8px;
+  padding: 11px 26px; border-radius: 8px;
   background: #FFB800; color: #000;
-  font-size: 13px; font-weight: 800; cursor: pointer; border: none;
+  font-size: 14px; font-weight: 800; cursor: pointer; border: none;
   font-family: 'Inter', sans-serif; transition: all .2s;
   letter-spacing: .3px;
 }
@@ -96,11 +96,11 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .hero-tag {
   display: inline-flex; align-items: center; gap: 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; font-weight: 700; letter-spacing: 4px;
+  font-size: 12px; font-weight: 700; letter-spacing: 3px;
   text-transform: uppercase; color: #FFB800;
-  background: rgba(255,184,0,.06);
-  border: 1px solid rgba(255,184,0,.2);
-  padding: 9px 18px; border-radius: 100px; margin-bottom: 48px;
+  background: rgba(255,184,0,.08);
+  border: 1px solid rgba(255,184,0,.3);
+  padding: 11px 22px; border-radius: 100px; margin-bottom: 48px;
 }
 .hero-tag-dot {
   width: 5px; height: 5px; border-radius: 50%;
@@ -127,9 +127,9 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 @keyframes flow { 0%{background-position:0%} 50%{background-position:100%} 100%{background-position:0%} }
 
 .hero-deck {
-  font-size: clamp(15px, 1.8vw, 19px);
-  color: rgba(232,232,240,.5); font-weight: 400;
-  max-width: 520px; line-height: 1.75; margin-bottom: 52px;
+  font-size: clamp(16px, 1.8vw, 21px);
+  color: rgba(232,232,240,.65); font-weight: 400;
+  max-width: 560px; line-height: 1.75; margin-bottom: 52px;
 }
 
 .hero-ctas {
@@ -167,8 +167,8 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
   display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;
 }
 .proof-pill {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: rgba(232,232,240,.35);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; color: rgba(232,232,240,.55);
   font-weight: 500; letter-spacing: .3px;
 }
 .proof-pill .dot { color: #FFB800; font-size: 10px; }
@@ -213,7 +213,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .truth h2 .accent { color: #FF4444; }
 
 .truth p {
-  font-size: 16px; color: rgba(232,232,240,.5);
+  font-size: 16px; color: rgba(232,232,240,.65);
   line-height: 1.85; margin-bottom: 20px;
 }
 .truth p strong { color: rgba(232,232,240,.85); font-weight: 600; }
@@ -271,7 +271,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 }
 
 .diff-sub {
-  font-size: 18px; color: rgba(232,232,240,.4);
+  font-size: 18px; color: rgba(232,232,240,.6);
   max-width: 580px; margin: 0 auto 80px; line-height: 1.75;
 }
 
@@ -343,16 +343,16 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 }
 .vs-tag {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 700; letter-spacing: 3px;
+  font-size: 11px; font-weight: 700; letter-spacing: 3px;
   margin-bottom: 16px;
 }
 .vs-box.them .vs-tag { color: rgba(255,68,68,.6); }
 .vs-box.us .vs-tag { color: #FFB800; }
 .vs-text {
-  font-size: 14px; line-height: 1.75;
+  font-size: 16px; line-height: 1.8;
 }
-.vs-box.them .vs-text { color: rgba(232,232,240,.35); }
-.vs-box.us .vs-text { color: rgba(232,232,240,.75); }
+.vs-box.them .vs-text { color: rgba(232,232,240,.55); }
+.vs-box.us .vs-text { color: rgba(232,232,240,.9); }
 .vs-divider {
   font-family: 'Cinzel', serif; font-size: 22px;
   font-weight: 900; color: #FFB800; text-align: center;
@@ -377,6 +377,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .how > .container { position: relative; z-index: 1; }
 
 .section-title {
+  position: relative; z-index: 2;
   font-family: 'Cinzel', serif;
   font-size: clamp(32px, 4vw, 56px);
   font-weight: 900; color: #fff; text-align: center;
@@ -408,7 +409,7 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
   font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700;
   color: #fff; margin-bottom: 14px;
 }
-.step-card p { font-size: 14px; color: rgba(232,232,240,.45); line-height: 1.8; }
+.step-card p { font-size: 15px; color: rgba(232,232,240,.6); line-height: 1.8; }
 
 /* ══════════════════════════════════════════════
    9 WEAPONS (return to deep void, gold lit)
@@ -429,9 +430,10 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .weapons > .container { position: relative; z-index: 1; }
 
 .section-sub {
+  position: relative; z-index: 2;
   text-align: center; font-size: 17px;
-  color: rgba(232,232,240,.35); max-width: 480px;
-  margin: -60px auto 80px; line-height: 1.7;
+  color: rgba(232,232,240,.55); max-width: 480px;
+  margin: -40px auto 80px; line-height: 1.7;
 }
 
 .weapons-grid {
@@ -455,14 +457,14 @@ nav.scrolled { border-color: rgba(255,184,0,.18); }
 .weapon-badge {
   display: inline-block;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; font-weight: 700; letter-spacing: 2px;
-  padding: 3px 10px; border-radius: 4px; margin-bottom: 14px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  padding: 5px 14px; border-radius: 6px; margin-bottom: 16px;
 }
 .weapon h3 {
-  font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
-  color: #fff; margin-bottom: 10px;
+  font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700;
+  color: #fff; margin-bottom: 12px;
 }
-.weapon p { font-size: 13px; color: rgba(232,232,240,.4); line-height: 1.75; }
+.weapon p { font-size: 14px; color: rgba(232,232,240,.6); line-height: 1.75; }
 
 /* ══════════════════════════════════════════════
    COMPARE TABLE (purple shift return)
@@ -501,8 +503,8 @@ table.ctable {
 }
 .ctable tr:last-child td { border-bottom: none; }
 .ctable tr:hover td { background: rgba(255,255,255,.015); }
-.ctable td:first-child { color: rgba(232,232,240,.7); font-weight: 500; }
-.ctable td.col-them { color: rgba(232,232,240,.25); }
+.ctable td:first-child { color: rgba(232,232,240,.85); font-weight: 500; }
+.ctable td.col-them { color: rgba(232,232,240,.45); }
 .ctable td.col-us { color: #FFB800; font-weight: 600; }
 .x { color: rgba(255,68,68,.6); margin-right: 8px; }
 .ck { color: #FFB800; margin-right: 8px; }
@@ -527,7 +529,7 @@ table.ctable {
 .faq-item { border-bottom: 1px solid rgba(255,255,255,.05); }
 .faq-btn {
   width: 100%; background: none; border: none;
-  color: rgba(232,232,240,.8); font-size: 15px; font-weight: 600;
+  color: rgba(232,232,240,.9); font-size: 16px; font-weight: 600;
   text-align: left; padding: 22px 0; cursor: pointer;
   display: flex; justify-content: space-between; align-items: center;
   gap: 20px; font-family: 'Inter', sans-serif; transition: color .2s;
@@ -537,7 +539,7 @@ table.ctable {
 .faq-item.open .faq-icon { transform: rotate(45deg); color: #FFB800; }
 .faq-ans {
   display: none; padding: 0 0 22px;
-  font-size: 14px; color: rgba(232,232,240,.45); line-height: 1.9;
+  font-size: 15px; color: rgba(232,232,240,.65); line-height: 1.9;
 }
 .faq-item.open .faq-ans { display: block; }
 
@@ -574,7 +576,7 @@ table.ctable {
   background-clip: text;
 }
 .signal-cta p {
-  font-size: 18px; color: rgba(232,232,240,.4);
+  font-size: 18px; color: rgba(232,232,240,.65);
   max-width: 500px; margin: 0 auto 56px; line-height: 1.75;
 }
 
@@ -591,19 +593,19 @@ footer {
 }
 .footer-brand {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; font-weight: 700; letter-spacing: 3px;
-  color: rgba(255,184,0,.5);
+  font-size: 13px; font-weight: 700; letter-spacing: 3px;
+  color: rgba(255,184,0,.8);
 }
 .footer-nav { display: flex; gap: 28px; flex-wrap: wrap; }
 .footer-nav a {
-  color: rgba(232,232,240,.25); text-decoration: none;
-  font-size: 12px; transition: color .2s;
+  color: rgba(232,232,240,.5); text-decoration: none;
+  font-size: 13px; transition: color .2s;
 }
 .footer-nav a:hover { color: rgba(232,232,240,.6); }
 .footer-copy {
-  width: 100%; font-size: 11px;
-  color: rgba(232,232,240,.15); margin-top: 8px;
-  text-align: center; letter-spacing: .5px;
+  width: 100%; font-size: 12px;
+  color: rgba(232,232,240,.35); margin-top: 16px;
+  text-align: center; letter-spacing: .3px;
 }
 
 /* ── RESPONSIVE ── */
@@ -670,7 +672,7 @@ footer {
   </p>
   <div class="hero-ctas">
     <button class="btn-primary" onclick="openAuth('signup')">⚡ Transmit Your Music Free</button>
-    <button class="btn-secondary" onclick="openAuth('signin')">Already have an account →</button>
+    <button class="btn-secondary" onclick="openAuth('signin')">Create an account →</button>
   </div>
   <div class="hero-proof">
     <span class="proof-pill"><span class="dot">◆</span> No credit card required</span>
@@ -994,7 +996,7 @@ footer {
 <!-- FINAL CTA -->
 <section class="signal-cta">
   <h2>Your music is ready<br>to reach the world.<br><span class="gold-grad">Transmit the signal.</span></h2>
-  <p>Paste your first song link and watch your lyrics become a campaign. No credit card. No ad experience. Just your music and the transmission.</p>
+  <p>Paste your first song link and watch your lyrics become a campaign. No credit card. No setup complexity. Just your music and the transmission.</p>
   <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
     <button class="btn-primary" onclick="openAuth('signup')" style="font-size:16px;padding:20px 48px">⚡ Begin Transmission — Free</button>
   </div>
