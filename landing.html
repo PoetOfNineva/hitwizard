@@ -13,7 +13,7 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; background: #05050a; }
 
 /* ── TOKENS ── */
 :root {
@@ -122,7 +122,7 @@ nav.light-nav .btn-ghost-nav {
     rgba(5,5,10,.85) 100%
   );
 }
-.s-hero > * { position: relative; z-index: 1; }
+.s-hero > * { position: relative; z-index: 2; }
 
 .hero-pill {
   display: inline-flex; align-items: center; gap: 10px;
@@ -242,9 +242,16 @@ nav.light-nav .btn-ghost-nav {
    ══════════════════ */
 .s-diff {
   position: relative; z-index: 2;
-  background: rgba(3,3,8,.88);
+  background: transparent;
   padding: 100px 0; text-align: center;
 }
+.s-diff::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 0;
+  background: rgba(2,2,6,.72);
+  pointer-events: none;
+}
+.s-diff > * { position: relative; z-index: 1; }
 
 .diff-h2 {
   font-family: 'Playfair Display', serif;
@@ -356,8 +363,15 @@ nav.light-nav .btn-ghost-nav {
    ══════════════════ */
 .s-weapons {
   position: relative; z-index: 2;
-  background: rgba(3,3,8,.88); padding: 100px 0;
+  background: transparent; padding: 100px 0;
 }
+.s-weapons::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 0;
+  background: rgba(2,2,6,.72);
+  pointer-events: none;
+}
+.s-weapons > .container { position: relative; z-index: 1; }
 .weapons-h2 {
   font-family: 'Playfair Display', serif;
   font-size: clamp(28px, 3.5vw, 52px);
@@ -429,8 +443,15 @@ table.ctable {
    ══════════════════ */
 .s-faq {
   position: relative; z-index: 2;
-  background: rgba(3,3,8,.88); padding: 100px 0;
+  background: transparent; padding: 100px 0;
 }
+.s-faq::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 0;
+  background: rgba(2,2,6,.72);
+  pointer-events: none;
+}
+.s-faq > .container { position: relative; z-index: 1; }
 .faq-h2 {
   font-family: 'Playfair Display', serif;
   font-size: clamp(28px, 3.5vw, 48px);
