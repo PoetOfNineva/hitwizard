@@ -5268,20 +5268,27 @@ function HitWizard() {
   var _titles$page, _titles$page2;
 
   // ── AUTH GATE ──
-  // Wait for auth to initialize, then gate logged-out users
   const [authReady, setAuthReady] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  // If coming from landing page after sign-in, give Supabase extra time
+  const fromLanding = window.location.search.includes('from=landing');
 
   React.useEffect(() => {
+    // Give extra time if coming from landing page sign-in
+    const delay = fromLanding ? 1500 : 0;
     const check = () => {
       if (window.HW_AUTH && window.HW_AUTH.ready) {
         setIsLoggedIn(window.HW_AUTH.isLoggedIn());
         setAuthReady(true);
+        // Clean up URL param
+        if (fromLanding) {
+          window.history.replaceState({}, '', '/');
+        }
       } else {
         setTimeout(check, 100);
       }
     };
-    check();
+    setTimeout(check, delay);
     window.addEventListener("hw_auth_ready", () => {
       setIsLoggedIn(window.HW_AUTH.isLoggedIn());
       setAuthReady(true);
@@ -5293,7 +5300,7 @@ function HitWizard() {
     }
   }, []);
 
-  // Show nothing while auth initializes (prevents flash)
+  // Show loading while auth initializes
   if (!authReady) {
     return React.createElement("div", {
       style: {
@@ -5305,24 +5312,20 @@ function HitWizard() {
     }, "⚡ LOADING...");
   }
 
-  // Logged-out users → redirect to cinematic landing page
-  if (!isLoggedIn) {
-    // Only redirect if not already on the landing page
+  // Logged-out users → redirect to landing page
+  // But NOT if we just came from landing (give session time to settle)
+  if (!isLoggedIn && !fromLanding) {
     if (!window.location.pathname.includes('landing')) {
       window.location.replace('/landing.html');
     }
     return null;
   }
-  React.useEffect(() => {
-    // Pick up auth intent from landing page redirect
-    const intent = sessionStorage.getItem('hw_auth_intent');
-    if (intent && isLoggedIn === false && authReady) {
-      sessionStorage.removeItem('hw_auth_intent');
-      setTimeout(() => {
-        if (window.showAuthModal) window.showAuthModal(intent);
-      }, 500);
-    }
-  }, [authReady, isLoggedIn]);
+
+  // If fromLanding but still not logged in after waiting, send back
+  if (!isLoggedIn && fromLanding) {
+    window.location.replace('/landing.html');
+    return null;
+  }
     _useState100 = _slicedToArray(_useState99, 2),
     page = _useState100[0],
     setPage = _useState100[1];
