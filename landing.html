@@ -553,6 +553,8 @@ footer {
 .rd2 { transition-delay: .2s; }
 .rd3 { transition-delay: .3s; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/auth.js"></script>
 </head>
 <body>
 
@@ -1099,12 +1101,7 @@ function openAuth(mode) {
 
 async function handleGoogleAuth() {
   try {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const sb = createClient('https://vklwiqbglmhyjuenysal.supabase.co', 'sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS');
-    await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/' }
-    });
+    await window.HW_AUTH.signInWithGoogle();
   } catch(e) { showAuthErr('Google sign-in failed. Please try email.'); }
 }
 
@@ -1116,37 +1113,27 @@ async function handleEmailAuth(mode) {
   if (mode === 'signup' && pass.length < 8) { showAuthErr('Password must be at least 8 characters.'); return; }
   btn.textContent = 'Please wait...'; btn.disabled = true;
   try {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const sb = createClient('https://vklwiqbglmhyjuenysal.supabase.co', 'sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS');
-    let result;
     if (mode === 'signup') {
       const name = document.getElementById('hw-fname')?.value?.trim() || '';
-      result = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+      const data = await window.HW_AUTH.signUpWithEmail(email, pass, name);
+      if (data && data.user && !data.session) {
+        document.getElementById('hw-landing-modal').querySelector('div').innerHTML = `
+          <div style="text-align:center;padding:20px 0">
+            <div style="font-size:52px;margin-bottom:20px">📧</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#FFB800;margin-bottom:12px">Check your email</div>
+            <div style="font-size:15px;color:rgba(255,255,255,.6);line-height:1.75">We sent a confirmation link to<br><strong style="color:#fff">${email}</strong><br><br>Click the link to activate your account, then sign in.</div>
+            <button onclick="document.getElementById('hw-landing-modal').remove();openAuth('signin')" style="margin-top:24px;padding:12px 32px;border-radius:10px;background:#FFB800;color:#000;font-weight:800;border:none;cursor:pointer;font-family:Inter,sans-serif;font-size:14px">Sign In</button>
+          </div>`;
+        return;
+      }
     } else {
-      result = await sb.auth.signInWithPassword({ email, password: pass });
+      await window.HW_AUTH.signInWithEmail(email, pass);
     }
-    if (result.error) {
-      showAuthErr(result.error.message);
-      btn.textContent = mode === 'signup' ? '⚡ Create Free Account' : 'Sign In';
-      btn.disabled = false;
-      return;
-    }
-    // Signup with email confirmation required
-    if (mode === 'signup' && result.data?.user && !result.data.session) {
-      document.getElementById('hw-landing-modal').querySelector('div').innerHTML = `
-        <div style="text-align:center;padding:20px 0">
-          <div style="font-size:52px;margin-bottom:20px">📧</div>
-          <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#FFB800;margin-bottom:12px">Check your email</div>
-          <div style="font-size:15px;color:rgba(255,255,255,.6);line-height:1.75">We sent a confirmation link to<br><strong style="color:#fff">${email}</strong><br><br>Click the link to activate your account, then come back and sign in.</div>
-          <button onclick="document.getElementById('hw-landing-modal').remove()" style="margin-top:24px;padding:12px 32px;border-radius:10px;background:#FFB800;color:#000;font-weight:800;border:none;cursor:pointer;font-family:Inter,sans-serif;font-size:14px">Got it</button>
-        </div>`;
-      return;
-    }
-    // Wait briefly for Supabase session to propagate, then enter app
-    await new Promise(r => setTimeout(r, 800));
-    window.location.href = '/?from=landing';
+    // HW_AUTH session now established in hw_auth_session storage key
+    // index.html reads the same key — redirect and it will find the session
+    window.location.href = '/';
   } catch(e) {
-    showAuthErr('Something went wrong. Please try again.');
+    showAuthErr(e.message || 'Something went wrong. Please try again.');
     btn.textContent = mode === 'signup' ? '⚡ Create Free Account' : 'Sign In';
     btn.disabled = false;
   }
