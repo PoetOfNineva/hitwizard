@@ -4,11 +4,16 @@
   edge_functions = "netlify/edge-functions"
 
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,KEEPALIVE_SECRET"
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,KEEPALIVE_SECRET,ADMIN_SECRET"
 
 # ── SCHEDULED FUNCTIONS ──
 [functions."supabase-keepalive"]
   schedule = "0 9 */3 * *"
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
 
 [[redirects]]
   from = "/auth/callback"
