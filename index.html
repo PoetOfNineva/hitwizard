@@ -5628,36 +5628,6 @@ window.addEventListener("hw_auth_ready",function(){
   var banner=document.getElementById("hw-hero-auth");
   if(banner&&window.HW_AUTH.isLoggedIn()){banner.style.display="none";}
 });
-
-// When user signs IN — reload cloud history and characters into the UI
-window.addEventListener("hw_user_signed_in", async function() {
-  try {
-    // Reload cloud history
-    if (window.HW_HISTORY) {
-      const cloudHistory = await window.HW_HISTORY.load(50);
-      if (cloudHistory && cloudHistory.length > 0) {
-        // Store to localStorage so React state picks it up on next render
-        const meta = cloudHistory.map(function(item) {
-          var r = item.result; var rest = Object.assign({}, item); delete rest.result; return rest;
-        });
-        localStorage.setItem("hw_history", JSON.stringify(meta));
-        cloudHistory.forEach(function(item) {
-          if (item.result) {
-            try { localStorage.setItem("hw_result_" + item.id, JSON.stringify(item.result)); } catch(e) {}
-          }
-        });
-        // Reload the page to reflect cloud data in React state
-        window.location.reload();
-      }
-    }
-  } catch(e) { console.warn("Cloud reload on sign-in failed:", e); }
-});
-
-// When user signs OUT — clear all local data from UI
-window.addEventListener("hw_user_signed_out", function() {
-  // Page reload will reinitialize with empty localStorage (already cleared in auth.js)
-  window.location.reload();
-});
 setTimeout(bootAuth,700);
 </script>
 </body>
