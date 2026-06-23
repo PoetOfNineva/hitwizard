@@ -5646,6 +5646,15 @@ ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getE
 <script src="/auth.js"></script>
 <script>
 // AUTH UI INJECTION
+// DOMContentLoaded fires before auth.js loads when script is at bottom of body.
+// auth.js registers its init() on DOMContentLoaded which already fired.
+// So we call init() directly here, guarded against double-calling.
+if (window.HW_AUTH && !window.HW_AUTH._initCalled) {
+  window.HW_AUTH._initCalled = true;
+  window.HW_AUTH.init().then(() => {
+    window.dispatchEvent(new CustomEvent("hw_auth_ready"));
+  });
+}
 function getTierLabel(t){return{free:"Free",artist:"Artist",pro_artist:"Pro Artist",manager:"Manager",label:"Label"}[t]||"Free";}
 
 // Handle Stripe checkout return
