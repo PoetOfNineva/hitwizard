@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HitWizard — Your Lyrics Are The Weapon</title>
+<meta name="description" content="The only AI music marketing platform that reads your actual lyrics. Turn your words into ads, pitches, video scripts, EPKs and more. Built for artists who refuse to be ordinary.">
+<meta property="og:title" content="HitWizard — Your Lyrics Are The Weapon">
+<meta property="og:description" content="Every ad written from inside your song. Not generic templates — your actual words.">
+<meta property="og:image" content="https://hitwizardai.com/logo.jpg">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #0a0a0f;
+  --deep: #13131a;
+  --navy: #1a1a2e;
+  --gold: #FFB800;
+  --ember: #FF6B00;
+  --star: #e8e8f0;
+  --muted: #666680;
+  --border: rgba(255,184,0,.15);
+  --border-bright: rgba(255,184,0,.4);
+  --glow: rgba(255,184,0,.2);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--void);
+  color: var(--star);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── CANVAS STARFIELD ── */
+#starfield {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  background: rgba(10,10,15,.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,184,0,.08);
+  transition: all .3s;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nav-logo img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.nav-logo-text {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color .2s;
+}
+
+.nav-links a:hover { color: var(--star); }
+
+.nav-ctas {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-ghost {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: var(--star);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-ghost:hover {
+  border-color: var(--border-bright);
+  color: var(--gold);
+}
+
+.btn-gold {
+  padding: 10px 24px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: #000;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all .2s;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.btn-gold:hover {
+  background: #ffc933;
+  box-shadow: 0 0 30px rgba(255,184,0,.4);
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(255,184,0,.08);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 100px;
+  margin-bottom: 32px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .4; transform: scale(1.5); }
+}
+
+.hero h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(40px, 7vw, 88px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  color: var(--star);
+  max-width: 900px;
+  margin-bottom: 12px;
+}
+
+.hero h1 .gold {
+  background: linear-gradient(135deg, #FFB800, #FF6B00, #FFB800);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-sub {
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--muted);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+  font-weight: 400;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+}
+
+.btn-hero {
+  padding: 18px 40px;
+  border-radius: 12px;
+  background: var(--gold);
+  color: #000;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all .25s;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.3px;
+  box-shadow: 0 0 60px rgba(255,184,0,.3);
+}
+
+.btn-hero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 60px rgba(255,184,0,.5);
+}
+
+.btn-hero-out {
+  padding: 18px 40px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--star);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.2);
+  transition: all .25s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-hero-out:hover {
+  border-color: var(--border-bright);
+  color: var(--gold);
+  transform: translateY(-2px);
+}
+
+.hero-proof {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.proof-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.proof-item .check {
+  color: var(--gold);
+  font-size: 14px;
+}
+
+/* ── SECTIONS ── */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+/* ── THE BRUTAL TRUTH ── */
+.truth {
+  padding: 120px 0;
+  background: linear-gradient(180deg, var(--void) 0%, #0d0d18 100%);
+}
+
+.truth-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.truth h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--star);
+  margin-bottom: 24px;
+}
+
+.truth h2 .red { color: #FF4444; }
+
+.truth p {
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.truth-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.stat-box {
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+}
+
+.stat-box .num {
+  font-family: 'Cinzel', serif;
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-box .label {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* ── THE DIFFERENCE ── */
+.difference {
+  padding: 120px 0;
+  text-align: center;
+}
+
+.difference h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(28px, 4vw, 52px);
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--star);
+  max-width: 760px;
+  margin: 0 auto 20px;
+}
+
+.difference .highlight {
+  display: inline-block;
+  background: linear-gradient(135deg, #FFB800, #FF6B00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.difference .sub {
+  color: var(--muted);
+  font-size: 18px;
+  max-width: 600px;
+  margin: 0 auto 64px;
+  line-height: 1.7;
+}
+
+.lyric-demo {
+  background: var(--deep);
+  border: 1px solid var(--border-bright);
+  border-radius: 20px;
+  padding: 48px;
+  max-width: 800px;
+  margin: 0 auto 48px;
+  text-align: left;
+  position: relative;
+  box-shadow: 0 0 80px rgba(255,184,0,.08);
+}
+
+.lyric-demo::before {
+  content: 'FROM YOUR LYRICS';
+  position: absolute;
+  top: -12px;
+  left: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--gold);
+  background: var(--deep);
+  padding: 0 12px;
+}
+
+.lyric-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  color: rgba(255,184,0,.6);
+  margin-bottom: 8px;
+  padding-left: 16px;
+  border-left: 2px solid rgba(255,184,0,.2);
+}
+
+.lyric-arrow {
+  text-align: center;
+  font-size: 28px;
+  margin: 24px 0;
+  color: var(--gold);
+}
+
+.ad-result {
+  background: rgba(255,184,0,.06);
+  border: 1px solid rgba(255,184,0,.2);
+  border-radius: 12px;
+  padding: 20px 24px;
+  font-size: 15px;
+  color: var(--star);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.ad-result .tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #000;
+  background: var(--gold);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-style: normal;
+}
+
+.vs-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+.vs-box {
+  background: var(--deep);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+}
+
+.vs-box.them { opacity: .6; }
+
+.vs-box .vs-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.vs-box.them .vs-label { color: #FF4444; }
+.vs-box.us .vs-label { color: var(--gold); }
+.vs-box.us { border-color: var(--border-bright); }
+
+.vs-text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.vs-divider {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--gold);
+  text-align: center;
+}
+
+/* ── HOW IT WORKS ── */
+.how {
+  padding: 120px 0;
+  background: linear-gradient(180deg, #0d0d18 0%, var(--void) 100%);
+}
+
+.how h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 72px;
+  color: var(--star);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  position: relative;
+}
+
+.steps::before {
+  content: '';
+  position: absolute;
+  top: 48px;
+  left: 16.67%;
+  right: 16.67%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+}
+
+.step {
+  text-align: center;
+  padding: 40px 24px;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: border-color .3s, box-shadow .3s;
+}
+
+.step:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 0 40px var(--glow);
+}
+
+.step-num {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--ember));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #000;
+  margin: 0 auto 24px;
+}
+
+.step h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--star);
+  margin-bottom: 12px;
+}
+
+.step p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ── 9 WEAPONS ── */
+.weapons {
+  padding: 120px 0;
+}
+
+.weapons h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--star);
+}
+
+.weapons .sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 16px;
+  max-width: 500px;
+  margin: 0 auto 64px;
+  line-height: 1.6;
+}
+
+.weapons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.weapon-card {
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  transition: all .3s;
+  cursor: default;
+}
+
+.weapon-card:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 0 40px var(--glow);
+  transform: translateY(-4px);
+}
+
+.weapon-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.weapon-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.weapon-card h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--star);
+  margin-bottom: 10px;
+}
+
+.weapon-card p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── COMPARISON ── */
+.compare {
+  padding: 120px 0;
+  background: linear-gradient(180deg, var(--void) 0%, #0d0d18 100%);
+}
+
+.compare h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 64px;
+  color: var(--star);
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.compare-table th {
+  padding: 20px 28px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-table th:first-child { color: var(--muted); }
+.compare-table th.them { color: #666; }
+.compare-table th.us { color: var(--gold); }
+
+.compare-table td {
+  padding: 18px 28px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table tr:hover td { background: rgba(255,255,255,.02); }
+
+.compare-table td:first-child { color: var(--star); font-weight: 500; }
+.compare-table td.them { color: #555; }
+.compare-table td.us { color: var(--gold); font-weight: 600; }
+
+.x { color: #FF4444; margin-right: 8px; }
+.check2 { color: var(--gold); margin-right: 8px; }
+
+/* ── FAQ ── */
+.faq {
+  padding: 120px 0;
+}
+
+.faq h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 64px;
+  color: var(--star);
+}
+
+.faq-group {
+  max-width: 720px;
+  margin: 0 auto 48px;
+}
+
+.faq-group-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item {
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--star);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  padding: 20px 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-family: 'Inter', sans-serif;
+  transition: color .2s;
+}
+
+.faq-q:hover { color: var(--gold); }
+
+.faq-q .arrow {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 18px;
+  transition: transform .3s;
+}
+
+.faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+
+.faq-a {
+  display: none;
+  padding: 0 0 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.faq-item.open .faq-a { display: block; }
+
+/* ── FINAL CTA ── */
+.final-cta {
+  position: relative;
+  padding: 160px 24px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,184,0,.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 20% 50%, rgba(255,107,0,.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 50%, rgba(139,92,246,.06) 0%, transparent 60%);
+  z-index: 0;
+}
+
+.final-cta > * { position: relative; z-index: 1; }
+
+.final-cta h2 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(32px, 5vw, 64px);
+  font-weight: 900;
+  color: var(--star);
+  max-width: 800px;
+  margin: 0 auto 20px;
+  line-height: 1.1;
+}
+
+.final-cta .gold2 {
+  background: linear-gradient(135deg, #FFB800, #FF6B00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.final-cta p {
+  color: var(--muted);
+  font-size: 18px;
+  max-width: 480px;
+  margin: 0 auto 48px;
+  line-height: 1.7;
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.footer-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color .2s;
+}
+
+.footer-links a:hover { color: var(--star); }
+
+.footer-copy {
+  font-size: 12px;
+  color: rgba(102,102,128,.5);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  nav { padding: 16px 20px; }
+  .nav-links { display: none; }
+  .truth-inner { grid-template-columns: 1fr; gap: 48px; }
+  .steps { grid-template-columns: 1fr; }
+  .steps::before { display: none; }
+  .weapons-grid { grid-template-columns: 1fr 1fr; }
+  .vs-row { grid-template-columns: 1fr; }
+  .vs-divider { transform: rotate(90deg); }
+}
+
+@media (max-width: 480px) {
+  .weapons-grid { grid-template-columns: 1fr; }
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <img src="/logo.jpg" alt="HitWizard">
+    <span class="nav-logo-text">HITWIZARD</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#weapons">Weapons</a></li>
+    <li><a href="#compare">Why Us</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-ctas">
+    <button class="btn-ghost" onclick="openAuth('signin')">Sign In</button>
+    <button class="btn-gold" onclick="openAuth('signup')">Get Started Free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">⚡ AI Music Marketing — From Inside Your Song</div>
+  <h1>Your Lyrics Are<br><span class="gold">The Weapon.</span></h1>
+  <p class="hero-sub">The only AI music marketing platform that reads your actual lyrics. Every ad, pitch, and video script written from inside your song — not generic templates.</p>
+  <div class="hero-ctas">
+    <button class="btn-hero" onclick="openAuth('signup')">⚡ Start Free — No Credit Card</button>
+    <button class="btn-hero-out" onclick="openAuth('signin')">Sign In</button>
+  </div>
+  <div class="hero-proof">
+    <span class="proof-item"><span class="check">✓</span> Free forever to start</span>
+    <span class="proof-item"><span class="check">✓</span> 9 AI-powered weapons</span>
+    <span class="proof-item"><span class="check">✓</span> No ads knowledge needed</span>
+    <span class="proof-item"><span class="check">✓</span> Cancel anytime</span>
+  </div>
+</section>
+
+<!-- THE BRUTAL TRUTH -->
+<section class="truth" id="truth">
+  <div class="container">
+    <div class="truth-inner reveal">
+      <div>
+        <div class="section-eyebrow">⚡ The Brutal Truth</div>
+        <h2>Spotify doesn't reward<br>talent. It rewards <span class="red">velocity.</span></h2>
+        <p>Labels have known this for decades. They pour money into Meta ads — Instagram and Facebook campaigns built to spike saves, follows, and streams in a short window. That's what triggers Discover Weekly, Radio pushes, and algorithmic playlists.</p>
+        <p>That's how songs blow up "overnight." It's momentum, engineered deliberately. The problem: running those ads requires expertise, strategy, and hours in Ads Manager. <strong style="color:var(--star)">Until now.</strong></p>
+      </div>
+      <div class="truth-stats">
+        <div class="stat-box">
+          <div class="num">$0.03</div>
+          <div class="label">Average cost per stream on optimized Meta campaigns</div>
+        </div>
+        <div class="stat-box">
+          <div class="num">3–5×</div>
+          <div class="label">Meta outperforms Spotify Ads on cost-per-stream</div>
+        </div>
+        <div class="stat-box">
+          <div class="num">9</div>
+          <div class="label">Marketing weapons. One song link. Fired simultaneously.</div>
+        </div>
+        <div class="stat-box">
+          <div class="num">60s</div>
+          <div class="label">From Spotify link to fully generated ad campaign</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE DIFFERENCE -->
+<section class="difference" id="difference">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow">⚔️ The HitWizard Difference</div>
+      <h2>Other platforms match templates<br>to your genre. We read your<br><span class="highlight">actual lyrics.</span></h2>
+      <p class="sub">Every ad, pitch, and hook written from inside your song. Not generic music promotion language. Your words. Your story. Your voice.</p>
+    </div>
+
+    <div class="lyric-demo reveal">
+      <div class="lyric-line">"I can't promise I'll live forever,"</div>
+      <div class="lyric-line">"But my love for you will live forever."</div>
+      <div class="lyric-line">"And when I stand at heaven's gate,"</div>
+      <div class="lyric-line">"If I can't find your face by fate,"</div>
+      <div class="lyric-arrow">↓</div>
+      <div class="ad-result">
+        <div class="tag">META AD COPY — GENERATED</div>
+        "Even at heaven's gate, I'd find my way back to you." — Heaven In Your Eyes hits different when love feels eternal. Listen now.
+      </div>
+    </div>
+
+    <div class="vs-row reveal">
+      <div class="vs-box them">
+        <div class="vs-label">❌ Generic AI Tools</div>
+        <p class="vs-text">"Stream this new song by [Artist Name]. Available now on Spotify."<br><br>Could be anyone. Says nothing. Converts nobody.</p>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="vs-box us">
+        <div class="vs-label">⚡ HitWizard</div>
+        <p class="vs-text">Reads your actual lyrics. Pulls the most emotionally charged phrase. Builds the ad around your real words. Makes strangers feel your song before they hear it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow" style="text-align:center">⚙️ How It Works</div>
+      <h2>Three steps. Nine weapons. One song.</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Paste Your Link</h3>
+        <p>Spotify, Apple Music, YouTube, SoundCloud — paste any link. Autopilot fetches your title, artist, genre, mood, BPM and finds your lyrics automatically. Zero manual entry.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>AI Reads Your Lyrics</h3>
+        <p>Our AI reads your actual words — not just your genre — and prepares everything. It knows which lyric lines are most powerful and what emotions they trigger in listeners.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Choose Your Weapon</h3>
+        <p>Launch all 9 weapons simultaneously or one at a time. Ad campaigns, playlist pitches, video scripts, EPKs — all written from inside your song, in seconds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 WEAPONS -->
+<section class="weapons" id="weapons">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow" style="text-align:center">⚔️ The Arsenal</div>
+      <h2>Nine Weapons. One Platform.</h2>
+      <p class="sub">Every weapon powered by your actual lyrics. Not one of them uses a template.</p>
+    </div>
+    <div class="weapons-grid reveal">
+
+      <div class="weapon-card">
+        <div class="weapon-icon">⚡</div>
+        <div class="weapon-badge" style="background:rgba(255,184,0,.15);color:var(--gold);border:1px solid rgba(255,184,0,.3)">Most Powerful</div>
+        <h3>Campaign Launcher</h3>
+        <p>Complete Meta, TikTok and YouTube ad campaigns — headlines, copy, targeting, budget splits, 4-week strategy. Every word pulled from your lyrics.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">🎯</div>
+        <div class="weapon-badge" style="background:rgba(0,229,153,.1);color:#00E599;border:1px solid rgba(0,229,153,.3)">Highest ROI</div>
+        <h3>Playlist Strike</h3>
+        <p>Professional curator pitch emails written for your specific song's genre, mood and story. Pitch independent curators, blogs and press with emails that actually get opened.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">✦</div>
+        <div class="weapon-badge" style="background:rgba(155,79,222,.15);color:#9B4FDE;border:1px solid rgba(155,79,222,.3)">Multi-Platform</div>
+        <h3>Content Arsenal</h3>
+        <p>30 days of social media content — captions, hooks, hashtags — for TikTok, Instagram, YouTube and X. Each post written from a different angle on your lyrics.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">📋</div>
+        <div class="weapon-badge" style="background:rgba(255,140,0,.15);color:#FF8C00;border:1px solid rgba(255,140,0,.3)">Press Ready</div>
+        <h3>EPK Generator</h3>
+        <p>Professional Electronic Press Kit in seconds. Artist bio, press release, pitch emails for labels, blogs, podcasts and media — ready to send immediately.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">🪝</div>
+        <div class="weapon-badge" style="background:rgba(255,68,102,.15);color:#FF4466;border:1px solid rgba(255,68,102,.3)">Go Viral</div>
+        <h3>Hook Lab</h3>
+        <p>Multiple completely different TikTok and Reel hooks, each written from a different lyric angle. The one that stops the scroll at 2am is in there.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">💰</div>
+        <div class="weapon-badge" style="background:rgba(0,204,255,.1);color:#00CCFF;border:1px solid rgba(0,204,255,.3)">Save Money</div>
+        <h3>Budget Planner</h3>
+        <p>Smart ad spend breakdown across Meta, TikTok and YouTube. Know exactly where every dollar goes before you spend a cent, with realistic reach projections.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">🎬</div>
+        <div class="weapon-badge" style="background:rgba(255,107,0,.15);color:#FF6B00;border:1px solid rgba(255,107,0,.3)">Exclusive</div>
+        <h3>Video Engine</h3>
+        <p>Shot-by-shot video prompt scripts for your entire song — timestamped, scene by scene, ready to paste into Grok, Krea or Runway. Characters auto-included.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">🧬</div>
+        <div class="weapon-badge" style="background:rgba(192,132,252,.15);color:#C084FC;border:1px solid rgba(192,132,252,.3)">Your DNA</div>
+        <h3>Character Vault</h3>
+        <p>Save your visual characters once — appearance, wardrobe, personality. Their full DNA auto-injects into every video prompt forever. No more re-describing them.</p>
+      </div>
+
+      <div class="weapon-card">
+        <div class="weapon-icon">🌐</div>
+        <div class="weapon-badge" style="background:rgba(0,229,153,.1);color:#00E599;border:1px solid rgba(0,229,153,.3)">Industry First</div>
+        <h3>Social Autopilot</h3>
+        <p>Connect your Instagram, TikTok, YouTube and Facebook once. HitWizard schedules and posts your content everywhere automatically. Write the song Monday. Fans see it everywhere by Friday.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section class="compare" id="compare">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow" style="text-align:center">⚖️ Why HitWizard</div>
+      <h2>Not All Music AI Is Created Equal.</h2>
+    </div>
+    <div class="reveal" style="overflow-x:auto">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="them">Generic AI Tools</th>
+            <th class="us">⚡ HitWizard</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Reads your actual lyrics</td>
+            <td class="them"><span class="x">✗</span>Never</td>
+            <td class="us"><span class="check2">✓</span>Always — it's the foundation</td>
+          </tr>
+          <tr>
+            <td>Ad copy source</td>
+            <td class="them"><span class="x">✗</span>Generic templates</td>
+            <td class="us"><span class="check2">✓</span>Your actual lyric lines</td>
+          </tr>
+          <tr>
+            <td>Auto-fetches song data</td>
+            <td class="them"><span class="x">✗</span>Manual entry required</td>
+            <td class="us"><span class="check2">✓</span>Paste one link. Done.</td>
+          </tr>
+          <tr>
+            <td>Campaign platforms covered</td>
+            <td class="them"><span class="x">✗</span>Usually just one</td>
+            <td class="us"><span class="check2">✓</span>Meta + TikTok + YouTube simultaneously</td>
+          </tr>
+          <tr>
+            <td>Video production support</td>
+            <td class="them"><span class="x">✗</span>None</td>
+            <td class="us"><span class="check2">✓</span>Full shot-by-shot prompt scripts</td>
+          </tr>
+          <tr>
+            <td>Visual character DNA</td>
+            <td class="them"><span class="x">✗</span>None</td>
+            <td class="us"><span class="check2">✓</span>Saved once, auto-injects everywhere</td>
+          </tr>
+          <tr>
+            <td>Playlist curator pitching</td>
+            <td class="them"><span class="x">✗</span>Generic or none</td>
+            <td class="us"><span class="check2">✓</span>Song-specific, lyric-referenced emails</td>
+          </tr>
+          <tr>
+            <td>Weapons count</td>
+            <td class="them"><span class="x">✗</span>1–3 features</td>
+            <td class="us"><span class="check2">✓</span>9 integrated weapons</td>
+          </tr>
+          <tr>
+            <td>Built by a musician</td>
+            <td class="them"><span class="x">✗</span>Built by tech teams</td>
+            <td class="us"><span class="check2">✓</span>Built by a poet with 400+ published poems</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-eyebrow" style="text-align:center">❓ FAQ</div>
+      <h2>Everything You Need To Know.</h2>
+    </div>
+
+    <div class="faq-group reveal">
+      <div class="faq-group-title">General</div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What exactly is HitWizard? <span class="arrow">↓</span></button>
+        <div class="faq-a">HitWizard is an AI music marketing platform that reads your actual song lyrics and generates complete marketing campaigns from them. It's the only platform where every ad, pitch email, hook, and video script is written from inside your song — not from generic templates.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Who is this for? <span class="arrow">↓</span></button>
+        <div class="faq-a">Independent artists, AI music creators, songwriters, and anyone who makes music and wants it heard — but doesn't want to become a full-time marketer to make that happen. You focus on the music. HitWizard handles the marketing.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Do I need marketing or ad experience? <span class="arrow">↓</span></button>
+        <div class="faq-a">None. Paste your song link. Everything else is handled. HitWizard researches your genre, mood, and target audience automatically, writes all your copy, and structures your campaigns for you.</div>
+      </div>
+    </div>
+
+    <div class="faq-group reveal">
+      <div class="faq-group-title">The Weapons</div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">How does Autopilot Mode work? <span class="arrow">↓</span></button>
+        <div class="faq-a">Paste any Spotify, Apple Music, YouTube or SoundCloud link. HitWizard fetches your song title, artist name, genre, mood, BPM and artwork automatically. It also searches Genius for your lyrics. One link — everything populated in seconds.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What is Character Vault and why is it different? <span class="arrow">↓</span></button>
+        <div class="faq-a">Character Vault lets you save your visual artist characters — full physical description, wardrobe, personality — once. Every time you use Video Engine to create prompts for a new song, your characters' complete DNA automatically injects into every single scene prompt. No more re-describing your character in every Grok or Krea prompt. Save hours per song.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Does Video Engine actually create videos? <span class="arrow">↓</span></button>
+        <div class="faq-a">Video Engine generates complete, production-ready prompt scripts for every scene in your song — timestamped, shot-by-shot, with character DNA, wardrobe, locations and camera directions. You paste those prompts into Grok, Krea, Runway or any AI video tool. This gives you director-level control over your visual story, which full automation can't match.</div>
+      </div>
+    </div>
+
+    <div class="faq-group reveal">
+      <div class="faq-group-title">Pricing</div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Is it really free to start? <span class="arrow">↓</span></button>
+        <div class="faq-a">Yes. Create a free account with no credit card required. The free tier lets you explore the platform and run your first campaigns. Upgrade to paid tiers for unlimited generations, advanced features, and cloud sync across devices.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What are the paid tiers? <span class="arrow">↓</span></button>
+        <div class="faq-a">Artist ($10/mo), Pro Artist ($29/mo), Manager ($79/mo) and Label ($149/mo). Each tier increases generation limits, unlocks advanced features, and adds support. All plans can be cancelled anytime.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Do you take a cut of my ad spend? <span class="arrow">↓</span></button>
+        <div class="faq-a">No. HitWizard is a subscription tool. Your ad spend goes directly from you to Meta, TikTok or YouTube — we never touch it. You pay a monthly subscription to use the platform, and 100% of your ad budget goes towards your actual ads.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <h2>The Future Of Music Marketing<br><span class="gold2">Lives In Your Lyrics.</span></h2>
+  <p>Paste your first song link and watch nine weapons load. No credit card. No ad experience. Just your music and the forge.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <button class="btn-hero" onclick="openAuth('signup')">⚡ Enter The Forge — It's Free</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">⚡ HITWIZARD</div>
+  <div class="footer-links">
+    <a href="#how">How It Works</a>
+    <a href="#weapons">Weapons</a>
+    <a href="#faq">FAQ</a>
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Service</a>
+    <a href="mailto:hitwizard.ai@gmail.com">Contact</a>
+  </div>
+  <p class="footer-copy">© 2026 HitWizard. All rights reserved. Built by a Poet, for Artists who refuse to be ordinary.</p>
+</footer>
+
+<script>
+// ── STARFIELD ──
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  stars = [];
+  const count = Math.floor((canvas.width * canvas.height) / 6000);
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      a: Math.random(),
+      speed: Math.random() * 0.3 + 0.05,
+      drift: (Math.random() - 0.5) * 0.15
+    });
+  }
+}
+
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(232,232,240,${s.a})`;
+    ctx.fill();
+    s.y -= s.speed;
+    s.x += s.drift;
+    s.a += (Math.random() - 0.5) * 0.01;
+    s.a = Math.max(0.05, Math.min(0.9, s.a));
+    if (s.y < -2) { s.y = canvas.height + 2; s.x = Math.random() * canvas.width; }
+    if (s.x < -2) s.x = canvas.width + 2;
+    if (s.x > canvas.width + 2) s.x = -2;
+  });
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener('resize', () => { resize(); initStars(); });
+resize();
+initStars();
+drawStars();
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── FAQ ACCORDION ──
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ── AUTH MODAL (redirect to main app) ──
+function openAuth(mode) {
+  // Store intended mode and redirect to main app which handles auth
+  sessionStorage.setItem('hw_auth_intent', mode);
+  window.location.href = '/';
+}
+
+// ── NAV SCROLL EFFECT ──
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if (window.scrollY > 60) {
+    nav.style.borderBottomColor = 'rgba(255,184,0,.15)';
+  } else {
+    nav.style.borderBottomColor = 'rgba(255,184,0,.08)';
+  }
+});
+</script>
+</body>
+</html>
