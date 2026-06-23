@@ -77,6 +77,22 @@ window.HW_AUTH = {
       if (event === "SIGNED_IN") {
         await this.syncLocalDataToCloud();
       }
+      // Send welcome email on first signup only
+      if (event === "SIGNED_UP" && this.user) {
+        try {
+          await fetch("/.netlify/functions/send-welcome", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: this.user.email,
+              name: this.user.user_metadata?.full_name || "",
+              type: this.user.app_metadata?.provider || "email"
+            })
+          });
+        } catch(e) {
+          console.warn("Welcome email failed:", e);
+        }
+      }
     });
   },
 
