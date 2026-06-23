@@ -1100,7 +1100,7 @@ function openAuth(mode) {
 async function handleGoogleAuth() {
   try {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const sb = createClient('https://vklwiqbglmhyjuenysal.supabase.co', 'sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTzTIuFGn2hEdJ78U');
+    const sb = createClient('https://vklwiqbglmhyjuenysal.supabase.co', 'sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS');
     await sb.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin + '/' }
@@ -1117,7 +1117,7 @@ async function handleEmailAuth(mode) {
   btn.textContent = 'Please wait...'; btn.disabled = true;
   try {
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const sb = createClient('https://vklwiqbglmhyjuenysal.supabase.co', 'sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTzTIuFGn2hEdJ78U');
+    const sb = createClient('https://vklwiqbglmhyjuenysal.supabase.co', 'sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS');
     let result;
     if (mode === 'signup') {
       const name = document.getElementById('hw-fname')?.value?.trim() || '';
