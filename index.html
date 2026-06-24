@@ -4670,7 +4670,8 @@ function History(_ref52) {
 
   const tl = {
     campaign: "Ad Campaign", pitch: "Playlist Pitch", content: "Content Set",
-    epk: "EPK", hook: "Hook Lab", budget: "Budget Plan", video: "Shooting Script"
+    epk: "EPK", hook: "Hook Lab", budget: "Budget Plan", video: "Shooting Script",
+    creative: "Ad Creative", links: "Smart Link"
   };
 
   function renderResult(r) {
@@ -4732,11 +4733,11 @@ function History(_ref52) {
       )
     ),
     React.createElement("div", {className:"g4", style:{marginBottom:20}},
-      ["campaign","pitch","content","epk"].map(function(type) {
+      ["campaign","pitch","content","creative"].map(function(type) {
         return React.createElement("div", {className:"stat", key:type},
           React.createElement("div", {style:{display:"flex",justifyContent:"space-between"}},
             React.createElement("div", {className:"sv"}, history.filter(function(h){return h.type===type;}).length),
-            React.createElement("span", {style:{fontSize:19}}, {campaign:"⚡",pitch:"🎯",content:"✦",epk:"📄"}[type])
+            React.createElement("span", {style:{fontSize:19}}, {campaign:"⚡",pitch:"🎯",content:"✦",creative:"🎨"}[type])
           ),
           React.createElement("div", {className:"sl"}, tl[type]+"s")
         );
@@ -4747,7 +4748,7 @@ function History(_ref52) {
         ? React.createElement("div", {style:{textAlign:"center",padding:"44px 0",color:"var(--muted)"}},
             React.createElement("div", {style:{fontSize:38,marginBottom:11}}, "📂"),
             React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,marginBottom:5,color:"var(--txt)"}}, "Nothing Here Yet"),
-            React.createElement("div", {style:{fontSize:12}}, "Everything you create across all eight weapons will be logged here.")
+            React.createElement("div", {style:{fontSize:12}}, "Everything you create across all eleven weapons will be logged here.")
           )
         : history.map(function(item, i) {
             var itemId = item.id || String(i);
@@ -5833,127 +5834,98 @@ Build all creative from the emotional truth of this specific lyric section.`
     setGenerating(false);
   }
 
-  // ── CANVAS: Generate Quote Card PNG ──
+  // ── CINEMATIC QUOTE CARD GENERATOR ──
   function generateQuoteCard() {
-    const canvas = canvasRef.current;
-    if (!canvas || !selected || !creative) return;
-
-    const ctx = canvas.getContext("2d");
-    canvas.width = 1080;
-    canvas.height = 1080;
-
+    if (!selected || !creative) return;
     const vd = creative.visualDirection || {};
     const mood = (vd.mood || "").toLowerCase();
+    const score = selected.overall;
 
-    // Mood-based gradient palettes
-    const palettes = {
-      dark:    ["#0a0a0f", "#1a0a2e"],
-      sad:     ["#0d1117", "#1a1a2e"],
-      love:    ["#1a0a0a", "#2d0a1a"],
-      epic:    ["#0a0a1a", "#1a0a3d"],
-      happy:   ["#1a0a00", "#2d1a00"],
-      default: ["#0a0a0f", "#1a0a2e"]
+    // Cinematic mood palettes
+    const moodPalettes = {
+      love:    { bg1:"#1a0008", bg2:"#2d0018", accent:"#FF4466", glow:"rgba(255,68,102,0.15)" },
+      sacred:  { bg1:"#0a0818", bg2:"#1a1030", accent:"#C084FC", glow:"rgba(192,132,252,0.12)" },
+      epic:    { bg1:"#080818", bg2:"#0f0a30", accent:"#FFB800", glow:"rgba(255,184,0,0.12)" },
+      sad:     { bg1:"#080c18", bg2:"#0d1428", accent:"#6B9FFF", glow:"rgba(107,159,255,0.1)" },
+      dark:    { bg1:"#050508", bg2:"#0d0a18", accent:"#9B4FDE", glow:"rgba(155,79,222,0.12)" },
+      default: { bg1:"#0a0a0f", bg2:"#18102e", accent:"#FFB800", glow:"rgba(255,184,0,0.1)" }
     };
 
-    let palette = palettes.default;
-    if (mood.includes("sad") || mood.includes("mellow")) palette = palettes.sad;
-    else if (mood.includes("love") || mood.includes("romantic")) palette = palettes.love;
-    else if (mood.includes("epic") || mood.includes("power")) palette = palettes.epic;
-    else if (mood.includes("happy") || mood.includes("joy")) palette = palettes.happy;
-    else if (mood.includes("dark") || mood.includes("deep")) palette = palettes.dark;
+    let palette = moodPalettes.default;
+    if (mood.includes("love") || mood.includes("romantic") || mood.includes("ach")) palette = moodPalettes.love;
+    else if (mood.includes("sacred") || mood.includes("intim") || mood.includes("spirit")) palette = moodPalettes.sacred;
+    else if (mood.includes("epic") || mood.includes("power") || mood.includes("grandeur")) palette = moodPalettes.epic;
+    else if (mood.includes("sad") || mood.includes("mellow") || mood.includes("grief")) palette = moodPalettes.sad;
+    else if (mood.includes("dark") || mood.includes("deep") || mood.includes("heavy")) palette = moodPalettes.dark;
 
-    // Background gradient
-    const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
-    grad.addColorStop(0, palette[0]);
-    grad.addColorStop(1, palette[1]);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 1080, 1080);
+    // Create offscreen iframe-based renderer for cinematic quality
+    const W = 1080, H = 1080;
+    const lyricText = selected.text;
+    const artistName = (form.artist || "").toUpperCase();
+    const songName = (form.songTitle || "").toUpperCase();
+    const scoreColor = score >= 80 ? palette.accent : score >= 60 ? "#00E599" : "#9B4FDE";
 
-    // Subtle texture overlay (radial glow)
-    const glow = ctx.createRadialGradient(540, 540, 0, 540, 540, 700);
-    glow.addColorStop(0, "rgba(255,184,0,0.06)");
-    glow.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, 1080, 1080);
+    // Render cinematic quote card directly on canvas
+    const canvas = canvasRef.current || document.createElement("canvas");
+    const CW = 1080, CH = 1080;
+    canvas.width = CW; canvas.height = CH;
+    const ctx = canvas.getContext("2d");
+    const bg1 = palette.bg1, bg2 = palette.bg2, accent = palette.accent;
 
-    // Top accent line
-    ctx.fillStyle = "#FFB800";
-    ctx.fillRect(80, 80, 120, 4);
+    const grad = ctx.createLinearGradient(0, 0, CW, CH);
+    grad.addColorStop(0, bg1); grad.addColorStop(0.5, bg2); grad.addColorStop(1, bg1);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, CW, CH);
 
-    // Artist name (top)
-    ctx.fillStyle = "rgba(255,184,0,0.7)";
-    ctx.font = "bold 28px 'Arial'";
-    ctx.letterSpacing = "4px";
-    ctx.fillText((form.artist || "").toUpperCase(), 80, 140);
+    const radGrad = ctx.createRadialGradient(CW/2, CH/2, 0, CW/2, CH/2, 600);
+    radGrad.addColorStop(0, palette.glow); radGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = radGrad; ctx.fillRect(0, 0, CW, CH);
 
-    // Song title
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.font = "24px 'Arial'";
-    ctx.fillText((form.songTitle || "").toUpperCase(), 80, 178);
+    const cGrad = ctx.createRadialGradient(CW, 0, 0, CW, 0, 450);
+    cGrad.addColorStop(0, palette.glow); cGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = cGrad; ctx.fillRect(0, 0, CW, CH);
 
-    // Divider
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.fillRect(80, 200, 920, 1);
+    ctx.fillStyle = accent; ctx.fillRect(72, 72, 52, 3);
+    ctx.fillStyle = accent; ctx.globalAlpha = 0.9;
+    ctx.font = "bold 17px Arial"; ctx.fillText(artistName, 72, 122);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.font = "300 14px Arial"; ctx.fillText(songName, 72, 150);
+    ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(72, 175, CW-144, 1);
 
-    // Lyric text — word-wrapped, large and bold
-    const lyric = `"${selected.text}"`;
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 58px 'Georgia'";
-    ctx.textAlign = "left";
-
-    const words = lyric.split(" ");
-    let line = "";
-    const lines = [];
-    const maxWidth = 920;
-
-    for (let w of words) {
-      const test = line + (line ? " " : "") + w;
-      if (ctx.measureText(test).width > maxWidth && line) {
-        lines.push(line);
-        line = w;
-      } else {
-        line = test;
-      }
+    const lyric = String.fromCharCode(8220) + lyricText + String.fromCharCode(8221);
+    ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 56px Georgia";
+    ctx.shadowColor = "rgba(0,0,0,0.9)"; ctx.shadowBlur = 30; ctx.textAlign = "left";
+    const wordArr = lyric.split(" ");
+    let line2 = "", lines2 = [], maxW = CW - 160;
+    for (let w of wordArr) {
+      const test = line2 + (line2?" ":"") + w;
+      if (ctx.measureText(test).width > maxW && line2) { lines2.push(line2); line2 = w; }
+      else line2 = test;
     }
-    if (line) lines.push(line);
-
-    // Center the lyric block vertically
-    const lineH = 74;
-    const blockH = lines.length * lineH;
-    let y = (1080 - blockH) / 2 + 20;
-
-    // Drop shadow for text
-    ctx.shadowColor = "rgba(0,0,0,0.8)";
-    ctx.shadowBlur = 20;
-    for (const ln of lines) {
-      ctx.fillText(ln, 80, y);
-      y += lineH;
-    }
+    if (line2) lines2.push(line2);
+    const lineH = 72, blockH2 = lines2.length * lineH;
+    let yPos = (CH - blockH2) / 2 + 24;
+    for (const ln of lines2) { ctx.fillText(ln, 80, yPos); yPos += lineH; }
     ctx.shadowBlur = 0;
 
-    // Impact score badge
-    const score = selected.overall;
-    ctx.fillStyle = score >= 80 ? "#FFB800" : score >= 60 ? "#00E599" : "#9B4FDE";
+    const bW = 170, bH = 44, bX = 72, bY = CH - 140;
+    ctx.fillStyle = scoreColor;
     ctx.beginPath();
-    ctx.roundRect(80, 1080 - 180, 200, 56, 28);
+    if (ctx.roundRect) ctx.roundRect(bX, bY, bW, bH, 22); else ctx.rect(bX, bY, bW, bH);
     ctx.fill();
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 22px 'Arial'";
-    ctx.textAlign = "center";
-    ctx.fillText(`⚡ IMPACT ${score}`, 180, 1080 - 145);
+    ctx.fillStyle = score >= 80 ? "#000" : "#fff"; ctx.font = "bold 15px Arial";
+    ctx.textAlign = "center"; ctx.fillText("IMPACT " + score, bX + bW/2, bY + 28);
 
-    // Bottom: HitWizard watermark
-    ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
-    ctx.font = "20px 'Arial'";
-    ctx.fillText("HITWIZARD · Music Marketing from the Future", 80, 1080 - 36);
+    ctx.textAlign = "right"; ctx.fillStyle = accent; ctx.globalAlpha = 0.5;
+    ctx.font = "bold 14px Arial"; ctx.fillText("HITWIZARD", CW - 72, CH - 54);
+    ctx.globalAlpha = 0.25; ctx.font = "300 12px Arial";
+    ctx.fillText("Music Marketing from the Future", CW - 72, CH - 34);
+    ctx.globalAlpha = 1;
 
-    // Download
-    const link = document.createElement("a");
-    link.download = `${(form.songTitle || "quote-card").replace(/\s+/g, "-").toLowerCase()}-quote-card.png`;
-    link.href = canvas.toDataURL("image/png", 1.0);
-    link.click();
-    showToast("Quote card downloaded! ⚡", "🎨");
+    const dl = document.createElement("a");
+    dl.download = (form.songTitle||"quote-card").replace(/\s+/g,"-").toLowerCase() + "-impact-" + score + ".png";
+    dl.href = canvas.toDataURL("image/png", 1.0); dl.click();
+    showToast("Cinematic quote card downloaded!", "🎨");
   }
 
   // ── SCORE BAR COMPONENT ──
@@ -6296,6 +6268,14 @@ function HitWizard() {
       window.HW_HISTORY.load(50).then(function(cloudItems) {
         if (cloudItems && cloudItems.length > 0) {
           const formatted = cloudItems.map(function(item) {
+            // Also check localStorage for result (in case large result stored locally)
+            let result = item.result || null;
+            if (!result && item.id) {
+              try {
+                const local = localStorage.getItem("hw_result_" + item.id) || localStorage.getItem("hw_result_backup_" + item.id);
+                if (local) result = JSON.parse(local);
+              } catch(e) {}
+            }
             return {
               id: item.id,
               type: item.type || "campaign",
@@ -6303,7 +6283,8 @@ function HitWizard() {
               title: item.title || "Untitled",
               sub: item.sub || "",
               color: item.color || "var(--gold)",
-              result: item.result || null,
+              result: result,
+              date: item.created_at ? new Date(item.created_at).toLocaleDateString() : "",
               ts: item.created_at
             };
           });
