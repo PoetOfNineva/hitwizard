@@ -1741,6 +1741,10 @@ function Dashboard(_ref1) {
     id: "links", icon: "🔗", title: "Smart Links",
     desc: "One link opens every platform. Track clicks by country, device and platform in real time.",
     badge: "New", bc: "b-gold", color: "#FFB800", glow: "rgba(255,184,0,.25)"
+  }, {
+    id: "creative", icon: "🎨", title: "Ad Creative Builder",
+    desc: "AI scores every lyric line 1-100. You pick the most powerful. We build the full ad from it. Aura can't touch this.",
+    badge: "Aura Killer", bc: "b-pur", color: "#FF4466", glow: "rgba(255,68,102,.25)"
   }];
   const done = t => history.some(h => h.type === t);
   const cl = [{
@@ -5642,6 +5646,591 @@ function SmartLinks({ showToast }) {
 }
 
 
+// ══════════════════════════════════════════════════════════════════
+// HITWIZARD AD CREATIVE BUILDER
+// Lyric Impact Score + Quote Card Generator + Meta/TikTok/IG Copy
+// This is what makes Aura irrelevant.
+// ══════════════════════════════════════════════════════════════════
+
+function AdCreativeBuilder({ showToast, addHistory }) {
+  const [step, setStep] = React.useState(1); // 1=input, 2=scores, 3=creative
+  const [form, setForm] = React.useState({
+    songTitle: "", artist: "", genre: "", mood: "", lyrics: "", artworkUrl: ""
+  });
+  const [sections, setSections] = React.useState([]);
+  const [selected, setSelected] = React.useState(null);
+  const [creative, setCreative] = React.useState(null);
+  const [scoring, setScoring] = React.useState(false);
+  const [generating, setGenerating] = React.useState(false);
+  const [err, setErr] = React.useState("");
+  const canvasRef = React.useRef(null);
+
+  const inp = (k, v) => setForm(f => ({...f, [k]: v}));
+
+  // ── STEP 1: Score the lyrics ──
+  async function scoreLyrics() {
+    setErr("");
+    if (!form.lyrics || form.lyrics.trim().length < 20) {
+      setErr("Please paste your lyrics first — we need them to score impact."); return;
+    }
+    if (!form.songTitle || !form.artist) {
+      setErr("Song title and artist name are required."); return;
+    }
+
+    // Paywall
+    if (window.HW_USAGE) {
+      const ok = await window.HW_USAGE.gate("creative");
+      if (!ok) return;
+    }
+
+    setScoring(true);
+    try {
+      const raw = await hwAI(
+        `You are a music marketing expert who scores song lyric sections for advertising potential.
+Score each lyric section on a scale of 1-100 for four dimensions:
+- emotional: emotional intensity and vulnerability
+- uniqueness: originality of the image or metaphor
+- relatability: how many people will instantly connect
+- hook: viral/hook potential for ads and social media
+
+Return ONLY valid JSON. No markdown. No explanation. Format exactly:
+{
+  "sections": [
+    {
+      "text": "the exact lyric lines",
+      "emotional": 85,
+      "uniqueness": 72,
+      "relatability": 90,
+      "hook": 88,
+      "overall": 84,
+      "why": "One sentence on why this section hits hard in ads"
+    }
+  ]
+}
+
+Split the lyrics into natural sections of 2-4 lines each. Score each separately.`,
+        `Song: "${form.songTitle}" by ${form.artist}
+Genre: ${form.genre || "Not specified"}
+Mood: ${form.mood || "Not specified"}
+
+LYRICS:
+${form.lyrics.trim()}`
+      );
+
+      let parsed;
+      try {
+        const clean = raw.replace(/```json|```/g, "").trim();
+        parsed = JSON.parse(clean);
+      } catch(e) {
+        throw new Error("Failed to parse scoring response. Please try again.");
+      }
+
+      if (!parsed.sections || !Array.isArray(parsed.sections)) {
+        throw new Error("Invalid response format. Please try again.");
+      }
+
+      setSections(parsed.sections);
+      setStep(2);
+    } catch(e) {
+      setErr(e.message || "Scoring failed. Please try again.");
+    }
+    setScoring(false);
+  }
+
+  // ── STEP 2: Generate creative from selected section ──
+  async function generateCreative() {
+    if (!selected) { setErr("Select a lyric section first."); return; }
+    setErr("");
+    setGenerating(true);
+    try {
+      const raw = await hwAI(
+        `You are an elite music marketing creative director. You write ad copy that makes people stop scrolling and feel something.
+You read the ACTUAL LYRICS and build creative from the EMOTIONAL CORE of the song — not from templates.
+
+Return ONLY valid JSON. No markdown. No preamble. Format exactly:
+{
+  "headline": "The killer one-liner for the ad (under 10 words, punches hard)",
+  "metaAds": [
+    {
+      "platform": "Facebook/Instagram Feed",
+      "dimensions": "1080×1080",
+      "primaryText": "The ad copy (2-3 sentences max, emotional, first-person or direct address)",
+      "headline": "Short punchy headline",
+      "cta": "Listen Now"
+    },
+    {
+      "platform": "Instagram Story / TikTok",
+      "dimensions": "1080×1920",
+      "primaryText": "Story ad copy — punchy, immediate, scroll-stopping",
+      "headline": "Story headline",
+      "cta": "Swipe Up"
+    },
+    {
+      "platform": "YouTube Pre-roll",
+      "dimensions": "1920×1080",
+      "primaryText": "Hook that grabs in first 5 seconds before skip button",
+      "headline": "YouTube headline",
+      "cta": "Watch Now"
+    }
+  ],
+  "tiktokHooks": [
+    "Hook 1 — under 8 words, starts mid-emotion",
+    "Hook 2 — poses a question the viewer can't ignore",
+    "Hook 3 — bold statement that demands a reaction"
+  ],
+  "instagramCaption": "Full Instagram caption with the lyric line, emotional context, call to action, and 5 relevant hashtags",
+  "visualDirection": {
+    "mood": "The visual mood in 3 words",
+    "colorPalette": "3-4 specific colors that match the song's emotion",
+    "typography": "Font style direction (e.g. bold serif, thin sans-serif, handwritten)",
+    "backgroundSuggestion": "Describe the ideal background for a lyric card",
+    "overlayStyle": "How the text should appear on screen (fade in word by word, bold center, etc)"
+  },
+  "targetAudience": "Who will feel this most — specific, not generic",
+  "whyThisWorks": "2 sentences on why this lyric section is perfect for ads"
+}`,
+        `Song: "${form.songTitle}" by ${form.artist}
+Genre: ${form.genre || "Not specified"}  
+Mood: ${form.mood || "Not specified"}
+
+SELECTED HIGH-IMPACT LYRIC SECTION (Impact Score: ${selected.overall}/100):
+"${selected.text}"
+
+WHY IT SCORES HIGH: ${selected.why}
+
+FULL SONG LYRICS FOR CONTEXT:
+${form.lyrics.trim()}
+
+Build all creative from the emotional truth of this specific lyric section.`
+      );
+
+      let parsed;
+      try {
+        const clean = raw.replace(/```json|```/g, "").trim();
+        parsed = JSON.parse(clean);
+      } catch(e) {
+        throw new Error("Failed to parse creative response. Please try again.");
+      }
+
+      setCreative(parsed);
+      setStep(3);
+
+      // Save to history
+      if (addHistory) {
+        addHistory({
+          type: "creative",
+          icon: "🎨",
+          title: `Ad Creative — ${form.songTitle}`,
+          sub: `"${selected.text.slice(0, 50)}..."`,
+          color: "#FF4466",
+          result: parsed
+        });
+      }
+
+    } catch(e) {
+      setErr(e.message || "Generation failed. Please try again.");
+    }
+    setGenerating(false);
+  }
+
+  // ── CANVAS: Generate Quote Card PNG ──
+  function generateQuoteCard() {
+    const canvas = canvasRef.current;
+    if (!canvas || !selected || !creative) return;
+
+    const ctx = canvas.getContext("2d");
+    canvas.width = 1080;
+    canvas.height = 1080;
+
+    const vd = creative.visualDirection || {};
+    const mood = (vd.mood || "").toLowerCase();
+
+    // Mood-based gradient palettes
+    const palettes = {
+      dark:    ["#0a0a0f", "#1a0a2e"],
+      sad:     ["#0d1117", "#1a1a2e"],
+      love:    ["#1a0a0a", "#2d0a1a"],
+      epic:    ["#0a0a1a", "#1a0a3d"],
+      happy:   ["#1a0a00", "#2d1a00"],
+      default: ["#0a0a0f", "#1a0a2e"]
+    };
+
+    let palette = palettes.default;
+    if (mood.includes("sad") || mood.includes("mellow")) palette = palettes.sad;
+    else if (mood.includes("love") || mood.includes("romantic")) palette = palettes.love;
+    else if (mood.includes("epic") || mood.includes("power")) palette = palettes.epic;
+    else if (mood.includes("happy") || mood.includes("joy")) palette = palettes.happy;
+    else if (mood.includes("dark") || mood.includes("deep")) palette = palettes.dark;
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
+    grad.addColorStop(0, palette[0]);
+    grad.addColorStop(1, palette[1]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // Subtle texture overlay (radial glow)
+    const glow = ctx.createRadialGradient(540, 540, 0, 540, 540, 700);
+    glow.addColorStop(0, "rgba(255,184,0,0.06)");
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // Top accent line
+    ctx.fillStyle = "#FFB800";
+    ctx.fillRect(80, 80, 120, 4);
+
+    // Artist name (top)
+    ctx.fillStyle = "rgba(255,184,0,0.7)";
+    ctx.font = "bold 28px 'Arial'";
+    ctx.letterSpacing = "4px";
+    ctx.fillText((form.artist || "").toUpperCase(), 80, 140);
+
+    // Song title
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.font = "24px 'Arial'";
+    ctx.fillText((form.songTitle || "").toUpperCase(), 80, 178);
+
+    // Divider
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fillRect(80, 200, 920, 1);
+
+    // Lyric text — word-wrapped, large and bold
+    const lyric = `"${selected.text}"`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 58px 'Georgia'";
+    ctx.textAlign = "left";
+
+    const words = lyric.split(" ");
+    let line = "";
+    const lines = [];
+    const maxWidth = 920;
+
+    for (let w of words) {
+      const test = line + (line ? " " : "") + w;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+
+    // Center the lyric block vertically
+    const lineH = 74;
+    const blockH = lines.length * lineH;
+    let y = (1080 - blockH) / 2 + 20;
+
+    // Drop shadow for text
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 20;
+    for (const ln of lines) {
+      ctx.fillText(ln, 80, y);
+      y += lineH;
+    }
+    ctx.shadowBlur = 0;
+
+    // Impact score badge
+    const score = selected.overall;
+    ctx.fillStyle = score >= 80 ? "#FFB800" : score >= 60 ? "#00E599" : "#9B4FDE";
+    ctx.beginPath();
+    ctx.roundRect(80, 1080 - 180, 200, 56, 28);
+    ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 22px 'Arial'";
+    ctx.textAlign = "center";
+    ctx.fillText(`⚡ IMPACT ${score}`, 180, 1080 - 145);
+
+    // Bottom: HitWizard watermark
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.font = "20px 'Arial'";
+    ctx.fillText("HITWIZARD · Music Marketing from the Future", 80, 1080 - 36);
+
+    // Download
+    const link = document.createElement("a");
+    link.download = `${(form.songTitle || "quote-card").replace(/\s+/g, "-").toLowerCase()}-quote-card.png`;
+    link.href = canvas.toDataURL("image/png", 1.0);
+    link.click();
+    showToast("Quote card downloaded! ⚡", "🎨");
+  }
+
+  // ── SCORE BAR COMPONENT ──
+  function ScoreBar({ label, value, color }) {
+    return React.createElement("div", { style: { marginBottom: 8 } },
+      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 4 } },
+        React.createElement("span", { style: { fontSize: 12, color: "var(--muted)" } }, label),
+        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color } }, value)
+      ),
+      React.createElement("div", { style: { background: "rgba(255,255,255,.06)", borderRadius: 4, height: 6 } },
+        React.createElement("div", { style: { background: color, height: 6, borderRadius: 4, width: `${value}%`, transition: "width .6s ease" } })
+      )
+    );
+  }
+
+  // ── RENDER ──
+
+  // STEP 1: Input
+  if (step === 1) return React.createElement("div", { style: { maxWidth: 700, margin: "0 auto" } },
+    React.createElement("div", { className: "card", style: { marginBottom: 20, background: "linear-gradient(135deg,rgba(255,68,102,.08),rgba(155,79,222,.08))", border: "1px solid rgba(255,68,102,.2)" } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "#FF4466", marginBottom: 8 } }, "🎨 LYRIC IMPACT SCORE"),
+      React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", lineHeight: 1.7 } },
+        "Paste your lyrics. Our AI scores every section for emotional weight, uniqueness, relatability and hook potential. You pick the highest-scoring line. We build the entire ad creative from it. ",
+        React.createElement("strong", { style: { color: "#FF4466" } }, "No templates. No genre matching. Pure lyric intelligence.")
+      )
+    ),
+
+    React.createElement("div", { className: "card", style: { marginBottom: 16 } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", marginBottom: 16 } }, "🎵 SONG DETAILS"),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 } },
+        React.createElement("div", null,
+          React.createElement("label", { style: { fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Song Title *"),
+          React.createElement("input", { value: form.songTitle, onChange: e => inp("songTitle", e.target.value), placeholder: "Heaven In Your Eyes", className: "inp", style: { width: "100%" } })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style: { fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Artist Name *"),
+          React.createElement("input", { value: form.artist, onChange: e => inp("artist", e.target.value), placeholder: "Celine Enya Houston", className: "inp", style: { width: "100%" } })
+        )
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 } },
+        React.createElement("div", null,
+          React.createElement("label", { style: { fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Genre"),
+          React.createElement("input", { value: form.genre, onChange: e => inp("genre", e.target.value), placeholder: "R&B / Soul", className: "inp", style: { width: "100%" } })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style: { fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Mood"),
+          React.createElement("input", { value: form.mood, onChange: e => inp("mood", e.target.value), placeholder: "Emotional, Longing", className: "inp", style: { width: "100%" } })
+        )
+      )
+    ),
+
+    React.createElement("div", { className: "card", style: { marginBottom: 20 } },
+      React.createElement("label", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", display: "block", marginBottom: 12 } }, "📝 YOUR LYRICS *"),
+      React.createElement("div", { style: { fontSize: 12, color: "var(--muted)", marginBottom: 10 } }, "Paste your full lyrics — every line gets scored individually"),
+      React.createElement("textarea", {
+        value: form.lyrics,
+        onChange: e => inp("lyrics", e.target.value),
+        placeholder: "Paste your full song lyrics here...\n\nEvery section will be scored for:\n• Emotional intensity\n• Uniqueness of imagery\n• Listener relatability\n• Viral hook potential",
+        className: "inp",
+        style: { width: "100%", minHeight: 240, resize: "vertical", fontFamily: "inherit", lineHeight: 1.8 }
+      })
+    ),
+
+    err && React.createElement("div", { style: { background: "rgba(255,68,68,.1)", border: "1px solid rgba(255,68,68,.3)", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#FF6B6B", marginBottom: 16 } }, err),
+
+    React.createElement("button", {
+      onClick: scoreLyrics,
+      disabled: scoring,
+      className: "btn btn-gold",
+      style: { width: "100%", padding: 16, fontSize: 15, fontWeight: 800, borderRadius: 12 }
+    }, scoring
+      ? React.createElement("span", null, "⚡ Scoring your lyrics...")
+      : React.createElement("span", null, "⚡ Score My Lyrics — Find the Ad Gold")
+    )
+  );
+
+  // STEP 2: Impact Scores
+  if (step === 2) return React.createElement("div", { style: { maxWidth: 740, margin: "0 auto" } },
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 28 } },
+      React.createElement("button", { onClick: () => { setStep(1); setSections([]); setSelected(null); }, style: { background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "var(--txt)", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 } }, "← Back"),
+      React.createElement("div", null,
+        React.createElement("div", { style: { fontFamily: "Cinzel,serif", fontSize: 18, fontWeight: 900, color: "var(--txt)" } }, "Lyric Impact Scores"),
+        React.createElement("div", { style: { fontSize: 12, color: "var(--muted)" } }, `${sections.length} sections scored — select the highest-impact line for your ad`)
+      )
+    ),
+
+    // Legend
+    React.createElement("div", { style: { display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" } },
+      [["🔴 80-100", "#FF4466", "Ad Gold"], ["🟡 60-79", "#FFB800", "Strong"], ["🟢 40-59", "#00E599", "Good"], ["⚪ 0-39", "rgba(255,255,255,.3)", "Weak"]].map(([label, color, tag]) =>
+        React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } },
+          React.createElement("div", { style: { width: 10, height: 10, borderRadius: "50%", background: color } }),
+          React.createElement("span", { style: { color: "var(--muted)" } }, `${tag} (${label})`)
+        )
+      )
+    ),
+
+    // Section cards
+    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } },
+      [...sections]
+        .sort((a, b) => b.overall - a.overall)
+        .map((sec, i) => {
+          const isSelected = selected?.text === sec.text;
+          const score = sec.overall;
+          const scoreColor = score >= 80 ? "#FF4466" : score >= 60 ? "#FFB800" : score >= 40 ? "#00E599" : "rgba(255,255,255,.3)";
+
+          return React.createElement("div", {
+            key: i,
+            onClick: () => setSelected(sec),
+            style: {
+              background: isSelected ? "rgba(255,68,102,.08)" : "rgba(255,255,255,.03)",
+              border: `2px solid ${isSelected ? "#FF4466" : "rgba(255,255,255,.06)"}`,
+              borderRadius: 16, padding: "20px 22px", cursor: "pointer",
+              transition: "all .2s"
+            }
+          },
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 } },
+              React.createElement("div", { style: { flex: 1 } },
+                // Rank badge
+                i === 0 && React.createElement("div", { style: { fontSize: 10, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "#FF4466", marginBottom: 6 } }, "⚡ HIGHEST IMPACT"),
+
+                // Lyric text
+                React.createElement("div", { style: { fontSize: 15, color: "var(--txt)", fontStyle: "italic", lineHeight: 1.7, marginBottom: 12, fontFamily: "Georgia,serif" } },
+                  `"${sec.text}"`
+                ),
+
+                // Why it works
+                React.createElement("div", { style: { fontSize: 12, color: "var(--muted)", marginBottom: 14 } }, sec.why),
+
+                // Score bars
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 20px" } },
+                  React.createElement(ScoreBar, { label: "Emotional", value: sec.emotional, color: "#FF4466" }),
+                  React.createElement(ScoreBar, { label: "Uniqueness", value: sec.uniqueness, color: "#9B4FDE" }),
+                  React.createElement(ScoreBar, { label: "Relatability", value: sec.relatability, color: "#00E599" }),
+                  React.createElement(ScoreBar, { label: "Hook Potential", value: sec.hook, color: "#FFB800" })
+                )
+              ),
+
+              // Overall score circle
+              React.createElement("div", { style: { textAlign: "center", flexShrink: 0 } },
+                React.createElement("div", {
+                  style: {
+                    width: 72, height: 72, borderRadius: "50%",
+                    background: `conic-gradient(${scoreColor} ${score * 3.6}deg, rgba(255,255,255,.06) 0deg)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: isSelected ? `0 0 20px ${scoreColor}44` : "none"
+                  }
+                },
+                  React.createElement("div", { style: { width: 56, height: 56, borderRadius: "50%", background: "#0d0d18", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" } },
+                    React.createElement("div", { style: { fontFamily: "Cinzel,serif", fontSize: 20, fontWeight: 900, color: scoreColor, lineHeight: 1 } }, score),
+                    React.createElement("div", { style: { fontSize: 9, color: "var(--muted)", letterSpacing: 1 } }, "IMPACT")
+                  )
+                ),
+                isSelected && React.createElement("div", { style: { fontSize: 10, color: "#FF4466", marginTop: 6, fontWeight: 700 } }, "✓ SELECTED")
+              )
+            )
+          );
+        })
+    ),
+
+    React.createElement("div", { style: { marginTop: 24 } },
+      err && React.createElement("div", { style: { background: "rgba(255,68,68,.1)", border: "1px solid rgba(255,68,68,.3)", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#FF6B6B", marginBottom: 14 } }, err),
+      React.createElement("button", {
+        onClick: generateCreative,
+        disabled: generating || !selected,
+        className: "btn btn-gold",
+        style: { width: "100%", padding: 16, fontSize: 15, fontWeight: 800, borderRadius: 12, opacity: selected ? 1 : 0.5 }
+      }, generating
+        ? "🎨 Building your ad creative..."
+        : selected
+          ? `🎨 Build Ad Creative from Impact Score ${selected.overall}`
+          : "Select a lyric section above first"
+      )
+    )
+  );
+
+  // STEP 3: Creative Output
+  if (step === 3 && creative) return React.createElement("div", { style: { maxWidth: 760, margin: "0 auto" } },
+    // Header
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 28 } },
+      React.createElement("button", { onClick: () => setStep(2), style: { background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "var(--txt)", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13 } }, "← Rescore"),
+      React.createElement("div", { flex: 1 },
+        React.createElement("div", { style: { fontFamily: "Cinzel,serif", fontSize: 18, fontWeight: 900, color: "var(--txt)" } }, "Ad Creative Package"),
+        React.createElement("div", { style: { fontSize: 12, color: "var(--muted)" } }, `Built from: "${selected.text.slice(0, 60)}..."`)
+      ),
+      React.createElement("button", {
+        onClick: () => { setStep(1); setForm({songTitle:"",artist:"",genre:"",mood:"",lyrics:"",artworkUrl:""}); setSections([]); setSelected(null); setCreative(null); },
+        style: { background: "rgba(255,184,0,.1)", border: "1px solid rgba(255,184,0,.2)", color: "var(--gold)", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600 }
+      }, "⚡ New Song")
+    ),
+
+    // Headline
+    React.createElement("div", { className: "card", style: { marginBottom: 16, textAlign: "center", background: "linear-gradient(135deg,rgba(255,68,102,.08),rgba(155,79,222,.08))", border: "1px solid rgba(255,68,102,.25)" } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "#FF4466", marginBottom: 10 } }, "⚡ CAMPAIGN HEADLINE"),
+      React.createElement("div", { style: { fontFamily: "Cinzel,serif", fontSize: 26, fontWeight: 900, color: "var(--txt)", lineHeight: 1.3 } }, creative.headline),
+      creative.whyThisWorks && React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 10, lineHeight: 1.6 } }, creative.whyThisWorks)
+    ),
+
+    // Meta Ads
+    React.createElement("div", { className: "card", style: { marginBottom: 16 } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", marginBottom: 16 } }, "📱 META AD COPY — 3 FORMATS"),
+      React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
+        (creative.metaAds || []).map((ad, i) =>
+          React.createElement("div", { key: i, style: { background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 12, padding: "16px 18px" } },
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } },
+              React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "#FFB800" } }, ad.platform),
+              React.createElement("span", { style: { fontSize: 11, color: "var(--muted)", fontFamily: "JetBrains Mono,monospace" } }, ad.dimensions)
+            ),
+            React.createElement("div", { style: { fontSize: 14, color: "var(--txt)", lineHeight: 1.7, marginBottom: 8 } }, ad.primaryText),
+            React.createElement("div", { style: { display: "flex", gap: 10 } },
+              React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--txt)" } }, ad.headline),
+              React.createElement("span", { style: { fontSize: 12, color: "#00E599", fontWeight: 700 } }, `→ ${ad.cta}`)
+            )
+          )
+        )
+      )
+    ),
+
+    // TikTok Hooks
+    React.createElement("div", { className: "card", style: { marginBottom: 16 } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", marginBottom: 16 } }, "🎵 TIKTOK HOOKS — USE THESE AS YOUR FIRST LINE"),
+      React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } },
+        (creative.tiktokHooks || []).map((hook, i) =>
+          React.createElement("div", { key: i, style: { display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 10, padding: "12px 16px" } },
+            React.createElement("span", { style: { fontFamily: "Cinzel,serif", fontWeight: 900, color: "#FF4466", fontSize: 18, flexShrink: 0 } }, `0${i+1}`),
+            React.createElement("div", { style: { fontSize: 15, color: "var(--txt)", fontStyle: "italic", lineHeight: 1.5 } }, `"${hook}"`)
+          )
+        )
+      )
+    ),
+
+    // Instagram Caption
+    React.createElement("div", { className: "card", style: { marginBottom: 16 } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", marginBottom: 12 } }, "📸 INSTAGRAM CAPTION"),
+      React.createElement("div", { style: { fontSize: 14, color: "var(--txt)", lineHeight: 1.8, whiteSpace: "pre-wrap" } }, creative.instagramCaption),
+      React.createElement("button", {
+        onClick: () => { navigator.clipboard.writeText(creative.instagramCaption); showToast("Caption copied!", "📋"); },
+        style: { marginTop: 12, background: "rgba(255,184,0,.1)", border: "1px solid rgba(255,184,0,.2)", color: "var(--gold)", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 12, fontWeight: 600 }
+      }, "📋 Copy Caption")
+    ),
+
+    // Visual Direction
+    creative.visualDirection && React.createElement("div", { className: "card", style: { marginBottom: 16 } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", marginBottom: 16 } }, "🎨 VISUAL DIRECTION — FOR YOUR VIDEO/GRAPHIC EDITOR"),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
+        [
+          ["Mood", creative.visualDirection.mood],
+          ["Color Palette", creative.visualDirection.colorPalette],
+          ["Typography", creative.visualDirection.typography],
+          ["Target Audience", creative.targetAudience],
+        ].map(([label, val]) => val && React.createElement("div", { key: label, style: { background: "rgba(255,255,255,.03)", borderRadius: 10, padding: "12px 14px" } },
+          React.createElement("div", { style: { fontSize: 10, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 } }, label.toUpperCase()),
+          React.createElement("div", { style: { fontSize: 13, color: "var(--txt)" } }, val)
+        ))
+      ),
+      creative.visualDirection.backgroundSuggestion && React.createElement("div", { style: { marginTop: 12, background: "rgba(255,255,255,.03)", borderRadius: 10, padding: "12px 14px" } },
+        React.createElement("div", { style: { fontSize: 10, color: "var(--muted)", letterSpacing: 1, marginBottom: 4 } }, "BACKGROUND SUGGESTION"),
+        React.createElement("div", { style: { fontSize: 13, color: "var(--txt)" } }, creative.visualDirection.backgroundSuggestion)
+      )
+    ),
+
+    // Quote Card Generator
+    React.createElement("div", { className: "card", style: { marginBottom: 16, textAlign: "center" } },
+      React.createElement("div", { style: { fontSize: 11, fontFamily: "JetBrains Mono,monospace", letterSpacing: 2, color: "var(--gold)", marginBottom: 12 } }, "🖼 QUOTE CARD — 1080×1080 PNG"),
+      React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginBottom: 16 } }, "Download a ready-to-post quote card with your highest-impact lyric line"),
+      React.createElement("canvas", { ref: canvasRef, style: { display: "none" } }),
+      React.createElement("button", {
+        onClick: generateQuoteCard,
+        className: "btn btn-gold",
+        style: { padding: "12px 32px", fontWeight: 700 }
+      }, "⬇ Download Quote Card PNG")
+    )
+  );
+
+  return null;
+}
+
+
 function HitWizard() {
   var _titles$page, _titles$page2;
 
@@ -5829,6 +6418,10 @@ function HitWizard() {
     id: "links",
     icon: "🔗",
     label: "Smart Links"
+  }, {
+    id: "creative",
+    icon: "🎨",
+    label: "Ad Creative Builder"
   }];
   const titles = {
     dashboard: {
@@ -5882,6 +6475,10 @@ function HitWizard() {
     links: {
       t: "Smart Links",
       s: "One link. Every platform. Real-time analytics."
+    },
+    creative: {
+      t: "Ad Creative Builder",
+      s: "Lyric Impact Score · Quote Cards · Meta Ads · TikTok Hooks"
     }
   };
   const props = {
@@ -5932,6 +6529,11 @@ function HitWizard() {
       case "links":
         return /*#__PURE__*/React.createElement(SmartLinks, {
           showToast: st
+        });
+      case "creative":
+        return /*#__PURE__*/React.createElement(AdCreativeBuilder, {
+          showToast: st,
+          addHistory: addHistory
         });
       default:
         return /*#__PURE__*/React.createElement(Dashboard, {
