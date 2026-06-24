@@ -5632,8 +5632,9 @@ function updateUserCard(){
     var tier=(profile&&profile.tier)||"free";
     var avatar=(profile&&profile.avatar_url)||(user.user_metadata&&user.user_metadata.avatar_url);
 
-    // Update user card
-    card.style.cursor="default";card.innerHTML="";card.onclick=null;
+    // Update user card — reset any logged-out green styling
+    card.style.cssText="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:default;";
+    card.innerHTML="";card.onclick=null;
     var av=document.createElement("div");av.className="uav";
     if(avatar){av.innerHTML='<img src="'+avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';}
     else{av.textContent=name.charAt(0).toUpperCase();}
