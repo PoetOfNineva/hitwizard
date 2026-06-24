@@ -5734,13 +5734,16 @@ function SmartLinks({ showToast }) {
 // ══════════════════════════════════════════════════════════════════
 
 function AdCreativeBuilder({ showToast, addHistory }) {
-  const [step, setStep] = React.useState(1);
-  const [form, setForm] = React.useState({
+  // Restore state from window if navigating back — survives component unmount
+  const _saved = window.HW_CREATIVE_STATE || {};
+
+  const [step, setStep] = React.useState(_saved.step || 1);
+  const [form, setForm] = React.useState(_saved.form || {
     songTitle: "", artist: "", genre: "", mood: "", lyrics: "", artworkUrl: "", customGenre: "", customMood: ""
   });
-  const [sections, setSections] = React.useState([]);
-  const [selected, setSelected] = React.useState(null);
-  const [creative, setCreative] = React.useState(null);
+  const [sections, setSections] = React.useState(_saved.sections || []);
+  const [selected, setSelected] = React.useState(_saved.selected || null);
+  const [creative, setCreative] = React.useState(_saved.creative || null);
   const [scoring, setScoring] = React.useState(false);
   const [generating, setGenerating] = React.useState(false);
   const [err, setErr] = React.useState("");
@@ -5754,6 +5757,11 @@ function AdCreativeBuilder({ showToast, addHistory }) {
   const inp = (k, v) => setForm(f => ({...f, [k]: v}));
   const effectiveGenre = form.genre === "Other (type below)" ? form.customGenre : form.genre;
   const effectiveMood = form.mood === "Other (type below)" ? form.customMood : form.mood;
+
+  // ── PERSIST STATE across navigation (survives component unmount/remount) ──
+  React.useEffect(() => {
+    window.HW_CREATIVE_STATE = { step, form, sections, selected, creative };
+  }, [step, form, sections, selected, creative]);
 
   // ── REBUILD from history ──
   React.useEffect(() => {
@@ -6315,7 +6323,7 @@ Build all creative from the emotional truth of this specific lyric section.`
         React.createElement("div", { style: { fontSize: 12, color: "var(--muted)" } }, `Built from: "${selected.text.slice(0, 60)}..."`)
       ),
       React.createElement("button", {
-        onClick: () => { setStep(1); setForm({songTitle:"",artist:"",genre:"",mood:"",lyrics:"",artworkUrl:""}); setSections([]); setSelected(null); setCreative(null); },
+        onClick: () => { window.HW_CREATIVE_STATE = null; setStep(1); setForm({songTitle:"",artist:"",genre:"",mood:"",lyrics:"",artworkUrl:""}); setSections([]); setSelected(null); setCreative(null); },
         style: { background: "rgba(255,184,0,.1)", border: "1px solid rgba(255,184,0,.2)", color: "var(--gold)", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600 }
       }, "⚡ New Song")
     ),
