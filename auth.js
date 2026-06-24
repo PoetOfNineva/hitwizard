@@ -427,8 +427,8 @@ window.HW_USAGE = {
 
   // Tier limits per weapon type
   LIMITS: {
-    free:       { campaign: 3,  pitch: 3,  content: 5,  epk: 1,  hook: 5,  budget: 3,  video: 2,  smartlink: 1 },
-    artist:     { campaign: 30, pitch: 50, content: 30, epk: 10, hook: 50, budget: 20, video: 15, smartlink: 5 },
+    free:       { campaign: 3,  pitch: 3,  content: 5,  epk: 1,  hook: 5,  budget: 3,  video: 2,  smartlink: 1,  creative: 2 },
+    artist:     { campaign: 30, pitch: 50, content: 30, epk: 10, hook: 50, budget: 20, video: 15, smartlink: 5,  creative: 20 },
     pro_artist: { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
     manager:    { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
     label:      { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
@@ -444,6 +444,8 @@ window.HW_USAGE = {
     budget:   "Budget Planner",
     video:    "Video Engine",
     smartlink: "Smart Links",
+    creative:  "Ad Creative Builder",
+    creative:  "Ad Creative Builder",
   },
 
   // Get current month's usage count for a weapon
