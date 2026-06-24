@@ -172,7 +172,7 @@ export default async function handler(request, context) {
             }
           }
         }
-      } catch(e) { console.warn("Genius search:", e.message); }
+      } catch(e) { console.warn("Genius:", e.message); }
     }
 
     return new Response(JSON.stringify({
