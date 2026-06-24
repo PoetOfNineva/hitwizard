@@ -203,9 +203,121 @@
 
 ---
 
+## ⚔️ COMPLETE FEATURE INVENTORY (all sessions scanned June 23, 2026)
+
+### ✅ PHASE 1 — LIVE & WORKING
+- 9 AI weapons (Campaign, Pitches, Content, EPK, Hooks, Budget, Video, Vault, Social UI)
+- Auth system (Google/Email/OAuth), cloud history, character vault
+- Landing page with nebula starfield, inline auth modal
+- Admin Command Bridge at /admin
+- Genius strict matching (75% similarity + lyrics_state=complete)
+- YouTube title suffix stripping (Official Lyric Video etc)
+- bootAuth() redirect gate — logged-out → landing.html
+
+### 🔴 PHASE 2 — PAYWALL ENFORCEMENT (building now)
+**Tier limits:**
+| Tier | Price | Campaigns | Pitches | EPKs | Hooks | Smart Links |
+|------|-------|-----------|---------|------|-------|-------------|
+| Free | $0 | 3 | 3 | 1 | 5 | 1 |
+| Artist | $10/mo | 30 | 50 | 10 | 50 | 5 |
+| Pro Artist | $29/mo | Unlimited | Unlimited | Unlimited | Unlimited | 20 |
+| Manager | $79/mo | Unlimited | Unlimited | Unlimited | Unlimited | 50 |
+| Label | $149/mo | Unlimited | Unlimited | Unlimited | Unlimited | Unlimited |
+
+**Implementation:**
+- usage_logs table in Supabase tracks every generation per user per weapon
+- On generate: check count vs tier limit → block with upgrade modal if exceeded
+- Stripe webhook → updates profiles.tier in Supabase on payment
+- Upgrade modal: shows current usage, tier benefits, Stripe checkout link
+
+### 🔴 PHASE 2 — AD CREATIVE BUILDER (HitWizard's Aura-killer)
+**Lyric Impact Score:**
+- AI scores every lyric section 1-100 for emotional/viral weight
+- Artist selects highest-scoring line as the ad's emotional core
+- Score factors: emotional intensity, uniqueness, relatability, hook potential
+
+**Ad Creative Types (all generated from lyrics + mood + artwork):**
+- Kinetic lyric card video — winning line appears word-by-word, kinetic typography
+- Animated album cover — pulse/zoom/particle effects (beats Hypeddit)
+- Quote card — lyric styled to song mood, ready for Stories/Reels
+- Waveform visualizer — audio waveform animated over artwork
+- Countdown timer ad — release date countdown with artwork
+
+**Why we surpass Aura:**
+- Aura: genre → template library → generic ad
+- HitWizard: lyrics → impact score → artist picks emotional core → unique ad built FROM the song
+- All output formatted for Meta, TikTok, Instagram Stories, YouTube (correct dimensions/specs)
+- Ready to upload directly to Meta — no Canva, no external tools
+
+### 🔴 PHASE 2 — SMART LINKS EMPIRE
+- Smart Link Builder — one link, all platforms (Spotify, Apple, YouTube, Deezer, Tidal)
+- Pre-Save Pages — fan collection before release date
+- Download Gates — fan must follow/save to unlock download
+- Email Fan List — own your audience
+- QR Code Generator — physical promo (flyers, merch, cards)
+- Link Analytics — clicks by platform, country, device, time of day
+- Branded pages — artist.hitwizardai.com/songname
+
+### 🔴 PHASE 3 — ANALYTICS WAR ROOM
+- Stream Tracker Dashboard — Spotify, Apple, YouTube, TikTok in one cockpit
+- Campaign ROI Tracker — ad spend vs streams in real time
+- Fan Growth Charts — followers over time by platform
+- Content Performance — which caption/hook got most clicks
+- Milestone Celebrations — 1K/10K/100K streams with shareable cards
+- Release Timeline Planner — plan drops like a general
+
+### 🔴 PHASE 3 — META CAMPAIGN LAUNCH
+- Connect Meta account via OAuth (meta_connections Supabase table)
+- Review generated campaign inside HitWizard
+- One-click launch to Meta Ads Manager via API
+- Campaign status dashboard — impressions, spend, CPR, saves
+
+### 🔴 PHASE 3 — SLIDING TESTIMONIALS (UI feature)
+- Auto-scrolling cards, left to right, continuous loop like GPM
+- Stream proof screenshots
+- Video testimonials when real users provide them
+
+### 🔴 PHASE 4 — REFERRAL & COMMUNITY
+- Referral program — invite artists, earn free months
+- Referral leaderboard
+- Affiliate program for music bloggers/educators
+- Discord community — HitWizard inner circle
+
+### 🔵 PHASE 5 — THE THRONE ROOM
+- Spotify OAuth — pull real stream data directly
+- Audio Fingerprint Analyzer — upload MP3, auto-detect BPM/key/mood
+- AI Release Planner — optimal release dates by genre/platform
+- Sync Licensing Pitches — TV/Film placement emails
+- Press Release Generator (beyond EPK)
+- Tour/Venue Finder — AI suggests venues by fanbase location
+- TikTok API — real video performance data
+- White-label platform for labels
+- Merchandise store integration
+- AI Mastering — upload track, get mastered version back
+
+---
+
 ## 🗺️ BUILD QUEUE (priority order)
 
-### 🔴 CRITICAL LESSONS (never repeat)
+### 🔴 NOW — PAYWALL ENFORCEMENT
+1. Usage tracking per weapon per user (usage_logs table)
+2. Tier limit checks before every generation
+3. Upgrade modal with Stripe checkout
+4. Stripe webhook → Supabase tier update
+
+### 🟡 NEXT — AD CREATIVE BUILDER
+5. Lyric Impact Score engine
+6. Kinetic lyric card video generator
+7. Animated album cover generator
+8. Meta-ready export (correct dimensions/formats)
+
+### 🟢 FOLLOWING — SMART LINKS EMPIRE
+9. Smart Link Builder
+10. Pre-Save Pages
+11. Download Gates
+12. Link Analytics
+
+### 🔵 THEN — META CAMPAIGN LAUNCH + ANALYTICS WAR ROOM
 - **React hooks must NEVER appear after conditional returns** — React error #310. All hooks go at top of component unconditionally.
 - **auth.js must be in `<head>`** — if loaded at bottom of body, DOMContentLoaded fires before it loads and init() never runs.
 - **Landing page auth must use window.HW_AUTH** — never a separate Supabase client. Two clients = two storage keys = session not found on redirect.
