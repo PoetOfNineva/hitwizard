@@ -85,20 +85,29 @@ export default async function handler(request, context) {
       : "";
 
     // ── Search Genius for lyrics ──
-    let geniusUrl   = "";
-    let lyricsFound = false;
-    if (GENIUS_TOKEN && attrs.name) {
+    
+    // ── Strict Genius search: 75% similarity + lyrics_state=complete required ──
+    const strictGeniusSearch = async (title, artist, token) => {
       try {
-        const query  = encodeURIComponent(`${attrs.name} ${attrs.artistName || ""}`);
-        const gResp  = await fetch(`https://api.genius.com/search?q=${query}`, {
-          headers: { "Authorization": `Bearer ${GENIUS_TOKEN}`, "User-Agent": "HitWizard/1.0" }
-        });
-        if (gResp.ok) {
-          const gData = await gResp.json();
-          const hit   = gData?.response?.hits?.[0];
-          if (hit) { geniusUrl = hit.result.url; lyricsFound = true; }
-        }
-      } catch(e) { console.warn("Genius search:", e.message); }
+        const q = encodeURIComponent(`${title} ${artist||""}`);
+        const gr = await fetch(`https://api.genius.com/search?q=${q}`,{headers:{"Authorization":`Bearer ${token}`,"User-Agent":"HitWizard/1.0"}});
+        if(!gr.ok)return{geniusUrl:"",lyricsFound:false};
+        const hits=(await gr.json())?.response?.hits||[];
+        const sim=(a,b)=>{a=(a||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim();b=(b||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim();if(a===b)return 1;if(!a||!b)return 0;const[lg,sh]=a.length>b.length?[a,b]:[b,a];let m=0,si=0;for(let i=0;i<lg.length&&si<sh.length;i++)if(lg[i]===sh[si]){m++;si++;}return m/lg.length;};
+        const ct=(title||"").replace(/\s*[\(\[].*?[\)\]]/g,"").trim();
+        let best=null,bs=0;
+        for(const h of hits){const ht=h.result?.title||"",ha=h.result?.primary_artist?.name||"";const ts=Math.max(sim(ct,ht),sim(ct,ht.replace(/\s*[\(\[].*?[\)\]]/g,"")));const as=artist?Math.max(sim(artist,ha),sim((artist.split(" ")[0]||""),(ha.split(" ")[0]||""))):0.5;const sc=ts*0.65+as*0.35;if(sc>bs){bs=sc;best=h;}}
+        if(!best||bs<0.75)return{geniusUrl:"",lyricsFound:false};
+        const dr=await fetch(`https://api.genius.com/songs/${best.result.id}?text_format=plain`,{headers:{"Authorization":`Bearer ${token}`,"User-Agent":"HitWizard/1.0"}});
+        if(!dr.ok)return{geniusUrl:"",lyricsFound:false};
+        const ls=(await dr.json())?.response?.song?.lyrics_state||"";
+        if(ls!=="complete")return{geniusUrl:"",lyricsFound:false};
+        return{geniusUrl:best.result.url,lyricsFound:true};
+      }catch(e){return{geniusUrl:"",lyricsFound:false};}
+    };
+    let geniusUrl="",lyricsFound=false;
+    if(GENIUS_TOKEN&&songTitle){const gr=await strictGeniusSearch(songTitle,artist,GENIUS_TOKEN);geniusUrl=gr.geniusUrl;lyricsFound=gr.lyricsFound;}
+ catch(e) { console.warn("Genius search:", e.message); }
     }
 
     return new Response(JSON.stringify({
