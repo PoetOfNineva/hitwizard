@@ -96,8 +96,9 @@ export default async function handler(request, context) {
 
     // Clean up common YouTube suffixes
     songTitle = songTitle
-      .replace(/\s*[\(\[](official\s*(music\s*)?video|official\s*audio|lyric\s*video|lyrics|audio|hd|4k|mv)[^\)\]]*[\)\]]/gi, "")
+      .replace(/\s*[\(\[](official\s*(music\s*)?video|official\s*lyric\s*video|official\s*audio|official\s*visualizer|lyric\s*video|lyrics\s*video|lyrics|audio|hd|4k|mv|visualizer|animated|live|acoustic|cover|remix|karaoke|instrumental)[^\)\]]*[\)\]]/gi, "")
       .replace(/\s*[\(\[](feat\.?|ft\.?)[^\)\]]+[\)\]]/gi, "")
+      .replace(/\s*(official\s*lyric\s*video|official\s*music\s*video|official\s*video|official\s*audio|lyric\s*video|lyrics\s*video)$/gi, "")
       .trim();
 
     // ── Get thumbnail ──
