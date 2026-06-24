@@ -4,7 +4,7 @@
 
 export default async function handler(request, context) {
   const url = new URL(request.url);
-  const slug = url.pathname.replace("/l/", "").split("/")[0].trim();
+  const slug = url.pathname.replace(/^\/l\//, "").split("/")[0].trim();
 
   if (!slug) return new Response("Not found", { status: 404 });
 
@@ -56,13 +56,13 @@ export default async function handler(request, context) {
     const accent = link.accent_color || "#FFB800";
 
     const PLATFORM_CONFIG = [
-      { key: "spotify",    label: "Listen on Spotify",    icon: "🎵", color: "#1DB954", url: platforms.spotify },
-      { key: "appleMusic", label: "Listen on Apple Music", icon: "🍎", color: "#FC3C44", url: platforms.apple_music },
-      { key: "youtube",    label: "Watch on YouTube",      icon: "▶",  color: "#FF0000", url: platforms.youtube },
-      { key: "soundcloud", label: "Listen on SoundCloud",  icon: "☁",  color: "#FF5500", url: platforms.soundcloud },
-      { key: "tidal",      label: "Listen on Tidal",       icon: "〰", color: "#00FFFF", url: platforms.tidal },
-      { key: "deezer",     label: "Listen on Deezer",      icon: "♦",  color: "#A238FF", url: platforms.deezer },
-    ].filter(p => p.url && p.url.trim());
+      { key: "spotify",    label: "Listen on Spotify",    icon: "🎵", color: "#1DB954", href: platforms.spotify },
+      { key: "appleMusic", label: "Listen on Apple Music", icon: "🍎", color: "#FC3C44", href: platforms.apple_music },
+      { key: "youtube",    label: "Watch on YouTube",      icon: "▶",  color: "#FF0000", href: platforms.youtube },
+      { key: "soundcloud", label: "Listen on SoundCloud",  icon: "☁",  color: "#FF5500", href: platforms.soundcloud },
+      { key: "tidal",      label: "Listen on Tidal",       icon: "〰", color: "#00FFFF", href: platforms.tidal },
+      { key: "deezer",     label: "Listen on Deezer",      icon: "♦",  color: "#A238FF", href: platforms.deezer },
+    ].filter(p => p.href && p.href.trim());
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -137,7 +137,7 @@ body{
   <div class="artist">${escHtml(link.artist)}</div>
   ${link.release_date ? `<div class="release">Released ${new Date(link.release_date).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}</div>` : ""}
   ${platforms.map(p => `
-  <a class="btn" href="${escHtml(p.url)}?ref=${p.key}&from=hitwizard"
+  <a class="btn" href="${escHtml(p.href)}?ref=${p.key}&from=hitwizard"
      target="_blank" rel="noopener"
      onclick="trackClick('${p.key}')"
      style="background:${p.color}18;border-color:${p.color}44;color:#fff">
@@ -187,4 +187,3 @@ function notFoundPage() {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Link Not Found</title><style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;text-align:center}h1{color:#FFB800;font-size:48px;margin-bottom:12px}p{color:rgba(255,255,255,.5)}a{color:#FFB800}</style></head><body><div><h1>⚡</h1><h2>Link Not Found</h2><p>This Smart Link doesn't exist or has been deactivated.</p><br><a href="https://hitwizardai.com">Create yours free at HitWizard →</a></div></body></html>`;
 }
 
-export const config = { path: "/l/:slug" };
