@@ -1737,6 +1737,10 @@ function Dashboard(_ref1) {
     id: "social", icon: "🌐", title: "Social Autopilot",
     desc: "Connect once. HitWizard posts everywhere automatically. Industry first.",
     badge: "Industry First", bc: "b-ok", color: "#00E599", glow: "rgba(0,229,153,.25)"
+  }, {
+    id: "links", icon: "🔗", title: "Smart Links",
+    desc: "One link opens every platform. Track clicks by country, device and platform in real time.",
+    badge: "New", bc: "b-gold", color: "#FFB800", glow: "rgba(255,184,0,.25)"
   }];
   const done = t => history.some(h => h.type === t);
   const cl = [{
@@ -5239,6 +5243,405 @@ function Pricing(_ref53) {
 }
 
 // ── MAIN APP ──
+// ══════════════════════════════════════════════════════════════════
+// HITWIZARD SMART LINKS EMPIRE
+// One link. All platforms. Fan data. QR codes. Analytics.
+// ══════════════════════════════════════════════════════════════════
+
+function SmartLinks({ showToast }) {
+  const [view, setView] = React.useState("list"); // list | create | detail
+  const [links, setLinks] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selected, setSelected] = React.useState(null);
+  const [saving, setSaving] = React.useState(false);
+  const [form, setForm] = React.useState({
+    title: "", artist: "", artworkUrl: "",
+    releaseDate: "", genre: "",
+    spotify: "", appleMusic: "", youtube: "", soundcloud: "", tidal: "", deezer: "",
+    presave: false, downloadGate: false, downloadUrl: "",
+    bgColor: "#0a0a0f", accentColor: "#FFB800"
+  });
+
+  const sb = () => {
+    if (!window.supabase) return null;
+    return window.supabase.createClient(
+      "https://vklwiqbglmhyjuenysal.supabase.co",
+      "sb_publishable_LijIXwSajzD2LygTl5-MtQ_p0mTznkS",
+      { auth: { storageKey: "hw_auth_session" } }
+    );
+  };
+
+  // Load all smart links for this user
+  React.useEffect(() => {
+    loadLinks();
+  }, []);
+
+  async function loadLinks() {
+    setLoading(true);
+    try {
+      const client = sb();
+      if (!client || !window.HW_AUTH?.isLoggedIn()) return;
+      const { data, error } = await client
+        .from("smart_links")
+        .select("*")
+        .eq("user_id", window.HW_AUTH.user.id)
+        .order("created_at", { ascending: false });
+      if (!error) setLinks(data || []);
+    } catch(e) { console.error("Load links:", e); }
+    setLoading(false);
+  }
+
+  // Generate a unique slug
+  function makeSlug(title, artist) {
+    const base = `${artist}-${title}`.toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+    const rand = Math.random().toString(36).slice(2, 6);
+    return `${base}-${rand}`;
+  }
+
+  async function saveLink() {
+    if (!form.title || !form.artist) {
+      showToast("Song title and artist name are required", "⚠️"); return;
+    }
+    const hasLink = form.spotify || form.appleMusic || form.youtube || form.soundcloud || form.tidal || form.deezer;
+    if (!hasLink) {
+      showToast("Add at least one streaming platform link", "⚠️"); return;
+    }
+
+    // Paywall check
+    if (window.HW_USAGE) {
+      const { allowed, count, limit } = await window.HW_USAGE.check("smartlink");
+      if (!allowed) { window.HW_USAGE.showUpgradeModal("smartlink", count, limit); return; }
+    }
+
+    setSaving(true);
+    try {
+      const client = sb();
+      const slug = makeSlug(form.title, form.artist);
+      const payload = {
+        user_id: window.HW_AUTH.user.id,
+        slug,
+        title: form.title,
+        artist: form.artist,
+        artwork_url: form.artworkUrl || "",
+        release_date: form.releaseDate || null,
+        genre: form.genre || "",
+        platforms: {
+          spotify: form.spotify,
+          apple_music: form.appleMusic,
+          youtube: form.youtube,
+          soundcloud: form.soundcloud,
+          tidal: form.tidal,
+          deezer: form.deezer,
+        },
+        presave_enabled: form.presave,
+        download_gate: form.downloadGate,
+        download_url: form.downloadUrl || "",
+        bg_color: form.bgColor,
+        accent_color: form.accentColor,
+        clicks: 0,
+        active: true
+      };
+      const { data, error } = await client.from("smart_links").insert([payload]).select().single();
+      if (error) throw error;
+      showToast("Smart Link created! ⚡", "🔗");
+      setLinks(prev => [data, ...prev]);
+      setView("detail");
+      setSelected(data);
+      setForm({ title:"",artist:"",artworkUrl:"",releaseDate:"",genre:"",spotify:"",appleMusic:"",youtube:"",soundcloud:"",tidal:"",deezer:"",presave:false,downloadGate:false,downloadUrl:"",bgColor:"#0a0a0f",accentColor:"#FFB800" });
+    } catch(e) {
+      showToast("Failed to save: " + e.message, "❌");
+    }
+    setSaving(false);
+  }
+
+  async function deleteLink(id) {
+    if (!confirm("Delete this Smart Link? This cannot be undone.")) return;
+    const client = sb();
+    await client.from("smart_links").delete().eq("id", id);
+    setLinks(prev => prev.filter(l => l.id !== id));
+    if (selected?.id === id) { setSelected(null); setView("list"); }
+    showToast("Smart Link deleted", "🗑");
+  }
+
+  const publicUrl = slug => `https://hitwizardai.com/l/${slug}`;
+
+  function copyLink(slug) {
+    navigator.clipboard.writeText(publicUrl(slug));
+    showToast("Link copied to clipboard!", "📋");
+  }
+
+  async function loadAnalytics(link) {
+    const client = sb();
+    const { data } = await client
+      .from("link_clicks")
+      .select("platform, country, device, created_at")
+      .eq("smart_link_id", link.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    return data || [];
+  }
+
+  const [analytics, setAnalytics] = React.useState([]);
+  React.useEffect(() => {
+    if (selected) loadAnalytics(selected).then(setAnalytics);
+  }, [selected]);
+
+  // ── PLATFORM DEFINITIONS ──
+  const PLATFORMS = [
+    { key: "spotify", label: "Spotify", icon: "🎵", color: "#1DB954", placeholder: "https://open.spotify.com/track/..." },
+    { key: "appleMusic", label: "Apple Music", icon: "🍎", color: "#FC3C44", placeholder: "https://music.apple.com/..." },
+    { key: "youtube", label: "YouTube", icon: "▶", color: "#FF0000", placeholder: "https://youtube.com/watch?v=..." },
+    { key: "soundcloud", label: "SoundCloud", icon: "☁", color: "#FF5500", placeholder: "https://soundcloud.com/..." },
+    { key: "tidal", label: "Tidal", icon: "〰", color: "#00FFFF", placeholder: "https://tidal.com/browse/track/..." },
+    { key: "deezer", label: "Deezer", icon: "♦", color: "#A238FF", placeholder: "https://deezer.com/track/..." },
+  ];
+
+  const inp = (k, v) => setForm(f => ({...f, [k]: v}));
+
+  // ── VIEWS ──
+  if (view === "create") return React.createElement("div", { style: { maxWidth: 680, margin: "0 auto" } },
+    // Header
+    React.createElement("div", { style: { display:"flex", alignItems:"center", gap:12, marginBottom:32 } },
+      React.createElement("button", { onClick: () => setView("list"), style: { background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", color:"var(--txt)", borderRadius:8, padding:"8px 16px", cursor:"pointer", fontSize:13 } }, "← Back"),
+      React.createElement("div", null,
+        React.createElement("div", { style: { fontFamily:"Cinzel,serif", fontSize:20, fontWeight:900, color:"var(--txt)" } }, "Create Smart Link"),
+        React.createElement("div", { style: { fontSize:12, color:"var(--muted)", marginTop:2 } }, "One link that opens all your streaming platforms")
+      )
+    ),
+
+    // Song Info
+    React.createElement("div", { className:"card", style:{marginBottom:20} },
+      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "🎵 SONG INFORMATION"),
+      React.createElement("div", { style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12} },
+        React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Song Title *"),
+          React.createElement("input", { value:form.title, onChange:e=>inp("title",e.target.value), placeholder:"Heaven In Your Eyes", className:"inp", style:{width:"100%"} })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Artist Name *"),
+          React.createElement("input", { value:form.artist, onChange:e=>inp("artist",e.target.value), placeholder:"Celine Enya Houston", className:"inp", style:{width:"100%"} })
+        )
+      ),
+      React.createElement("div", { style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12} },
+        React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Release Date"),
+          React.createElement("input", { type:"date", value:form.releaseDate, onChange:e=>inp("releaseDate",e.target.value), className:"inp", style:{width:"100%"} })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Genre"),
+          React.createElement("input", { value:form.genre, onChange:e=>inp("genre",e.target.value), placeholder:"R&B / Soul", className:"inp", style:{width:"100%"} })
+        )
+      ),
+      React.createElement("div", null,
+        React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Artwork URL (optional — paste direct image link)"),
+        React.createElement("input", { value:form.artworkUrl, onChange:e=>inp("artworkUrl",e.target.value), placeholder:"https://...", className:"inp", style:{width:"100%"} })
+      )
+    ),
+
+    // Platform Links
+    React.createElement("div", { className:"card", style:{marginBottom:20} },
+      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "🔗 STREAMING PLATFORM LINKS"),
+      React.createElement("div", { style:{fontSize:12,color:"var(--muted)",marginBottom:16} }, "Add at least one. Only platforms with links will appear on your Smart Link page."),
+      PLATFORMS.map(p => React.createElement("div", { key:p.key, style:{marginBottom:12} },
+        React.createElement("label", { style:{fontSize:13,color:p.color,display:"flex",alignItems:"center",gap:8,marginBottom:6,fontWeight:600} },
+          React.createElement("span", null, p.icon), p.label
+        ),
+        React.createElement("input", { value:form[p.key], onChange:e=>inp(p.key,e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%"} })
+      ))
+    ),
+
+    // Advanced Options
+    React.createElement("div", { className:"card", style:{marginBottom:20} },
+      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "⚙️ ADVANCED OPTIONS"),
+      React.createElement("div", { style:{display:"flex",flexDirection:"column",gap:12} },
+        React.createElement("label", { style:{display:"flex",alignItems:"center",gap:12,cursor:"pointer"} },
+          React.createElement("input", { type:"checkbox", checked:form.presave, onChange:e=>inp("presave",e.target.checked), style:{width:16,height:16,accentColor:"var(--gold)"} }),
+          React.createElement("div", null,
+            React.createElement("div", { style:{fontSize:14,fontWeight:600,color:"var(--txt)"} }, "Enable Pre-Save"),
+            React.createElement("div", { style:{fontSize:12,color:"var(--muted)"} }, "Let fans save your song before it drops — collects their data for your fan list")
+          )
+        ),
+        React.createElement("label", { style:{display:"flex",alignItems:"center",gap:12,cursor:"pointer"} },
+          React.createElement("input", { type:"checkbox", checked:form.downloadGate, onChange:e=>inp("downloadGate",e.target.checked), style:{width:16,height:16,accentColor:"var(--gold)"} }),
+          React.createElement("div", null,
+            React.createElement("div", { style:{fontSize:14,fontWeight:600,color:"var(--txt)"} }, "Enable Download Gate"),
+            React.createElement("div", { style:{fontSize:12,color:"var(--muted)"} }, "Fan must follow/save on Spotify to unlock the download")
+          )
+        ),
+        form.downloadGate && React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Download URL (direct file link)"),
+          React.createElement("input", { value:form.downloadUrl, onChange:e=>inp("downloadUrl",e.target.value), placeholder:"https://...", className:"inp", style:{width:"100%"} })
+        )
+      )
+    ),
+
+    // Page Design
+    React.createElement("div", { className:"card", style:{marginBottom:24} },
+      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "🎨 PAGE DESIGN"),
+      React.createElement("div", { style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16} },
+        React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Background Color"),
+          React.createElement("div", { style:{display:"flex",gap:8,alignItems:"center"} },
+            React.createElement("input", { type:"color", value:form.bgColor, onChange:e=>inp("bgColor",e.target.value), style:{width:44,height:36,border:"1px solid rgba(255,255,255,.1)",borderRadius:8,cursor:"pointer",background:"none"} }),
+            React.createElement("span", { style:{fontSize:12,color:"var(--muted)",fontFamily:"JetBrains Mono,monospace"} }, form.bgColor)
+          )
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Accent Color"),
+          React.createElement("div", { style:{display:"flex",gap:8,alignItems:"center"} },
+            React.createElement("input", { type:"color", value:form.accentColor, onChange:e=>inp("accentColor",e.target.value), style:{width:44,height:36,border:"1px solid rgba(255,255,255,.1)",borderRadius:8,cursor:"pointer",background:"none"} }),
+            React.createElement("span", { style:{fontSize:12,color:"var(--muted)",fontFamily:"JetBrains Mono,monospace"} }, form.accentColor)
+          )
+        )
+      )
+    ),
+
+    React.createElement("button", {
+      onClick: saveLink, disabled: saving,
+      className: "btn btn-gold",
+      style: { width:"100%", padding:"16px", fontSize:15, fontWeight:800, borderRadius:12 }
+    }, saving ? "Creating..." : "⚡ Create Smart Link")
+  );
+
+  // ── DETAIL VIEW ──
+  if (view === "detail" && selected) {
+    const platformClicks = {};
+    analytics.forEach(c => { platformClicks[c.platform] = (platformClicks[c.platform]||0)+1; });
+    const countries = {};
+    analytics.forEach(c => { if(c.country) countries[c.country] = (countries[c.country]||0)+1; });
+    const topCountries = Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+    return React.createElement("div", { style:{maxWidth:720,margin:"0 auto"} },
+      React.createElement("div", { style:{display:"flex",alignItems:"center",gap:12,marginBottom:32} },
+        React.createElement("button", { onClick:()=>{setView("list");setSelected(null);}, style:{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"var(--txt)",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:13} }, "← Back"),
+        React.createElement("div", { style:{flex:1} },
+          React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:18,fontWeight:900,color:"var(--txt)"} }, selected.title),
+          React.createElement("div", { style:{fontSize:12,color:"var(--muted)"} }, selected.artist)
+        ),
+        React.createElement("button", { onClick:()=>deleteLink(selected.id), style:{background:"rgba(255,60,60,.08)",border:"1px solid rgba(255,60,60,.2)",color:"rgba(255,100,100,.8)",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontSize:12} }, "Delete")
+      ),
+
+      // Link + Copy
+      React.createElement("div", { className:"card", style:{marginBottom:20,textAlign:"center"} },
+        React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:12} }, "YOUR SMART LINK"),
+        React.createElement("div", { style:{fontFamily:"JetBrains Mono,monospace",fontSize:15,color:"var(--txt)",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"12px 16px",marginBottom:14,wordBreak:"break-all"} },
+          publicUrl(selected.slug)
+        ),
+        React.createElement("div", { style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"} },
+          React.createElement("button", { onClick:()=>copyLink(selected.slug), className:"btn btn-gold", style:{padding:"10px 24px",fontWeight:700} }, "📋 Copy Link"),
+          React.createElement("a", { href:publicUrl(selected.slug), target:"_blank", rel:"noopener", style:{display:"inline-flex",alignItems:"center",padding:"10px 24px",borderRadius:8,background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"var(--txt)",textDecoration:"none",fontSize:14,fontWeight:600} }, "🔗 Preview Page")
+        )
+      ),
+
+      // Analytics
+      React.createElement("div", { style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20} },
+        ...[
+          ["Total Clicks", selected.clicks || 0, "👆"],
+          ["This Month", analytics.length, "📅"],
+          ["Top Platform", Object.entries(platformClicks).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—", "🏆"]
+        ].map(([label, val, icon]) =>
+          React.createElement("div", { key:label, className:"card", style:{textAlign:"center"} },
+            React.createElement("div", { style:{fontSize:28,marginBottom:4} }, icon),
+            React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:28,fontWeight:900,color:"var(--gold)"} }, val),
+            React.createElement("div", { style:{fontSize:11,color:"var(--muted)",letterSpacing:1} }, label)
+          )
+        )
+      ),
+
+      // Platform breakdown
+      analytics.length > 0 && React.createElement("div", { className:"card", style:{marginBottom:20} },
+        React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "📊 CLICKS BY PLATFORM"),
+        PLATFORMS.filter(p=>selected.platforms[p.key]).map(p => {
+          const clicks = platformClicks[p.key]||0;
+          const total = Object.values(platformClicks).reduce((a,b)=>a+b,0)||1;
+          return React.createElement("div", { key:p.key, style:{marginBottom:10} },
+            React.createElement("div", { style:{display:"flex",justifyContent:"space-between",marginBottom:4} },
+              React.createElement("span", { style:{fontSize:13,color:p.color,fontWeight:600} }, `${p.icon} ${p.label}`),
+              React.createElement("span", { style:{fontSize:13,color:"var(--muted)"} }, `${clicks} clicks`)
+            ),
+            React.createElement("div", { style:{background:"rgba(255,255,255,.06)",borderRadius:4,height:6} },
+              React.createElement("div", { style:{background:p.color,height:6,borderRadius:4,width:`${Math.round(clicks/total*100)}%`,transition:"width .5s"} })
+            )
+          );
+        })
+      ),
+
+      // Top countries
+      topCountries.length > 0 && React.createElement("div", { className:"card" },
+        React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "🌍 TOP COUNTRIES"),
+        topCountries.map(([country, count]) =>
+          React.createElement("div", { key:country, style:{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.04)"} },
+            React.createElement("span", { style:{color:"var(--txt)",fontSize:14} }, country),
+            React.createElement("span", { style:{color:"var(--muted)",fontSize:14} }, `${count} clicks`)
+          )
+        )
+      )
+    );
+  }
+
+  // ── LIST VIEW ──
+  return React.createElement("div", null,
+    // Header + Create button
+    React.createElement("div", { style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24} },
+      React.createElement("div", null,
+        React.createElement("div", { style:{fontSize:13,color:"var(--muted)"} }, `${links.length} Smart Link${links.length!==1?"s":""} created`)
+      ),
+      React.createElement("button", {
+        onClick: () => setView("create"),
+        className: "btn btn-gold",
+        style: { padding:"10px 22px", fontWeight:700 }
+      }, "⚡ Create Smart Link")
+    ),
+
+    loading
+      ? React.createElement("div", { style:{textAlign:"center",padding:"60px 0",color:"var(--muted)"} }, "Loading your links...")
+      : links.length === 0
+        ? React.createElement("div", { className:"card", style:{textAlign:"center",padding:"60px 24px"} },
+            React.createElement("div", { style:{fontSize:48,marginBottom:16} }, "🔗"),
+            React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:20,fontWeight:700,color:"var(--txt)",marginBottom:8} }, "Your first Smart Link is one click away."),
+            React.createElement("div", { style:{fontSize:14,color:"var(--muted)",marginBottom:24,maxWidth:400,margin:"0 auto 24px"} }, "One link that opens every streaming platform. Track every click. Know exactly where your fans come from."),
+            React.createElement("button", { onClick:()=>setView("create"), className:"btn btn-gold", style:{padding:"14px 32px",fontWeight:700} }, "⚡ Create Your First Smart Link")
+          )
+        : React.createElement("div", { style:{display:"flex",flexDirection:"column",gap:14} },
+            links.map(link =>
+              React.createElement("div", {
+                key: link.id,
+                className: "card",
+                style: { cursor:"pointer", transition:"all .2s" },
+                onClick: () => { setSelected(link); setView("detail"); }
+              },
+                React.createElement("div", { style:{display:"flex",gap:16,alignItems:"center"} },
+                  link.artwork_url
+                    ? React.createElement("img", { src:link.artwork_url, style:{width:56,height:56,borderRadius:10,objectFit:"cover",flexShrink:0} })
+                    : React.createElement("div", { style:{width:56,height:56,borderRadius:10,background:"rgba(255,184,0,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0} }, "🎵"),
+                  React.createElement("div", { style:{flex:1,minWidth:0} },
+                    React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:15,fontWeight:700,color:"var(--txt)",marginBottom:2} }, link.title),
+                    React.createElement("div", { style:{fontSize:13,color:"var(--muted)",marginBottom:6} }, link.artist),
+                    React.createElement("div", { style:{fontFamily:"JetBrains Mono,monospace",fontSize:11,color:"rgba(255,184,0,.5)"} }, `hitwizardai.com/l/${link.slug}`)
+                  ),
+                  React.createElement("div", { style:{textAlign:"right",flexShrink:0} },
+                    React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:24,fontWeight:900,color:"var(--gold)"} }, link.clicks||0),
+                    React.createElement("div", { style:{fontSize:10,color:"var(--muted)",letterSpacing:1} }, "CLICKS"),
+                    React.createElement("div", { style:{display:"flex",gap:4,marginTop:8,justifyContent:"flex-end"} },
+                      Object.entries(link.platforms||{}).filter(([,v])=>v).map(([k]) => {
+                        const p = PLATFORMS.find(pl=>pl.key===k||pl.key===k.replace("_",""));
+                        return p ? React.createElement("span", { key:k, style:{fontSize:14} }, p.icon) : null;
+                      })
+                    )
+                  ),
+                  React.createElement("button", {
+                    onClick: e => { e.stopPropagation(); copyLink(link.slug); },
+                    style: { marginLeft:8, background:"rgba(255,184,0,.1)", border:"1px solid rgba(255,184,0,.2)", color:"var(--gold)", borderRadius:8, padding:"8px 12px", cursor:"pointer", fontSize:12, fontWeight:600, flexShrink:0 }
+                  }, "📋 Copy")
+                )
+              )
+            )
+          )
+  );
+}
+
+
 function HitWizard() {
   var _titles$page, _titles$page2;
 
@@ -5422,6 +5825,10 @@ function HitWizard() {
     id: "social",
     icon: "🌐",
     label: "Social Autopilot"
+  }, {
+    id: "links",
+    icon: "🔗",
+    label: "Smart Links"
   }];
   const titles = {
     dashboard: {
@@ -5471,6 +5878,10 @@ function HitWizard() {
     social: {
       t: "Social Autopilot",
       s: "Connect your platforms. Post everywhere. Touch nothing."
+    },
+    links: {
+      t: "Smart Links",
+      s: "One link. Every platform. Real-time analytics."
     }
   };
   const props = {
@@ -5516,6 +5927,10 @@ function HitWizard() {
         });
       case "social":
         return /*#__PURE__*/React.createElement(SocialAutopilot, {
+          showToast: st
+        });
+      case "links":
+        return /*#__PURE__*/React.createElement(SmartLinks, {
           showToast: st
         });
       default:
