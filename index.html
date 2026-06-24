@@ -6390,6 +6390,14 @@ function HitWizard() {
         window.HW_HISTORY.load(50).then(function(cloudItems) {
           if (cloudItems && cloudItems.length > 0) {
             const formatted = cloudItems.map(function(item) {
+              // Result comes from Supabase JSONB column — also check localStorage fallback
+              let result = item.result || null;
+              if (!result && item.id) {
+                try {
+                  const local = localStorage.getItem("hw_result_" + item.id);
+                  if (local) result = JSON.parse(local);
+                } catch(e) {}
+              }
               return {
                 id: item.id,
                 type: item.type || "campaign",
@@ -6397,7 +6405,8 @@ function HitWizard() {
                 title: item.title || "Untitled",
                 sub: item.sub || "",
                 color: item.color || "var(--gold)",
-                result: item.result || null,
+                result: result,
+                date: item.created_at ? new Date(item.created_at).toLocaleDateString() : "",
                 ts: item.created_at
               };
             });
@@ -6410,20 +6419,43 @@ function HitWizard() {
     return function() { window.removeEventListener("hw_user_signed_in", onSignIn); };
   }, []);
 
-  const addHistory = useCallback(function(item) {
-    var id = "hw_" + Date.now();
-    var itemWithId = Object.assign({}, item, {id: id});
+  const addHistory = useCallback(async function(item) {
+    var localId = "hw_" + Date.now();
+    var itemWithId = Object.assign({}, item, {id: localId, date: new Date().toLocaleDateString()});
+
+    // Save result to localStorage immediately (fast, works offline)
     if (item.result) {
       try {
         const resultJson = JSON.stringify(item.result);
-        localStorage.setItem("hw_result_" + id, resultJson);
-        localStorage.setItem("hw_result_backup_" + id, resultJson);
+        localStorage.setItem("hw_result_" + localId, resultJson);
+        localStorage.setItem("hw_result_backup_" + localId, resultJson);
       } catch {}
     }
+
+    // Add to local state immediately
     setHistory(function(h) { return [itemWithId].concat(h.slice(0, 49)); });
-    // Save to Supabase if logged in
+
+    // Save to Supabase — await so we get the real UUID back
     if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_HISTORY) {
-      window.HW_HISTORY.save(itemWithId).catch(e => console.warn("History cloud save:", e));
+      try {
+        const saved = await window.HW_HISTORY.save(itemWithId);
+        if (saved && saved.id) {
+          // Update local state with real Supabase UUID so reload works
+          setHistory(function(h) {
+            return h.map(function(hi) {
+              if (hi.id === localId) return Object.assign({}, hi, {id: saved.id});
+              return hi;
+            });
+          });
+          // Re-save localStorage under the real Supabase UUID
+          if (item.result) {
+            try {
+              const resultJson = JSON.stringify(item.result);
+              localStorage.setItem("hw_result_" + saved.id, resultJson);
+            } catch {}
+          }
+        }
+      } catch(e) { console.warn("History cloud save:", e); }
     }
   }, []);
   const st = useCallback((msg, icon) => setToast({msg, icon}), []);
