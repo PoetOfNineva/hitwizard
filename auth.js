@@ -390,7 +390,127 @@ window.HW_ANALYTICS = {
   }
 };
 
-// ── INIT ON LOAD ──
+// ── PAYWALL ENFORCEMENT ──
+window.HW_USAGE = {
+
+  // Tier limits per weapon type
+  LIMITS: {
+    free:       { campaign: 3,  pitch: 3,  content: 5,  epk: 1,  hook: 5,  budget: 3,  video: 2 },
+    artist:     { campaign: 30, pitch: 50, content: 30, epk: 10, hook: 50, budget: 20, video: 15 },
+    pro_artist: { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
+    manager:    { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
+    label:      { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
+  },
+
+  // Friendly weapon names for the upgrade modal
+  WEAPON_NAMES: {
+    campaign: "Campaign Launcher",
+    pitch:    "Playlist Strike",
+    content:  "Content Arsenal",
+    epk:      "EPK Generator",
+    hook:     "Hook Lab",
+    budget:   "Budget Planner",
+    video:    "Video Engine",
+  },
+
+  // Get current month's usage count for a weapon
+  async getCount(weaponType) {
+    if (!window.HW_AUTH.isLoggedIn()) return 0;
+    const sb = getSB();
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const { count } = await sb.from("history")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", window.HW_AUTH.user.id)
+      .eq("type", weaponType)
+      .gte("created_at", monthStart);
+    return count || 0;
+  },
+
+  // Get user's current tier
+  getTier() {
+    const profile = window.HW_AUTH.profile;
+    return (profile && profile.tier) || "free";
+  },
+
+  // Get limit for a weapon on current tier
+  getLimit(weaponType) {
+    const tier = this.getTier();
+    const limits = this.LIMITS[tier] || this.LIMITS.free;
+    return limits[weaponType] !== undefined ? limits[weaponType] : 3;
+  },
+
+  // Check if user can generate — returns { allowed: bool, count: int, limit: int }
+  async check(weaponType) {
+    const limit = this.getLimit(weaponType);
+    if (limit === -1) return { allowed: true, count: 0, limit: -1 }; // unlimited
+    const count = await this.getCount(weaponType);
+    return { allowed: count < limit, count, limit };
+  },
+
+  // Show upgrade modal when limit hit
+  showUpgradeModal(weaponType, count, limit) {
+    const existing = document.getElementById("hw-upgrade-modal");
+    if (existing) existing.remove();
+
+    const tier = this.getTier();
+    const weaponName = this.WEAPON_NAMES[weaponType] || weaponType;
+    const tierLabels = { free: "Free", artist: "Artist ($10/mo)", pro_artist: "Pro Artist ($29/mo)" };
+
+    const overlay = document.createElement("div");
+    overlay.id = "hw-upgrade-modal";
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.88);backdrop-filter:blur(14px)";
+
+    overlay.innerHTML = `
+      <div style="background:#0d0d18;border:1px solid rgba(255,184,0,.35);border-radius:20px;padding:40px 36px;width:100%;max-width:460px;text-align:center;box-shadow:0 0 80px rgba(255,184,0,.12)">
+        <div style="font-size:44px;margin-bottom:16px">⚡</div>
+        <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#FFB800;margin-bottom:10px">You've Hit Your Limit</div>
+        <div style="font-size:15px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:24px">
+          You've used <strong style="color:#fff">${count} of ${limit}</strong> ${weaponName} generations<br>on the <strong style="color:#FFB800">${tierLabels[tier] || tier}</strong> plan this month.
+        </div>
+        <div style="background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.2);border-radius:14px;padding:20px;margin-bottom:24px;text-align:left">
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;color:#FFB800;margin-bottom:12px">UPGRADE TO UNLOCK</div>
+          ${tier === "free" ? `
+            <div style="font-size:14px;color:rgba(255,255,255,.75);margin-bottom:8px">✓ <strong>Artist ($10/mo)</strong> — 30 campaigns, 50 pitches, 10 EPKs</div>
+            <div style="font-size:14px;color:rgba(255,255,255,.75);margin-bottom:8px">✓ <strong>Pro Artist ($29/mo)</strong> — Unlimited everything</div>
+            <div style="font-size:14px;color:rgba(255,255,255,.75)">✓ <strong>Manager ($79/mo)</strong> — Multiple artists</div>
+          ` : `
+            <div style="font-size:14px;color:rgba(255,255,255,.75);margin-bottom:8px">✓ <strong>Pro Artist ($29/mo)</strong> — Unlimited everything</div>
+            <div style="font-size:14px;color:rgba(255,255,255,.75)">✓ Smart Links, Analytics Dashboard & more coming</div>
+          `}
+        </div>
+        <button onclick="window.HW_USAGE.goUpgrade()" style="width:100%;padding:15px;border-radius:12px;background:#FFB800;color:#000;font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:12px">
+          ⚡ Upgrade Now
+        </button>
+        <button onclick="document.getElementById('hw-upgrade-modal').remove()" style="background:none;border:none;color:rgba(255,255,255,.35);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">
+          Maybe later
+        </button>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+  },
+
+  // Navigate to pricing/upgrade page
+  goUpgrade() {
+    document.getElementById("hw-upgrade-modal")?.remove();
+    // Dispatch event for React to navigate to pricing page
+    window.dispatchEvent(new CustomEvent("hw_nav", { detail: "pricing" }));
+  },
+
+  // Gate wrapper — call this before any generation
+  // Returns true if allowed, false if blocked (and shows modal)
+  async gate(weaponType) {
+    const { allowed, count, limit } = await this.check(weaponType);
+    if (!allowed) {
+      this.showUpgradeModal(weaponType, count, limit);
+      return false;
+    }
+    return true;
+  }
+};
+
+
 document.addEventListener("DOMContentLoaded", () => {
   window.HW_AUTH.init().then(() => {
     window.dispatchEvent(new CustomEvent("hw_auth_ready"));
