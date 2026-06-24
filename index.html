@@ -1096,6 +1096,7 @@ function VideoEngine(_ref0) {
       if (window.showAuthModal) window.showAuthModal("signup");
       return;
     }
+    if (window.HW_USAGE) { const ok = await window.HW_USAGE.gate("video"); if (!ok) return; }
     if (!form.lyrics) {
       setErr("Please paste your lyrics first — the AI needs them to plan your video.");
       return;
@@ -2736,6 +2737,7 @@ function CampaignForge(_ref10) {
       if (window.showAuthModal) window.showAuthModal("signup");
       return;
     }
+    if (window.HW_USAGE) { const ok = await window.HW_USAGE.gate("campaign"); if (!ok) return; }
     if (!form.songTitle || !form.artist || !form.genre) {
       setErr("Please fill in Song Title, Artist Name and Genre before continuing.");
       return;
@@ -3031,6 +3033,7 @@ function PlaylistStrike(_ref19) {
       if (window.showAuthModal) window.showAuthModal("signup");
       return;
     }
+    if (window.HW_USAGE) { const ok = await window.HW_USAGE.gate("pitch"); if (!ok) return; }
     if (!form.songTitle || !form.artist || !form.genre) {
       setErr("Please fill in Song Title, Artist Name and Genre.");
       return;
@@ -3387,6 +3390,7 @@ function ContentArsenal(_ref20) {
       if (window.showAuthModal) window.showAuthModal("signup");
       return;
     }
+    if (window.HW_USAGE) { const ok = await window.HW_USAGE.gate("content"); if (!ok) return; }
     if (!form.songTitle || !form.artist) {
       setErr("Please fill in Song Title and Artist Name.");
       return;
@@ -3697,6 +3701,7 @@ function EPKGenerator(_ref33) {
       if (window.showAuthModal) window.showAuthModal("signup");
       return;
     }
+    if (window.HW_USAGE) { const ok = await window.HW_USAGE.gate("epk"); if (!ok) return; }
     if (!form.artistName || !form.genre) {
       setErr("Please fill in Artist Name and Genre.");
       return;
@@ -4008,6 +4013,7 @@ function HookLab(_ref44) {
       if (window.showAuthModal) window.showAuthModal("signup");
       return;
     }
+    if (window.HW_USAGE) { const ok = await window.HW_USAGE.gate("hook"); if (!ok) return; }
     if (!form.songTitle || !form.lyrics) {
       setErr("Song Title and Lyrics are both required for Hook Lab.");
       return;
@@ -5247,6 +5253,8 @@ function HitWizard() {
     _useState100 = _slicedToArray(_useState99, 2),
     page = _useState100[0],
     setPage = _useState100[1];
+  // Expose setPage for upgrade modal navigation
+  React.useEffect(() => { window.HW_SET_PAGE = setPage; return () => { delete window.HW_SET_PAGE; }; }, [setPage]);
   const _useState101 = useState(() => {
       try {
         // Try primary key first, fall back to backup key
@@ -5774,6 +5782,13 @@ window.addEventListener("hw_auth_ready",function(){
   });
   var banner=document.getElementById("hw-hero-auth");
   if(banner&&window.HW_AUTH.isLoggedIn()){banner.style.display="none";}
+});
+
+// ── hw_nav — upgrade modal → React page navigation ──
+window.addEventListener("hw_nav", function(e) {
+  var page = e.detail;
+  // Find the React setPage function exposed on window
+  if (window.HW_SET_PAGE) { window.HW_SET_PAGE(page); }
 });
 setTimeout(bootAuth,700);
 </script>
