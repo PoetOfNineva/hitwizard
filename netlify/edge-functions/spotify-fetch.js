@@ -62,7 +62,7 @@ export default async function handler(request, context) {
       }), { status: 502, headers });
     }
 
-    // Search Genius for lyrics AND artist name
+    // Search Genius for lyrics — strict matching (75% similarity + lyrics_state=complete)
     let geniusUrl = "", lyricsFound = false;
     if (GENIUS_TOKEN && songTitle) {
       try {
@@ -71,18 +71,23 @@ export default async function handler(request, context) {
           headers: { "Authorization": `Bearer ${GENIUS_TOKEN}`, "User-Agent": "HitWizard/1.0" }
         });
         if (gResp.ok) {
-          const gData = await gResp.json();
-          const hit = gData?.response?.hits?.[0];
-          if (hit) {
-            geniusUrl = hit.result.url;
-            lyricsFound = true;
-            // Use Genius artist name if Spotify oEmbed didn't return one
-            if (!artist && hit.result.primary_artist?.name) {
-              artist = hit.result.primary_artist.name;
-            }
-            // Use Genius artwork if Spotify didn't provide one
-            if (!artworkUrl && hit.result.song_art_image_url) {
-              artworkUrl = hit.result.song_art_image_url;
+          const hits = (await gResp.json())?.response?.hits || [];
+          const sim = (a,b) => { a=(a||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); b=(b||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); if(a===b)return 1; if(!a||!b)return 0; const[lg,sh]=a.length>b.length?[a,b]:[b,a]; let m=0,si=0; for(let i=0;i<lg.length&&si<sh.length;i++)if(lg[i]===sh[si]){m++;si++;} return m/lg.length; };
+          const ct = (songTitle||"").replace(/\s*[\(\[].*?[\)\]]/g,"").trim();
+          let best=null, bs=0;
+          for(const h of hits){ const ht=h.result?.title||"", ha=h.result?.primary_artist?.name||""; const ts=Math.max(sim(ct,ht),sim(ct,ht.replace(/\s*[\(\[].*?[\)\]]/g,""))); const as=artist?Math.max(sim(artist,ha),sim((artist.split(" ")[0]||""),(ha.split(" ")[0]||""))):0.5; const sc=ts*0.65+as*0.35; if(sc>bs){bs=sc;best=h;} }
+          if (best && bs >= 0.75) {
+            const dr = await fetch(`https://api.genius.com/songs/${best.result.id}?text_format=plain`,{headers:{"Authorization":`Bearer ${GENIUS_TOKEN}`,"User-Agent":"HitWizard/1.0"}});
+            if (dr.ok) {
+              const ls = (await dr.json())?.response?.song?.lyrics_state || "";
+              if (ls === "complete") {
+                geniusUrl = best.result.url;
+                lyricsFound = true;
+                // Use Genius artist name if Spotify oEmbed didn't return one
+                if (!artist && best.result.primary_artist?.name) artist = best.result.primary_artist.name;
+                // Use Genius artwork if Spotify didn't provide one
+                if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
+              }
             }
           }
         }
