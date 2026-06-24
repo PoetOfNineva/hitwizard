@@ -4681,7 +4681,7 @@ function History(_ref52) {
     );
 
     // ── SPECIAL RENDER FOR AD CREATIVE SESSIONS ──
-    if (r._session && r.creative) {
+    if ((r._session && r.creative) || (r.headline && r.selectedText)) {
       const session = r._session;
       const creative = r.creative;
       const sections = session.sections || [];
@@ -5955,20 +5955,37 @@ Build all creative from the emotional truth of this specific lyric section.`
 
       // Save FULL session to history — form + all sections + selected + creative
       if (addHistory) {
+        // Save FULL session to localStorage, slim version to Supabase
+        const fullSession = {
+          _session: {
+            form: { ...form },
+            sections: sections,
+            selected: selected,
+          },
+          creative: parsed
+        };
+
+        // Slim version for Supabase (no full lyrics, no section texts)
+        const slimResult = {
+          headline: parsed.headline,
+          tiktokHooks: parsed.tiktokHooks,
+          instagramCaption: parsed.instagramCaption,
+          targetAudience: parsed.targetAudience,
+          visualDirection: parsed.visualDirection,
+          selectedText: selected.text,
+          selectedScore: selected.overall,
+          songTitle: form.songTitle,
+          artist: form.artist,
+        };
+
         addHistory({
           type: "creative",
           icon: "🎨",
           title: `Ad Creative — ${form.songTitle}`,
           sub: `Impact ${selected.overall} · "${selected.text.slice(0, 45)}..."`,
           color: "#FF4466",
-          result: {
-            _session: {
-              form: { ...form },
-              sections: sections,
-              selected: selected,
-            },
-            creative: parsed
-          }
+          result: slimResult,
+          _fullSession: fullSession // passed separately, saved to localStorage only
         });
       }
 
@@ -6451,13 +6468,16 @@ function HitWizard() {
     window.HW_SET_HISTORY = function(cloudItems) {
       if (!cloudItems || cloudItems.length === 0) return;
       const formatted = cloudItems.map(function(item) {
-        let result = item.result || null;
-        if (!result && item.id) {
+        // Always check localStorage first — has full session for creative items
+        let result = null;
+        if (item.id) {
           try {
             const local = localStorage.getItem("hw_result_" + item.id);
             if (local) result = JSON.parse(local);
           } catch(e) {}
         }
+        // Fall back to Supabase slim result if nothing in localStorage
+        if (!result) result = item.result || null;
         return {
           id: item.id,
           type: item.type || "campaign",
@@ -6470,7 +6490,7 @@ function HitWizard() {
           ts: item.created_at
         };
       });
-      historyFromCloud.current = true; // prevent localStorage sync from stripping results
+      historyFromCloud.current = true;
       setHistory(formatted);
     };
     return function() { delete window.HW_SET_HISTORY; };
@@ -6496,38 +6516,45 @@ function HitWizard() {
 
   const addHistory = useCallback(async function(item) {
     var localId = "hw_" + Date.now();
-    var itemWithId = Object.assign({}, item, {id: localId, date: new Date().toLocaleDateString()});
+    var fullSession = item._fullSession || null;
+    var cleanItem = Object.assign({}, item);
+    delete cleanItem._fullSession; // don't send to Supabase
 
-    // Save result to localStorage immediately (fast, works offline)
-    if (item.result) {
+    var itemWithId = Object.assign({}, cleanItem, {id: localId, date: new Date().toLocaleDateString()});
+    // Attach full session to local state for immediate use
+    if (fullSession) itemWithId.result = fullSession;
+
+    // Save full session to localStorage immediately
+    if (fullSession || cleanItem.result) {
       try {
-        const resultJson = JSON.stringify(item.result);
-        localStorage.setItem("hw_result_" + localId, resultJson);
-        localStorage.setItem("hw_result_backup_" + localId, resultJson);
-      } catch {}
+        const toSave = fullSession || cleanItem.result;
+        localStorage.setItem("hw_result_" + localId, JSON.stringify(toSave));
+      } catch(e) { console.warn("localStorage save:", e); }
     }
 
     // Add to local state immediately
     setHistory(function(h) { return [itemWithId].concat(h.slice(0, 49)); });
 
-    // Save to Supabase — await so we get the real UUID back
+    // Save slim result to Supabase
     if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_HISTORY) {
       try {
-        const saved = await window.HW_HISTORY.save(itemWithId);
+        const savedItem = Object.assign({}, cleanItem, {id: localId, date: new Date().toLocaleDateString()});
+        const saved = await window.HW_HISTORY.save(savedItem);
         if (saved && saved.id) {
-          // Update local state with real Supabase UUID so reload works
+          // Update local state with real Supabase UUID
           setHistory(function(h) {
             return h.map(function(hi) {
               if (hi.id === localId) return Object.assign({}, hi, {id: saved.id});
               return hi;
             });
           });
-          // Re-save localStorage under the real Supabase UUID
-          if (item.result) {
+          // Re-save full session under the real Supabase UUID
+          if (fullSession || cleanItem.result) {
             try {
-              const resultJson = JSON.stringify(item.result);
-              localStorage.setItem("hw_result_" + saved.id, resultJson);
-            } catch {}
+              const toSave = fullSession || cleanItem.result;
+              localStorage.setItem("hw_result_" + saved.id, JSON.stringify(toSave));
+              localStorage.removeItem("hw_result_" + localId); // clean up temp key
+            } catch(e) {}
           }
         }
       } catch(e) { console.warn("History cloud save:", e); }
