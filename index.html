@@ -4695,11 +4695,9 @@ function History(_ref52) {
             style:{background:"#FF4466",color:"#fff",border:"none",borderRadius:8,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer"},
             onClick: function(e) {
               e.stopPropagation();
+              // Set data BEFORE navigating — component reads it on mount
+              window.HW_REBUILD_CREATIVE = { form, sections, selected };
               window.dispatchEvent(new CustomEvent("hw_nav", {detail:"creative"}));
-              // Pre-fill form after navigation
-              setTimeout(() => {
-                window.HW_REBUILD_CREATIVE = { form, sections, selected };
-              }, 100);
             }
           }, "⚡ Rebuild This Ad"),
           React.createElement("div", {style:{fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center"}},
@@ -6355,63 +6353,46 @@ function HitWizard() {
     open = _useState106[0],
     setOpen = _useState106[1];
   // Load history from cloud on login
+  // Expose setHistory to window so bootAuth can trigger it after auth is confirmed ready
+  React.useEffect(() => {
+    window.HW_SET_HISTORY = function(cloudItems) {
+      if (!cloudItems || cloudItems.length === 0) return;
+      const formatted = cloudItems.map(function(item) {
+        let result = item.result || null;
+        if (!result && item.id) {
+          try {
+            const local = localStorage.getItem("hw_result_" + item.id);
+            if (local) result = JSON.parse(local);
+          } catch(e) {}
+        }
+        return {
+          id: item.id,
+          type: item.type || "campaign",
+          icon: item.icon || "⚡",
+          title: item.title || "Untitled",
+          sub: item.sub || "",
+          color: item.color || "var(--gold)",
+          result: result,
+          date: item.created_at ? new Date(item.created_at).toLocaleDateString() : "",
+          ts: item.created_at
+        };
+      });
+      setHistory(formatted);
+    };
+    return function() { delete window.HW_SET_HISTORY; };
+  }, []);
+
   React.useEffect(() => {
     if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_HISTORY) {
       window.HW_HISTORY.load(50).then(function(cloudItems) {
-        if (cloudItems && cloudItems.length > 0) {
-          const formatted = cloudItems.map(function(item) {
-            // Also check localStorage for result (in case large result stored locally)
-            let result = item.result || null;
-            if (!result && item.id) {
-              try {
-                const local = localStorage.getItem("hw_result_" + item.id) || localStorage.getItem("hw_result_backup_" + item.id);
-                if (local) result = JSON.parse(local);
-              } catch(e) {}
-            }
-            return {
-              id: item.id,
-              type: item.type || "campaign",
-              icon: item.icon || "⚡",
-              title: item.title || "Untitled",
-              sub: item.sub || "",
-              color: item.color || "var(--gold)",
-              result: result,
-              date: item.created_at ? new Date(item.created_at).toLocaleDateString() : "",
-              ts: item.created_at
-            };
-          });
-          setHistory(formatted);
-        }
+        if (window.HW_SET_HISTORY) window.HW_SET_HISTORY(cloudItems);
       }).catch(function(e) { console.warn("History cloud load:", e); });
     }
     // Also listen for sign-in events to reload history
     const onSignIn = function() {
       if (window.HW_HISTORY) {
         window.HW_HISTORY.load(50).then(function(cloudItems) {
-          if (cloudItems && cloudItems.length > 0) {
-            const formatted = cloudItems.map(function(item) {
-              // Result comes from Supabase JSONB column — also check localStorage fallback
-              let result = item.result || null;
-              if (!result && item.id) {
-                try {
-                  const local = localStorage.getItem("hw_result_" + item.id);
-                  if (local) result = JSON.parse(local);
-                } catch(e) {}
-              }
-              return {
-                id: item.id,
-                type: item.type || "campaign",
-                icon: item.icon || "⚡",
-                title: item.title || "Untitled",
-                sub: item.sub || "",
-                color: item.color || "var(--gold)",
-                result: result,
-                date: item.created_at ? new Date(item.created_at).toLocaleDateString() : "",
-                ts: item.created_at
-              };
-            });
-            setHistory(formatted);
-          }
+          if (window.HW_SET_HISTORY) window.HW_SET_HISTORY(cloudItems);
         }).catch(function(e) { console.warn("History cloud load on signin:", e); });
       }
     };
@@ -6890,6 +6871,12 @@ function bootAuth(){
   window.showAuthModal=showAuthModal;
   updateUserCard();
   window.HW_AUTH.onChange(updateUserCard);
+  // Load history from cloud NOW that we know user is authenticated
+  if(window.HW_HISTORY && window.HW_SET_HISTORY){
+    window.HW_HISTORY.load(50).then(function(items){
+      if(window.HW_SET_HISTORY) window.HW_SET_HISTORY(items);
+    }).catch(function(e){ console.warn("bootAuth history load:", e); });
+  }
 }
 window.showAuthModal=showAuthModal;
 // Catch any early clicks before auth was ready
