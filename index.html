@@ -4674,10 +4674,92 @@ function History(_ref52) {
     creative: "Ad Creative", links: "Smart Link"
   };
 
-  function renderResult(r) {
+
+  function renderResult(r, item) {
     if (!r) return React.createElement("div", {style:{color:"#888",fontSize:13,padding:"12px 0"}},
       "No result data. Generate a fresh campaign and it will be fully viewable."
     );
+
+    // ── SPECIAL RENDER FOR AD CREATIVE SESSIONS ──
+    if (r._session && r.creative) {
+      const session = r._session;
+      const creative = r.creative;
+      const sections = session.sections || [];
+      const selected = session.selected;
+      const form = session.form || {};
+
+      return React.createElement("div", {style:{padding:"16px 0 4px"}},
+        // Rebuild button
+        React.createElement("div", {style:{display:"flex",gap:10,marginBottom:20,flexWrap:"wrap"}},
+          React.createElement("button", {
+            style:{background:"#FF4466",color:"#fff",border:"none",borderRadius:8,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer"},
+            onClick: function(e) {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent("hw_nav", {detail:"creative"}));
+              // Pre-fill form after navigation
+              setTimeout(() => {
+                window.HW_REBUILD_CREATIVE = { form, sections, selected };
+              }, 100);
+            }
+          }, "⚡ Rebuild This Ad"),
+          React.createElement("div", {style:{fontSize:12,color:"var(--muted)",display:"flex",alignItems:"center"}},
+            "Navigate to Ad Creative Builder → it will pre-fill your session"
+          )
+        ),
+
+        // Selected section that won
+        selected && React.createElement("div", {style:{marginBottom:16,background:"rgba(255,68,102,.06)",border:"1px solid rgba(255,68,102,.2)",borderRadius:10,padding:"14px 16px"}},
+          React.createElement("div", {style:{fontSize:10,letterSpacing:2,color:"#FF4466",marginBottom:8}}, "⚡ WINNING SECTION — IMPACT " + selected.overall),
+          React.createElement("div", {style:{fontSize:14,color:"#fff",fontStyle:"italic",fontFamily:"Georgia,serif",lineHeight:1.6}}, '"' + selected.text + '"'),
+          React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:6}}, selected.why)
+        ),
+
+        // All scored sections
+        sections.length > 0 && React.createElement("div", {style:{marginBottom:16}},
+          React.createElement("div", {style:{fontSize:10,letterSpacing:2,color:"var(--gold)",marginBottom:10}}, "ALL " + sections.length + " SECTION SCORES"),
+          React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:8}},
+            [...sections].sort((a,b)=>b.overall-a.overall).map(function(sec,i) {
+              const scoreColor = sec.overall>=80?"#FF4466":sec.overall>=60?"#FFB800":"#00E599";
+              return React.createElement("div", {key:i, style:{background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",borderRadius:8,padding:"10px 14px",display:"flex",gap:12,alignItems:"center"}},
+                React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:18,fontWeight:900,color:scoreColor,flexShrink:0,width:36,textAlign:"center"}}, sec.overall),
+                React.createElement("div", {style:{fontSize:12,color:"rgba(255,255,255,.6)",fontStyle:"italic",lineHeight:1.4,flex:1}}, '"' + sec.text.slice(0,80) + (sec.text.length>80?"...":"") + '"')
+              );
+            })
+          )
+        ),
+
+        // Campaign headline
+        creative.headline && React.createElement("div", {style:{marginBottom:12,background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.12)",borderRadius:8,padding:"12px 14px"}},
+          React.createElement("div", {style:{fontSize:10,letterSpacing:2,color:"var(--gold)",marginBottom:6}}, "CAMPAIGN HEADLINE"),
+          React.createElement("div", {style:{fontSize:16,fontWeight:700,color:"#fff",fontFamily:"Cinzel,serif"}}, creative.headline)
+        ),
+
+        // TikTok hooks
+        creative.tiktokHooks && creative.tiktokHooks.length > 0 && React.createElement("div", {style:{marginBottom:12,background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.12)",borderRadius:8,padding:"12px 14px"}},
+          React.createElement("div", {style:{fontSize:10,letterSpacing:2,color:"var(--gold)",marginBottom:8}}, "TIKTOK HOOKS"),
+          React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:6}},
+            creative.tiktokHooks.map(function(h,i) {
+              return React.createElement("div", {key:i, style:{fontSize:13,color:"rgba(255,255,255,.7)",display:"flex",gap:8}},
+                React.createElement("span", {style:{color:"#FF4466",fontWeight:700,flexShrink:0}}, "0"+(i+1)),
+                React.createElement("span", {style:{fontStyle:"italic"}}, '"'+h+'"')
+              );
+            })
+          )
+        ),
+
+        // Instagram caption with copy
+        creative.instagramCaption && React.createElement("div", {style:{marginBottom:12,background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.12)",borderRadius:8,padding:"12px 14px"}},
+          React.createElement("div", {style:{fontSize:10,letterSpacing:2,color:"var(--gold)",marginBottom:8}}, "INSTAGRAM CAPTION"),
+          React.createElement("div", {style:{fontSize:12,color:"rgba(255,255,255,.7)",lineHeight:1.7,whiteSpace:"pre-wrap",marginBottom:8}}, creative.instagramCaption),
+          React.createElement("button", {
+            style:{background:"rgba(255,255,255,.06)",color:"#F0F0F0",border:"1px solid rgba(255,255,255,.1)",padding:"4px 10px",borderRadius:6,fontSize:11,cursor:"pointer"},
+            onClick: function(e){ e.stopPropagation(); try{navigator.clipboard.writeText(creative.instagramCaption);}catch(ex){} }
+          }, "📋 Copy Caption")
+        )
+      );
+    }
+
+    // ── DEFAULT RENDER (all other weapon types) ──
     var items = [];
     function walk(obj, depth) {
       if (!obj) return;
@@ -4785,7 +4867,7 @@ function History(_ref52) {
               ),
               isOpen && React.createElement("div", {
                 style:{background:"rgba(8,8,14,.8)",border:"1px solid rgba(255,184,0,.35)",borderTop:"none",borderRadius:"0 0 8px 8px",padding:"0 16px 16px"}
-              }, renderResult(item.result))
+              }, renderResult(item.result, item))
             );
           })
     )
@@ -5668,7 +5750,18 @@ function AdCreativeBuilder({ showToast, addHistory }) {
 
   const inp = (k, v) => setForm(f => ({...f, [k]: v}));
 
-  // ── STEP 1: Score the lyrics ──
+  // ── REBUILD from history ──
+  React.useEffect(() => {
+    const data = window.HW_REBUILD_CREATIVE;
+    if (!data) return;
+    delete window.HW_REBUILD_CREATIVE;
+    if (data.form) setForm(data.form);
+    if (data.sections && data.sections.length > 0) {
+      setSections(data.sections);
+      setSelected(data.selected || null);
+      setStep(2);
+    }
+  }, []);
   async function scoreLyrics() {
     setErr("");
     if (!form.lyrics || form.lyrics.trim().length < 20) {
@@ -5816,15 +5909,22 @@ Build all creative from the emotional truth of this specific lyric section.`
       setCreative(parsed);
       setStep(3);
 
-      // Save to history
+      // Save FULL session to history — form + all sections + selected + creative
       if (addHistory) {
         addHistory({
           type: "creative",
           icon: "🎨",
           title: `Ad Creative — ${form.songTitle}`,
-          sub: `"${selected.text.slice(0, 50)}..."`,
+          sub: `Impact ${selected.overall} · "${selected.text.slice(0, 45)}..."`,
           color: "#FF4466",
-          result: parsed
+          result: {
+            _session: {
+              form: { ...form },
+              sections: sections,
+              selected: selected,
+            },
+            creative: parsed
+          }
         });
       }
 
@@ -5907,14 +6007,6 @@ Build all creative from the emotional truth of this specific lyric section.`
     let yPos = (CH - blockH2) / 2 + 24;
     for (const ln of lines2) { ctx.fillText(ln, 80, yPos); yPos += lineH; }
     ctx.shadowBlur = 0;
-
-    const bW = 170, bH = 44, bX = 72, bY = CH - 140;
-    ctx.fillStyle = scoreColor;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(bX, bY, bW, bH, 22); else ctx.rect(bX, bY, bW, bH);
-    ctx.fill();
-    ctx.fillStyle = score >= 80 ? "#000" : "#fff"; ctx.font = "bold 15px Arial";
-    ctx.textAlign = "center"; ctx.fillText("IMPACT " + score, bX + bW/2, bY + 28);
 
     ctx.textAlign = "right"; ctx.fillStyle = accent; ctx.globalAlpha = 0.5;
     ctx.font = "bold 14px Arial"; ctx.fillText("HITWIZARD", CW - 72, CH - 54);
