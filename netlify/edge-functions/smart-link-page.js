@@ -14,9 +14,16 @@ export default async function handler(request, context) {
   try {
     // Fetch the smart link from Supabase
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/smart_links?slug=eq.${slug}&active=eq.true&select=*`,
+      `${SUPABASE_URL}/rest/v1/smart_links?slug=eq.${encodeURIComponent(slug)}&select=*&limit=1`,
       { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
     );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Supabase error:", res.status, errText);
+      return new Response(`DB error: ${res.status}`, { status: 500 });
+    }
+
     const links = await res.json();
     if (!links || links.length === 0) {
       return new Response(notFoundPage(), { status: 404, headers: { "Content-Type": "text/html" } });
@@ -170,8 +177,8 @@ function trackClick(platform){
     });
 
   } catch(err) {
-    console.error("Smart link page error:", err);
-    return new Response("Something went wrong", { status: 500 });
+    console.error("Smart link page error:", err.message, err.stack);
+    return new Response(`Error: ${err.message}`, { status: 500 });
   }
 }
 
