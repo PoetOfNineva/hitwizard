@@ -58,6 +58,14 @@
   path = "/api/apple-fetch"
   function = "apple-fetch"
 
+[[edge_functions]]
+  path = "/l/*"
+  function = "smart-link-page"
+
+[[edge_functions]]
+  path = "/api/track-click"
+  function = "track-click"
+
 # Serve TikTok verification file as plain text
 [[headers]]
   for = "/*.txt"
