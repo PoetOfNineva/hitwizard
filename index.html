@@ -8,6 +8,7 @@
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/auth.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#08080E;color:#F0F0F0;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
@@ -5704,7 +5705,6 @@ function HitWizard() {
 ReactDOM.render(/*#__PURE__*/React.createElement(HitWizard, null), document.getElementById("root"));
 
 </script>
-<script src="/auth.js"></script>
 <script>
 // AUTH UI INJECTION
 function getTierLabel(t){return{free:"Free",artist:"Artist",pro_artist:"Pro Artist",manager:"Manager",label:"Label"}[t]||"Free";}
