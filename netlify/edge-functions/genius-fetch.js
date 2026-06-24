@@ -55,18 +55,35 @@ export default async function handler(request, context) {
     }
 
     // Find best match — prefer exact title match
-    let best = hits[0];
+    let best = null;
+    const searchTitle = songTitle.toLowerCase().trim();
+    const searchArtist = (artist || "").toLowerCase().trim();
+
     for (const hit of hits) {
-      const hitTitle = hit.result?.title?.toLowerCase() || "";
-      const hitArtist = hit.result?.primary_artist?.name?.toLowerCase() || "";
-      const searchTitle = songTitle.toLowerCase();
-      const searchArtist = (artist || "").toLowerCase();
-      if (hitTitle.includes(searchTitle) || searchTitle.includes(hitTitle)) {
-        if (!searchArtist || hitArtist.includes(searchArtist) || searchArtist.includes(hitArtist)) {
-          best = hit;
-          break;
-        }
+      const hitTitle = (hit.result?.title || "").toLowerCase().trim();
+      const hitArtist = (hit.result?.primary_artist?.name || "").toLowerCase().trim();
+
+      // Require STRONG title match — not just substring
+      const titleMatch = hitTitle === searchTitle ||
+        hitTitle.includes(searchTitle) && searchTitle.length > 4 ||
+        searchTitle.includes(hitTitle) && hitTitle.length > 4;
+
+      const artistMatch = !searchArtist ||
+        hitArtist.includes(searchArtist.split(" ")[0]) ||
+        searchArtist.includes(hitArtist.split(" ")[0]);
+
+      if (titleMatch && artistMatch) {
+        best = hit;
+        break;
       }
+    }
+
+    // No confident match found — don't return a wrong link
+    if (!best) {
+      return new Response(JSON.stringify({
+        found: false,
+        message: "Lyrics not found on Genius — please paste your lyrics manually below"
+      }), { status: 200, headers });
     }
 
     const song = best.result;
@@ -88,20 +105,21 @@ export default async function handler(request, context) {
       lyricsState = fullSong?.lyrics_state || "";
     }
 
+    // Only report lyrics found if state is complete
+    const lyricsComplete = lyricsState === "complete";
+
     return new Response(JSON.stringify({
-      found: true,
+      found: lyricsComplete,
       songTitle:    song.title || "",
       artist:       song.primary_artist?.name || "",
       artworkUrl:   song.song_art_image_url || song.header_image_url || "",
-      geniusUrl:    song.url || "",
+      geniusUrl:    lyricsComplete ? (song.url || "") : "",
       songId:       song.id,
       description:  description,
       lyricsState:  lyricsState,
-      // Note: Genius API doesn't return raw lyrics text — only the URL
-      // Users must visit the URL or we use the description as lyric hint
-      message: lyricsState === "complete" 
-        ? `Lyrics found on Genius. Visit: ${song.url}`
-        : "Partial lyrics available on Genius"
+      message: lyricsComplete
+        ? `Lyrics found on Genius — click to copy them, then paste below`
+        : "This song's lyrics aren't on Genius yet — please paste your lyrics manually below"
     }), { status: 200, headers });
 
   } catch (err) {
