@@ -143,7 +143,7 @@ body{
   <div class="title">${escHtml(link.title)}</div>
   <div class="artist">${escHtml(link.artist)}</div>
   ${link.release_date ? `<div class="release">Released ${new Date(link.release_date).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}</div>` : ""}
-  ${platforms.map(p => `
+  ${PLATFORM_CONFIG.map(p => `
   <a class="btn" href="${escHtml(p.href)}?ref=${p.key}&from=hitwizard"
      target="_blank" rel="noopener"
      onclick="trackClick('${p.key}')"
