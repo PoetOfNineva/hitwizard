@@ -6493,8 +6493,7 @@ function HitWizard() {
       historyFromCloud.current = true;
       setHistory(formatted);
     };
-    return function() { delete window.HW_SET_HISTORY; };
-  }, []);
+  }, []); // no cleanup - HW_SET_HISTORY must persist
 
   React.useEffect(() => {
     if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_HISTORY) {
@@ -6992,12 +6991,17 @@ function bootAuth(){
   window.showAuthModal=showAuthModal;
   updateUserCard();
   window.HW_AUTH.onChange(updateUserCard);
-  // Load history from cloud NOW that we know user is authenticated
-  if(window.HW_HISTORY && window.HW_SET_HISTORY){
-    window.HW_HISTORY.load(50).then(function(items){
-      if(window.HW_SET_HISTORY) window.HW_SET_HISTORY(items);
-    }).catch(function(e){ console.warn("bootAuth history load:", e); });
-  }
+  // Load history from cloud — retry if HW_SET_HISTORY not ready yet
+  var loadHist = function(attempt) {
+    if(window.HW_HISTORY && window.HW_SET_HISTORY){
+      window.HW_HISTORY.load(50).then(function(items){
+        if(window.HW_SET_HISTORY) window.HW_SET_HISTORY(items);
+      }).catch(function(e){ console.warn("bootAuth history load:", e); });
+    } else if(attempt < 10) {
+      setTimeout(function(){ loadHist(attempt+1); }, 200);
+    }
+  };
+  loadHist(0);
 }
 window.showAuthModal=showAuthModal;
 // Catch any early clicks before auth was ready
@@ -7020,7 +7024,7 @@ window.addEventListener("hw_nav", function(e) {
   // Find the React setPage function exposed on window
   if (window.HW_SET_PAGE) { window.HW_SET_PAGE(page); }
 });
-setTimeout(bootAuth,700);
+setTimeout(bootAuth,1500);
 </script>
 </body>
 </html>
