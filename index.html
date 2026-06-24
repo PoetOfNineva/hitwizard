@@ -5322,6 +5322,53 @@ function HitWizard() {
     _useState106 = _slicedToArray(_useState105, 2),
     open = _useState106[0],
     setOpen = _useState106[1];
+  // Load history from cloud on login
+  React.useEffect(() => {
+    if (window.HW_AUTH && window.HW_AUTH.isLoggedIn() && window.HW_HISTORY) {
+      window.HW_HISTORY.load(50).then(function(cloudItems) {
+        if (cloudItems && cloudItems.length > 0) {
+          const formatted = cloudItems.map(function(item) {
+            return {
+              id: item.id,
+              type: item.type || "campaign",
+              icon: item.icon || "⚡",
+              title: item.title || "Untitled",
+              sub: item.sub || "",
+              color: item.color || "var(--gold)",
+              result: item.result || null,
+              ts: item.created_at
+            };
+          });
+          setHistory(formatted);
+        }
+      }).catch(function(e) { console.warn("History cloud load:", e); });
+    }
+    // Also listen for sign-in events to reload history
+    const onSignIn = function() {
+      if (window.HW_HISTORY) {
+        window.HW_HISTORY.load(50).then(function(cloudItems) {
+          if (cloudItems && cloudItems.length > 0) {
+            const formatted = cloudItems.map(function(item) {
+              return {
+                id: item.id,
+                type: item.type || "campaign",
+                icon: item.icon || "⚡",
+                title: item.title || "Untitled",
+                sub: item.sub || "",
+                color: item.color || "var(--gold)",
+                result: item.result || null,
+                ts: item.created_at
+              };
+            });
+            setHistory(formatted);
+          }
+        }).catch(function(e) { console.warn("History cloud load on signin:", e); });
+      }
+    };
+    window.addEventListener("hw_user_signed_in", onSignIn);
+    return function() { window.removeEventListener("hw_user_signed_in", onSignIn); };
+  }, []);
+
   const addHistory = useCallback(function(item) {
     var id = "hw_" + Date.now();
     var itemWithId = Object.assign({}, item, {id: id});
@@ -5665,34 +5712,7 @@ function updateUserCard(){
       };
       card.parentElement.appendChild(soBtn);
 
-      // Delete Account button — danger zone
-      var existingDel=document.getElementById("hw-delete-account-btn");
-      if(!existingDel){
-        var delBtn=document.createElement("button");
-        delBtn.id="hw-delete-account-btn";
-        delBtn.textContent="🗑 Delete Account";
-        delBtn.style.cssText="width:100%;margin-top:6px;padding:8px;border-radius:10px;background:transparent;border:1px solid rgba(255,60,60,.2);color:rgba(255,107,107,.5);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;font-family:inherit;transition:all .2s;";
-        delBtn.onmouseover=function(){this.style.background="rgba(255,60,60,.08)";this.style.color="#FF6B6B";this.style.borderColor="rgba(255,60,60,.5)";};
-        delBtn.onmouseout=function(){this.style.background="transparent";this.style.color="rgba(255,107,107,.5)";this.style.borderColor="rgba(255,60,60,.2)";};
-        delBtn.onclick=function(){
-          var confirmed=window.confirm("⚠️ Permanently delete your HitWizard account?\n\nThis will erase ALL your history, characters, and saved data. This cannot be undone.");
-          if(!confirmed)return;
-          var doubleConfirm=window.confirm("Are you absolutely sure? Type OK to confirm permanent deletion.");
-          if(!doubleConfirm)return;
-          delBtn.textContent="Deleting...";
-          delBtn.disabled=true;
-          if(window.HW_AUTH&&window.HW_AUTH.deleteAccount){
-            window.HW_AUTH.deleteAccount().then(function(){
-              window.location.href=window.location.origin+"?deleted=1";
-            }).catch(function(e){
-              alert("Delete failed: "+e.message);
-              delBtn.textContent="🗑 Delete Account";
-              delBtn.disabled=false;
-            });
-          }
-        };
-        card.parentElement.appendChild(delBtn);
-      }
+      // Delete Account moved to Plans & Pricing page for safety
     }
   } else {
     card.style.cursor="pointer";card.innerHTML="";
