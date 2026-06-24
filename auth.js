@@ -293,7 +293,7 @@ window.HW_HISTORY = {
       title: item.title,
       sub: item.sub,
       color: item.color,
-      result: item.result || null
+      result: item.result ? JSON.stringify(item.result) : null
     }).select().single();
     if (error) console.error("History save error:", error);
     return data;
@@ -308,7 +308,13 @@ window.HW_HISTORY = {
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) { console.error("History load error:", error); return null; }
-    return data;
+    // Parse result field — stored as JSON text in Supabase
+    return (data || []).map(function(item) {
+      if (item.result && typeof item.result === "string") {
+        try { item.result = JSON.parse(item.result); } catch(e) {}
+      }
+      return item;
+    });
   },
 
   async delete(id) {
