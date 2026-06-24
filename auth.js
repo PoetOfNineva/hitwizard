@@ -395,7 +395,7 @@ window.HW_USAGE = {
 
   // Tier limits per weapon type
   LIMITS: {
-    free:       { campaign: 3,  pitch: 3,  content: 5,  epk: 1,  hook: 5,  budget: 3,  video: 2 },
+    free:       { campaign: 0,  pitch: 0,  content: 0,  epk: 0,  hook: 0,  budget: 0,  video: 0 }, // TEMP TEST — restore after
     artist:     { campaign: 30, pitch: 50, content: 30, epk: 10, hook: 50, budget: 20, video: 15 },
     pro_artist: { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
     manager:    { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
