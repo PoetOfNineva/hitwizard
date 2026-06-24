@@ -14,6 +14,7 @@ function clearLocalUserData() {
     k.startsWith("hw_") || k.startsWith("supabase.")
   );
   keys.forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem("hw_last_active");
   console.log("[HitWizard] Local user data cleared on sign-out.");
 }
 
@@ -59,6 +60,37 @@ window.HW_AUTH = {
     }
     this.ready = true;
     this.emit();
+
+    // ── SESSION TIMEOUT: 8 hours of inactivity ──
+    const SESSION_TIMEOUT_MS = 8 * 60 * 60 * 1000; // 8 hours
+    const LAST_ACTIVE_KEY = "hw_last_active";
+    const recordActivity = () => {
+      try { localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString()); } catch(e) {}
+    };
+    // Track user activity
+    ["click","keydown","scroll","touchstart"].forEach(evt =>
+      document.addEventListener(evt, recordActivity, { passive: true })
+    );
+    // Check if session has expired from inactivity (e.g. reopened browser after 8+ hours)
+    const lastActive = parseInt(localStorage.getItem(LAST_ACTIVE_KEY) || "0");
+    if (lastActive > 0 && this.user && (Date.now() - lastActive) > SESSION_TIMEOUT_MS) {
+      console.log("[HitWizard] Session expired after 8h inactivity — signing out");
+      await this.signOut();
+      window.location.replace("/landing.html");
+      return;
+    }
+    recordActivity();
+    // Check every 5 minutes while tab is open
+    setInterval(async () => {
+      try {
+        const la = parseInt(localStorage.getItem(LAST_ACTIVE_KEY) || "0");
+        if (la > 0 && this.isLoggedIn() && (Date.now() - la) > SESSION_TIMEOUT_MS) {
+          console.log("[HitWizard] Inactivity timeout — signing out");
+          await this.signOut();
+          window.location.replace("/landing.html");
+        }
+      } catch(e) {}
+    }, 5 * 60 * 1000);
 
     sb.auth.onAuthStateChange(async (event, session) => {
       this.session = session;
@@ -395,7 +427,7 @@ window.HW_USAGE = {
 
   // Tier limits per weapon type
   LIMITS: {
-    free:       { campaign: 0,  pitch: 0,  content: 0,  epk: 0,  hook: 0,  budget: 0,  video: 0 }, // TEMP TEST — restore after
+    free:       { campaign: 3,  pitch: 3,  content: 5,  epk: 1,  hook: 5,  budget: 3,  video: 2 },
     artist:     { campaign: 30, pitch: 50, content: 30, epk: 10, hook: 50, budget: 20, video: 15 },
     pro_artist: { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
     manager:    { campaign: -1, pitch: -1, content: -1, epk: -1, hook: -1, budget: -1, video: -1 },
