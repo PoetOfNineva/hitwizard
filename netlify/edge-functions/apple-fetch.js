@@ -107,8 +107,7 @@ export default async function handler(request, context) {
     };
     let geniusUrl="",lyricsFound=false;
     if(GENIUS_TOKEN&&songTitle){const gr=await strictGeniusSearch(songTitle,artist,GENIUS_TOKEN);geniusUrl=gr.geniusUrl;lyricsFound=gr.lyricsFound;}
- catch(e) { console.warn("Genius search:", e.message); }
-    }
+
 
     return new Response(JSON.stringify({
       songTitle:   attrs.name || "",
