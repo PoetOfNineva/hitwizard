@@ -205,7 +205,21 @@
 
 ## 🗺️ BUILD QUEUE (priority order)
 
-### 🔴 IMMEDIATE
+### 🔴 CRITICAL LESSONS (never repeat)
+- **React hooks must NEVER appear after conditional returns** — React error #310. All hooks go at top of component unconditionally.
+- **auth.js must be in `<head>`** — if loaded at bottom of body, DOMContentLoaded fires before it loads and init() never runs.
+- **Landing page auth must use window.HW_AUTH** — never a separate Supabase client. Two clients = two storage keys = session not found on redirect.
+- **Auth gate lives in bootAuth()** — not in React component hooks. bootAuth polls until HW_AUTH.ready then redirects if not logged in.
+- **RESEND_API_KEY** still missing from Netlify — add from resend.com (account: hitwizard.ai@gmail.com, key: "HitWizard Production" re_FQnaFkt6...)
+
+### 🟡 LANDING PAGE STATUS
+- Live at hitwizardai.com/landing.html
+- Light/dark hybrid design — dark hero with concert photo + nebula starfield, alternating light sections
+- Auth modal inline on landing page — uses window.HW_AUTH (shared session)
+- Logged-out users redirected from / to /landing.html via bootAuth()
+- Logged-in users go straight to app
+
+
 1. **Landing page overhaul** — galaxy-tier, better than Aura (in progress)
 2. Add `RESEND_API_KEY` to Netlify (Resend account exists at hitwizard.ai@gmail.com, key: "HitWizard Production" re_FQnaFkt6...)
 3. Email Jason personally from hitwizard.ai@gmail.com
@@ -297,5 +311,5 @@ Full DNA strings locked in `index.html` source. Proportion tags non-negotiable.
 | May 31, 2026 | Initial platform build — 9 weapons, Supabase, Stripe, OAuth |
 | Jun 5, 2026 | Major fixes batch — Link Autopilot, Character Vault, History cloud sync |
 | Jun 8, 2026 | Supabase keepalive, Video Engine master scroll doctrine, STARFIRE deploy |
-| Jun 23, 2026 | Security overhaul (API key rotation, /api/claude proxy), Link Autopilot fixes, Admin Command Bridge, onboarding overlay, welcome email, Master Scroll created |
+| Jun 23, 2026 | Landing page full rebuild (light/dark hybrid, Playfair Display, nebula starfield, lyric demo with Heaven In Your Eyes chorus, testimonials, comparison table, FAQ, auth modal inline). Fixed React error #310 (hooks after conditional return). Auth gate moved to bootAuth(). auth.js moved to <head>. App fully restored and working. Landing page gates logged-out users. |
 
