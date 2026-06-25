@@ -16,6 +16,14 @@ export default async function handler(request, context) {
     const SPOTIFY_CLIENT_ID = Deno.env.get("SPOTIFY_CLIENT_ID");
     const SPOTIFY_CLIENT_SECRET = Deno.env.get("SPOTIFY_CLIENT_SECRET");
 
+    // Deno-safe base64 encode
+    const btoa_safe = (str) => {
+      const bytes = new TextEncoder().encode(str);
+      let binary = "";
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      return btoa(binary);
+    };
+
     const body = await request.json();
     const { url, trackId } = body;
     if (!trackId) return new Response(JSON.stringify({ error: "No track ID" }), { status: 400, headers });
@@ -28,6 +36,7 @@ export default async function handler(request, context) {
     console.log("[spotify-fetch] v2-webapi starting. hasClientId:", !!SPOTIFY_CLIENT_ID, "hasSecret:", !!SPOTIFY_CLIENT_SECRET, "trackId:", cleanId);
 
     // ── SPOTIFY WEB API (Client Credentials) ──
+    let webApiError = null;
     if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
       try {
         // Step 1: Get access token
@@ -35,7 +44,7 @@ export default async function handler(request, context) {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": "Basic " + btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`)
+            "Authorization": "Basic " + btoa_safe(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET)
           },
           body: "grant_type=client_credentials"
         });
