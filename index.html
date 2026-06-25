@@ -5484,6 +5484,31 @@ function SmartLinks({ showToast }) {
 
   const inp = (k, v) => setForm(f => ({...f, [k]: v}));
 
+  // Auto-fetch from Spotify when URL is pasted into spotify field
+  const [fetching, setFetching] = React.useState(false);
+  async function autoFetchSpotify(url) {
+    inp("spotify", url);
+    if (!url.includes("open.spotify.com/track/")) return;
+    setFetching(true);
+    try {
+      const res = await fetch(`/.netlify/edge-functions/spotify-fetch?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      if (data && data.title) {
+        setForm(f => ({
+          ...f,
+          spotify: url,
+          title: f.title || data.title || "",
+          artist: f.artist || data.artist || "",
+          artworkUrl: f.artworkUrl || data.artworkUrl || "",
+          releaseDate: f.releaseDate || data.releaseDate || "",
+          genre: f.genre || data.genre || "",
+        }));
+        showToast("Song details auto-filled from Spotify! ⚡", "⚡");
+      }
+    } catch(e) { console.warn("Spotify autofill:", e); }
+    setFetching(false);
+  }
+
   // ── VIEWS ──
   if (view === "create") return React.createElement("div", { style: { maxWidth: 680, margin: "0 auto" } },
     // Header
@@ -5527,12 +5552,14 @@ function SmartLinks({ showToast }) {
     // Platform Links
     React.createElement("div", { className:"card", style:{marginBottom:20} },
       React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "🔗 STREAMING PLATFORM LINKS"),
-      React.createElement("div", { style:{fontSize:12,color:"var(--muted)",marginBottom:16} }, "Add at least one. Only platforms with links will appear on your Smart Link page."),
+      React.createElement("div", { style:{fontSize:12,color:"var(--muted)",marginBottom:16} }, fetching ? "⚡ Fetching song details from Spotify..." : "Paste your Spotify link first — title, artist & artwork auto-fill. Add other platforms below."),
       PLATFORMS.map(p => React.createElement("div", { key:p.key, style:{marginBottom:12} },
         React.createElement("label", { style:{fontSize:13,color:p.color,display:"flex",alignItems:"center",gap:8,marginBottom:6,fontWeight:600} },
           React.createElement("span", null, p.icon), p.label
         ),
-        React.createElement("input", { value:form[p.key], onChange:e=>inp(p.key,e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%"} })
+        p.key === "spotify"
+          ? React.createElement("input", { value:form[p.key], onChange:e=>autoFetchSpotify(e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%",borderColor: form.spotify ? "#1DB95466" : ""} })
+          : React.createElement("input", { value:form[p.key], onChange:e=>inp(p.key,e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%"} })
       ))
     ),
 
