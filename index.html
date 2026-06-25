@@ -6113,8 +6113,9 @@ Build all creative from the emotional truth of this specific lyric section.`
               date: new Date().toLocaleDateString()
             });
             if (addHistory) {
-              // Use a special flag so addHistory doesn't re-save to Supabase
+              // Pass full session via _fullSession so addHistory caches to localStorage
               itemWithMeta._alreadySaved = true;
+              itemWithMeta._fullSession = fullSession;
               addHistory(itemWithMeta);
             }
           }
