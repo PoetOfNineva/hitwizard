@@ -138,7 +138,7 @@ body{
 <body>
 <div class="card">
   ${link.artwork_url
-    ? `<img class="artwork" src="${escHtml(link.artwork_url)}" alt="${escHtml(link.title)}" loading="eager">`
+    ? `<img class="artwork" src="${escHtml(link.artwork_url)}" alt="${escHtml(link.title)}" loading="eager" onerror="this.style.display='none';document.getElementById('aw-placeholder').style.display='flex'">`
     : `<div class="artwork-placeholder">🎵</div>`}
   <div class="title">${escHtml(link.title)}</div>
   <div class="artist">${escHtml(link.artist)}</div>
