@@ -5519,19 +5519,24 @@ function SmartLinks({ showToast }) {
         if (data && data.songTitle) { data.title = data.songTitle; }
       }
 
-      if (data && (data.title || data.artist)) {
+      if (data && (data.title || data.songTitle || data.artist)) {
+        const title = data.title || data.songTitle || "";
+        const artist = data.artist || "";
+        const artworkUrl = data.artworkUrl || "";
+        const releaseDate = data.releaseDate || data.release_date || "";
+        const genre = data.genre || "";
         setForm(f => ({
           ...f,
-          title: data.title || f.title,
-          artist: data.artist || f.artist,
-          artworkUrl: data.artworkUrl || f.artworkUrl,
-          releaseDate: data.releaseDate || f.releaseDate,
-          genre: data.genre || f.genre,
+          title: title || f.title,
+          artist: artist || f.artist,
+          artworkUrl: artworkUrl || f.artworkUrl,
+          releaseDate: releaseDate || f.releaseDate,
+          genre: genre || f.genre,
           spotify: url.includes("spotify.com") ? url : f.spotify,
           appleMusic: url.includes("apple") ? url : f.appleMusic,
           youtube: (url.includes("youtube.com") || url.includes("youtu.be")) ? url : f.youtube,
         }));
-        showToast("Song details auto-filled! ⚡", "⚡");
+        showToast(artist ? "Song details auto-filled! ⚡" : "Title & artwork fetched — add artist name below ⚡", "⚡");
       } else {
         showToast("Couldn\'t fetch details — fill in manually below", "⚠️");
       }
@@ -5551,28 +5556,35 @@ function SmartLinks({ showToast }) {
     ),
 
     // ── AUTOPILOT BAR ──
-    React.createElement("div", { className:"card", style:{marginBottom:20, border:"1px solid rgba(255,184,0,.2)", background:"rgba(255,184,0,.03)"} },
-      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:12} }, "🔗 AUTOPILOT — PASTE A SONG LINK"),
-      React.createElement("div", { style:{display:"flex",gap:10} },
+    React.createElement("div", { style:{background:"linear-gradient(135deg,rgba(0,229,153,.08),rgba(0,204,255,.05))",border:"1px solid rgba(0,229,153,.3)",borderRadius:16,padding:"18px 20px",marginBottom:20} },
+      React.createElement("div", { style:{display:"flex",alignItems:"center",gap:10,marginBottom:12} },
+        React.createElement("div", { style:{fontSize:20} }, "⚡"),
+        React.createElement("div", null,
+          React.createElement("div", { style:{fontSize:14,fontWeight:800,color:"var(--ok)",fontFamily:"Cinzel,serif"} }, "Autopilot Mode"),
+          React.createElement("div", { style:{fontSize:11,color:"var(--muted)"} }, "Paste a link — we fetch everything. No manual entry.")
+        )
+      ),
+      React.createElement("div", { style:{display:"flex",gap:8} },
         React.createElement("input", {
           id: "sl-autopilot-inp",
-          placeholder: "Spotify, Apple Music, SoundCloud or YouTube link...",
+          placeholder: "https://open.spotify.com/track/... or Apple Music, SoundCloud, YouTube",
           className: "inp", style: { flex:1, fontFamily:"JetBrains Mono,monospace", fontSize:13 },
           onKeyDown: e => { if(e.key === "Enter") autoFetchSpotify(e.target.value); }
         }),
         React.createElement("button", {
+          className: "btn btn-gold",
+          style: { whiteSpace:"nowrap", fontWeight:800, minWidth:120 },
           onClick: () => autoFetchSpotify(document.getElementById("sl-autopilot-inp")?.value),
-          disabled: fetching,
-          style: { background:"var(--gold)", color:"#000", border:"none", borderRadius:10, padding:"0 18px", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity: fetching ? 0.6 : 1 }
+          disabled: fetching
         }, fetching ? "Fetching..." : "⚡ Fetch Song")
       ),
-      React.createElement("div", { style:{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"} },
+      React.createElement("div", { style:{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"} },
         ["🟢 Spotify","🍎 Apple Music","🟠 SoundCloud","▶️ YouTube"].map((p,i) =>
           React.createElement("div", { key:i, style:{fontSize:11,color:"var(--muted)",padding:"3px 8px",background:"rgba(255,255,255,.04)",borderRadius:6} }, p)
         )
       ),
-      form.title && React.createElement("div", { style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",fontSize:13,color:"var(--gold)"} },
-        `✓ Auto-filled: ${form.title} — ${form.artist}${form.artworkUrl ? " · Artwork ready" : ""}`
+      form.title && React.createElement("div", { style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"rgba(0,229,153,.06)",border:"1px solid rgba(0,229,153,.2)",fontSize:13,color:"var(--ok)"} },
+        `✓ Auto-filled: ${form.title}${form.artist ? " — " + form.artist : ""}${form.artworkUrl ? " · Artwork ready" : " · Add artist name below"}`
       )
     ),
 
@@ -5696,7 +5708,21 @@ function SmartLinks({ showToast }) {
         ),
         React.createElement("div", { style:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"} },
           React.createElement("button", { onClick:()=>copyLink(selected.slug), className:"btn btn-gold", style:{padding:"10px 24px",fontWeight:700} }, "📋 Copy Link"),
-          React.createElement("a", { href:publicUrl(selected.slug), target:"_blank", rel:"noopener", style:{display:"inline-flex",alignItems:"center",padding:"10px 24px",borderRadius:8,background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"var(--txt)",textDecoration:"none",fontSize:14,fontWeight:600} }, "🔗 Preview Page")
+          React.createElement("a", { href:publicUrl(selected.slug), target:"_blank", rel:"noopener", style:{display:"inline-flex",alignItems:"center",padding:"10px 24px",borderRadius:8,background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"var(--txt)",textDecoration:"none",fontSize:14,fontWeight:600} }, "🔗 Preview Page"),
+          React.createElement("button", {
+            onClick: async () => {
+              const newUrl = prompt("Paste new artwork URL (from Spotify, Apple Music, etc):", selected.artwork_url || "");
+              if (!newUrl || newUrl === selected.artwork_url) return;
+              const client = sb();
+              const { error } = await client.from("smart_links").update({ artwork_url: newUrl }).eq("id", selected.id);
+              if (!error) {
+                setSelected(s => ({...s, artwork_url: newUrl}));
+                setLinks(ls => ls.map(l => l.id === selected.id ? {...l, artwork_url: newUrl} : l));
+                showToast("Artwork updated! ⚡", "🎨");
+              } else { showToast("Update failed — try again", "⚠️"); }
+            },
+            style:{display:"inline-flex",alignItems:"center",padding:"10px 18px",borderRadius:8,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",color:"var(--muted)",fontSize:13,cursor:"pointer",fontWeight:600}
+          }, selected.artwork_url ? "🖼 Fix Artwork" : "🖼 Add Artwork")
         )
       ),
 
