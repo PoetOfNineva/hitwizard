@@ -40,15 +40,23 @@ export default async function handler(request, context) {
       const title = oData.title || "";
       artworkUrl = oData.thumbnail_url || "";
       fetchedReal = true;
-      // Parse formats: "Song · Artist" or "Song - Artist" or just "Song"
+      // oEmbed also returns author_name = artist directly on some tracks
+      if (oData.author_name) {
+        artist = oData.author_name.trim();
+      }
+      // Parse title formats: "Song · Artist" or "Song - Artist" or just "Song"
       if (title.includes(" · ")) {
         const p = title.split(" · ");
         songTitle = p[0].trim();
-        artist = p[1].trim();
+        if (!artist) artist = p[1].trim();
       } else if (title.includes(" - ")) {
         const p = title.split(" - ");
         songTitle = p[0].trim();
-        artist = p[1].trim();
+        if (!artist) artist = p[1].trim();
+      } else if (title.includes(" by ")) {
+        const p = title.split(" by ");
+        songTitle = p[0].trim();
+        if (!artist) artist = p[1].trim();
       } else {
         songTitle = title;
       }
@@ -76,15 +84,17 @@ export default async function handler(request, context) {
           const ct = (songTitle||"").replace(/\s*[\(\[].*?[\)\]]/g,"").trim();
           let best=null, bs=0;
           for(const h of hits){ const ht=h.result?.title||"", ha=h.result?.primary_artist?.name||""; const ts=Math.max(sim(ct,ht),sim(ct,ht.replace(/\s*[\(\[].*?[\)\]]/g,""))); const as=artist?Math.max(sim(artist,ha),sim((artist.split(" ")[0]||""),(ha.split(" ")[0]||""))):0.5; const sc=ts*0.65+as*0.35; if(sc>bs){bs=sc;best=h;} }
-          if (best && bs >= 0.75) {
+          // Lower threshold when artist unknown — we need Genius to fill it
+          const threshold = artist ? 0.75 : 0.5;
+          if (best && bs >= threshold) {
             const dr = await fetch(`https://api.genius.com/songs/${best.result.id}?text_format=plain`,{headers:{"Authorization":`Bearer ${GENIUS_TOKEN}`,"User-Agent":"HitWizard/1.0"}});
             if (dr.ok) {
               const ls = (await dr.json())?.response?.song?.lyrics_state || "";
               if (ls === "complete") {
                 geniusUrl = best.result.url;
                 lyricsFound = true;
-                // Use Genius artist name if Spotify oEmbed didn't return one
-                if (!artist && best.result.primary_artist?.name) artist = best.result.primary_artist.name;
+                // Use Genius artist name — more reliable than oEmbed split
+                if (best.result.primary_artist?.name) artist = best.result.primary_artist.name;
                 // Use Genius artwork if Spotify didn't provide one
                 if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
               }
