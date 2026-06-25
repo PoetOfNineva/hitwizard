@@ -1228,7 +1228,7 @@ function VideoEngine(_ref0) {
     className: "lbl"
   }, "Song Title"), /*#__PURE__*/React.createElement("input", {
     className: "inp",
-    placeholder: "e.g. Heaven In Your Eyes",
+    placeholder: "e.g. My Song Title",
     value: form.songTitle,
     onChange: e => f("songTitle", e.target.value)
   })), /*#__PURE__*/React.createElement("div", {
@@ -2245,6 +2245,7 @@ function LinkAutopilot({ onFetched, showToast }) {
           });
           if (resp.ok) {
             const data = await resp.json();
+            console.log("[Campaign Spotify] response:", JSON.stringify(data));
             if (data.songTitle) {
               const result = {
                 songTitle:   data.songTitle,
@@ -2802,7 +2803,7 @@ function CampaignForge(_ref10) {
     className: "lbl"
   }, "Song Title *"), /*#__PURE__*/React.createElement("input", {
     className: "inp",
-    placeholder: "e.g. Heaven In Your Eyes",
+    placeholder: "e.g. My Song Title",
     value: form.songTitle,
     onChange: e => f("songTitle", e.target.value)
   })), /*#__PURE__*/React.createElement("div", {
@@ -3105,7 +3106,7 @@ function PlaylistStrike(_ref19) {
     className: "lbl"
   }, "Song Title *"), /*#__PURE__*/React.createElement("input", {
     className: "inp",
-    placeholder: "e.g. Heaven In Your Eyes",
+    placeholder: "e.g. My Song Title",
     value: form.songTitle,
     onChange: e => f("songTitle", e.target.value)
   })), /*#__PURE__*/React.createElement("div", {
@@ -5597,11 +5598,11 @@ function SmartLinks({ showToast }) {
       React.createElement("div", { style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12} },
         React.createElement("div", null,
           React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Song Title *"),
-          React.createElement("input", { value:form.title, onChange:e=>inp("title",e.target.value), placeholder:"Heaven In Your Eyes", className:"inp", style:{width:"100%"} })
+          React.createElement("input", { value:form.title, onChange:e=>inp("title",e.target.value), placeholder:"Song title", className:"inp", style:{width:"100%"} })
         ),
         React.createElement("div", null,
           React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Artist Name *"),
-          React.createElement("input", { value:form.artist, onChange:e=>inp("artist",e.target.value), placeholder:"Celine Enya Houston", className:"inp", style:{width:"100%"} })
+          React.createElement("input", { value:form.artist, onChange:e=>inp("artist",e.target.value), placeholder:"Artist name", className:"inp", style:{width:"100%"} })
         )
       ),
       React.createElement("div", { style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12} },
@@ -6280,11 +6281,11 @@ Build all creative from the emotional truth of this specific lyric section.`
       React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 } },
         React.createElement("div", null,
           React.createElement("label", { style: { fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Song Title *"),
-          React.createElement("input", { value: form.songTitle, onChange: e => inp("songTitle", e.target.value), placeholder: "Heaven In Your Eyes", className: "inp", style: { width: "100%" } })
+          React.createElement("input", { value: form.songTitle, onChange: e => inp("songTitle", e.target.value), placeholder: "Song title", className: "inp", style: { width: "100%" } })
         ),
         React.createElement("div", null,
           React.createElement("label", { style: { fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Artist Name *"),
-          React.createElement("input", { value: form.artist, onChange: e => inp("artist", e.target.value), placeholder: "Celine Enya Houston", className: "inp", style: { width: "100%" } })
+          React.createElement("input", { value: form.artist, onChange: e => inp("artist", e.target.value), placeholder: "Artist name", className: "inp", style: { width: "100%" } })
         )
       ),
       React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
