@@ -5490,14 +5490,35 @@ function SmartLinks({ showToast }) {
     if (!url || !url.startsWith("http")) return;
     setFetching(true);
     try {
-      let endpoint = "";
-      if (url.includes("spotify.com")) endpoint = `/.netlify/edge-functions/spotify-fetch?url=${encodeURIComponent(url)}`;
-      else if (url.includes("apple")) endpoint = `/.netlify/edge-functions/apple-fetch?url=${encodeURIComponent(url)}`;
-      else if (url.includes("youtube.com") || url.includes("youtu.be")) endpoint = `/.netlify/edge-functions/youtube-fetch?url=${encodeURIComponent(url)}`;
-      else if (url.includes("soundcloud.com")) endpoint = `/.netlify/edge-functions/spotify-fetch?url=${encodeURIComponent(url)}`;
-      if (!endpoint) { setFetching(false); return; }
-      const res = await fetch(endpoint);
-      const data = await res.json();
+      let data = null;
+
+      if (url.includes("spotify.com")) {
+        const trackId = url.match(/track\/([a-zA-Z0-9]+)/)?.[1];
+        if (trackId) {
+          const res = await fetch("/api/spotify-fetch", {
+            method: "POST", headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({url, trackId})
+          });
+          if (res.ok) data = await res.json();
+          // Normalize field names (spotify-fetch returns songTitle not title)
+          if (data && data.songTitle) { data.title = data.songTitle; }
+        }
+      } else if (url.includes("apple")) {
+        const res = await fetch("/api/apple-fetch", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({url})
+        });
+        if (res.ok) data = await res.json();
+        if (data && data.songTitle) { data.title = data.songTitle; }
+      } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        const res = await fetch("/api/youtube-fetch", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({url})
+        });
+        if (res.ok) data = await res.json();
+        if (data && data.songTitle) { data.title = data.songTitle; }
+      }
+
       if (data && (data.title || data.artist)) {
         setForm(f => ({
           ...f,
@@ -5509,11 +5530,12 @@ function SmartLinks({ showToast }) {
           spotify: url.includes("spotify.com") ? url : f.spotify,
           appleMusic: url.includes("apple") ? url : f.appleMusic,
           youtube: (url.includes("youtube.com") || url.includes("youtu.be")) ? url : f.youtube,
-          soundcloud: url.includes("soundcloud.com") ? url : f.soundcloud,
         }));
         showToast("Song details auto-filled! ⚡", "⚡");
+      } else {
+        showToast("Couldn\'t fetch details — fill in manually below", "⚠️");
       }
-    } catch(e) { console.warn("Autopilot fetch:", e); showToast("Couldn\'t fetch — fill in manually", "⚠️"); }
+    } catch(e) { console.warn("Autopilot fetch:", e); showToast("Fetch failed — fill in manually", "⚠️"); }
     setFetching(false);
   }
 
@@ -5529,8 +5551,8 @@ function SmartLinks({ showToast }) {
     ),
 
     // ── AUTOPILOT BAR ──
-    React.createElement("div", { className:"card", style:{marginBottom:20, border:"1px solid rgba(0,229,153,.15)", background:"rgba(0,229,153,.03)"} },
-      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"#00E599",marginBottom:12} }, "🔗 AUTOPILOT — PASTE A SONG LINK"),
+    React.createElement("div", { className:"card", style:{marginBottom:20, border:"1px solid rgba(255,184,0,.2)", background:"rgba(255,184,0,.03)"} },
+      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:12} }, "🔗 AUTOPILOT — PASTE A SONG LINK"),
       React.createElement("div", { style:{display:"flex",gap:10} },
         React.createElement("input", {
           id: "sl-autopilot-inp",
@@ -5541,7 +5563,7 @@ function SmartLinks({ showToast }) {
         React.createElement("button", {
           onClick: () => autoFetchSpotify(document.getElementById("sl-autopilot-inp")?.value),
           disabled: fetching,
-          style: { background:"#00E599", color:"#000", border:"none", borderRadius:10, padding:"0 18px", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity: fetching ? 0.6 : 1 }
+          style: { background:"var(--gold)", color:"#000", border:"none", borderRadius:10, padding:"0 18px", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity: fetching ? 0.6 : 1 }
         }, fetching ? "Fetching..." : "⚡ Fetch Song")
       ),
       React.createElement("div", { style:{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"} },
@@ -5549,7 +5571,7 @@ function SmartLinks({ showToast }) {
           React.createElement("div", { key:i, style:{fontSize:11,color:"var(--muted)",padding:"3px 8px",background:"rgba(255,255,255,.04)",borderRadius:6} }, p)
         )
       ),
-      form.title && React.createElement("div", { style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"rgba(0,229,153,.06)",border:"1px solid rgba(0,229,153,.2)",fontSize:13,color:"#00E599"} },
+      form.title && React.createElement("div", { style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"rgba(255,184,0,.06)",border:"1px solid rgba(255,184,0,.2)",fontSize:13,color:"var(--gold)"} },
         `✓ Auto-filled: ${form.title} — ${form.artist}${form.artworkUrl ? " · Artwork ready" : ""}`
       )
     ),
