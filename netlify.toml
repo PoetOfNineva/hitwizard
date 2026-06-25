@@ -78,3 +78,5 @@
   to = "/tiktokYopvycw09CJhkdLwt5TielyLm1wKfeS1.txt"
   status = 200
   force = true
+
+# cache-bust: spotify-web-api-v1
