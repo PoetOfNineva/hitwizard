@@ -36,10 +36,14 @@ export default async function handler(request, context) {
 
     // ── Extract Apple Music IDs from URL ──
     // ?i= is the track ID; the last numeric segment is album ID
-    const trackIdMatch = url.match(/[?&]i=(\d+)/);
-    const albumIdMatch = url.match(/\/(?:album|song)\/[^\/]+\/(\d+)/);
-    const trackId = trackIdMatch?.[1];
-    const albumId = albumIdMatch?.[1];
+    // ?i= = explicit track ID; /song/ path means last numeric ID IS the track; /album/ = album ID
+    const trackIdParam = url.match(/[?&]i=(\d+)/)?.[1];
+    const isSongPath = /\/song\//.test(url);
+    const pathNumericId = url.match(/\/(\d{5,})(?:[?#]|$)/)?.[1];
+    const albumPathId = url.match(/\/album\/[^\/]+\/(\d+)/)?.[1];
+
+    const trackId = trackIdParam || (isSongPath ? pathNumericId : null);
+    const albumId = !trackId ? albumPathId : null;
 
     if (!trackId && !albumId) {
       return new Response(JSON.stringify({ error: "Could not extract ID from Apple Music URL" }), { status: 400, headers });
@@ -52,12 +56,11 @@ export default async function handler(request, context) {
     const storefrontMatch = url.match(/music\.apple\.com\/([a-z]{2})\//);
     const storefront = storefrontMatch?.[1] || "us";
 
-    // ── Fetch song: prefer track ID, fall back to first track of album ──
+    // ── Fetch: track ID -> songs endpoint; album ID -> albums+tracks ──
     let apiUrl;
     if (trackId) {
       apiUrl = `https://api.music.apple.com/v1/catalog/${storefront}/songs/${trackId}`;
     } else {
-      // Album link — fetch album and get first track
       apiUrl = `https://api.music.apple.com/v1/catalog/${storefront}/albums/${albumId}?include=tracks`;
     }
     const apiResp = await fetch(apiUrl, {
