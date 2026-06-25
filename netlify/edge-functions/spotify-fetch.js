@@ -40,26 +40,20 @@ export default async function handler(request, context) {
       const title = oData.title || "";
       artworkUrl = oData.thumbnail_url || "";
       fetchedReal = true;
-      // oEmbed also returns author_name = artist directly on some tracks
-      console.log("[spotify-fetch] oEmbed raw:", JSON.stringify({title: oData.title, author_name: oData.author_name}));
-      if (oData.author_name) {
-        artist = oData.author_name.trim();
-      }
-      // Parse title formats: "Song · Artist" or "Song - Artist" or just "Song"
+      // Parse title — oEmbed title format: "Song · Artist" or "Song - Artist"
+      // NOTE: author_name is unreliable (returns channel name not artist) — never use it
+      console.log("[spotify-fetch] oEmbed title:", title);
       if (title.includes(" · ")) {
         const p = title.split(" · ");
         songTitle = p[0].trim();
-        if (!artist) artist = p[1].trim();
+        artist = p.slice(1).join(" · ").trim();
       } else if (title.includes(" - ")) {
         const p = title.split(" - ");
         songTitle = p[0].trim();
-        if (!artist) artist = p[1].trim();
-      } else if (title.includes(" by ")) {
-        const p = title.split(" by ");
-        songTitle = p[0].trim();
-        if (!artist) artist = p[1].trim();
+        artist = p.slice(1).join(" - ").trim();
       } else {
         songTitle = title;
+        // artist stays empty — Genius lookup below may fill it
       }
     } else {
       const errText = await oResp.text();
@@ -94,8 +88,8 @@ export default async function handler(request, context) {
               if (ls === "complete") {
                 geniusUrl = best.result.url;
                 lyricsFound = true;
-                // Only use Genius artist if we still have none — oEmbed author_name is more reliable
-                if (!artist && best.result.primary_artist?.name) artist = best.result.primary_artist.name;
+                // NEVER set artist from Genius — Genius matches wrong songs too often
+                // Artist comes from oEmbed author_name or title split only
                 // Use Genius artwork if Spotify didn't provide one
                 if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
               }
