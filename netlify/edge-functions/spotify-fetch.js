@@ -83,8 +83,7 @@ export default async function handler(request, context) {
               if (ls === "complete") {
                 geniusUrl = best.result.url;
                 lyricsFound = true;
-                // Use Genius artist name if Spotify oEmbed didn't return one
-                if (!artist && best.result.primary_artist?.name) artist = best.result.primary_artist.name;
+                // NEVER set artist from Genius — it guesses wrong for indie/DistroKid artists
                 // Use Genius artwork if Spotify didn't provide one
                 if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
               }
