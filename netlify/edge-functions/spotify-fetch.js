@@ -63,6 +63,7 @@ export default async function handler(request, context) {
           console.warn("[spotify-fetch] Token fetch failed:", tokenResp.status);
         }
       } catch(e) {
+        webApiError = e.message;
         console.warn("[spotify-fetch] Web API error:", e.message);
       }
     }
@@ -126,7 +127,8 @@ export default async function handler(request, context) {
     return new Response(JSON.stringify({
       songTitle, artist, artworkUrl, releaseDate,
       geniusUrl, lyricsFound, fetchedReal,
-      platform: "spotify", confidence: fetchedReal ? "high" : "low"
+      platform: "spotify", confidence: fetchedReal ? "high" : "low",
+      _debug: { hasClientId: !!SPOTIFY_CLIENT_ID, hasSecret: !!SPOTIFY_CLIENT_SECRET, cleanId, webApiError, fetchedReal }
     }), { status: 200, headers });
 
   } catch (err) {
