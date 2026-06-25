@@ -1,6 +1,6 @@
-// HitWizard — Spotify Proxy Edge Function
-// Proxies Spotify oEmbed through our server to bypass CORS
-// Spotify blocks browser requests but allows server-to-server with proper headers
+// HitWizard — Spotify Fetch Edge Function
+// Primary: Spotify Web API (Client Credentials) — full metadata for ALL tracks
+// Fallback: oEmbed — title + artwork only
 
 export default async function handler(request, context) {
   const headers = {
@@ -14,98 +14,169 @@ export default async function handler(request, context) {
 
   try {
     const GENIUS_TOKEN = Deno.env.get("GENIUS_ACCESS_TOKEN");
+    const SPOTIFY_CLIENT_ID = Deno.env.get("SPOTIFY_CLIENT_ID");
+    const SPOTIFY_CLIENT_SECRET = Deno.env.get("SPOTIFY_CLIENT_SECRET");
+
     const body = await request.json();
     const { url, trackId } = body;
-
     if (!trackId) return new Response(JSON.stringify({ error: "No track ID" }), { status: 400, headers });
 
-    // Try oEmbed with browser-like headers to bypass Spotify's server block
-    const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
-    
-    let songTitle = "", artist = "", artworkUrl = "";
+    const cleanId = trackId.replace(/[^a-zA-Z0-9]/g, "");
+
+    let songTitle = "";
+    let artist = "";
+    let artworkUrl = "";
+    let releaseDate = "";
     let fetchedReal = false;
+    let fetchMethod = "none";
 
-    const oResp = await fetch(oembedUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://open.spotify.com/",
-        "Origin": "https://open.spotify.com",
-        "Accept": "application/json",
-        "Accept-Language": "en-US,en;q=0.9"
-      }
-    });
+    // ── PRIMARY: Spotify Web API ──
+    if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
+      try {
+        const tokenResp = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Basic " + btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET)
+          },
+          body: "grant_type=client_credentials"
+        });
 
-    if (oResp.ok) {
-      const oData = await oResp.json();
-      const title = oData.title || "";
-      artworkUrl = oData.thumbnail_url || "";
-      fetchedReal = true;
-      // Parse formats: "Song · Artist" or "Song - Artist" or just "Song"
-      if (title.includes(" · ")) {
-        const p = title.split(" · ");
-        songTitle = p[0].trim();
-        artist = p[1].trim();
-      } else if (title.includes(" - ")) {
-        const p = title.split(" - ");
-        songTitle = p[0].trim();
-        artist = p[1].trim();
-      } else {
-        songTitle = title;
+        if (tokenResp.ok) {
+          const tokenJson = await tokenResp.json();
+          const accessToken = tokenJson.access_token || "";
+
+          if (accessToken) {
+            const trackResp = await fetch(
+              "https://api.spotify.com/v1/tracks/" + cleanId + "?market=US",
+              { headers: { "Authorization": "Bearer " + accessToken } }
+            );
+
+            if (trackResp.ok) {
+              const track = await trackResp.json();
+              songTitle = track.name || "";
+              artist = (track.artists || []).map(function(a) { return a.name; }).join(", ");
+              artworkUrl = (track.album && track.album.images && track.album.images[0])
+                ? track.album.images[0].url : "";
+              releaseDate = (track.album && track.album.release_date) ? track.album.release_date : "";
+              fetchedReal = true;
+              fetchMethod = "web_api";
+              console.log("[spotify-fetch] Web API OK:", songTitle, "by", artist);
+            } else {
+              console.warn("[spotify-fetch] Track fetch failed:", trackResp.status);
+            }
+          }
+        } else {
+          console.warn("[spotify-fetch] Token failed:", tokenResp.status);
+        }
+      } catch (webApiErr) {
+        console.warn("[spotify-fetch] Web API error:", webApiErr.message);
       }
-    } else {
-      const errText = await oResp.text();
-      console.error("Spotify oEmbed error:", oResp.status, errText.substring(0, 100));
-      return new Response(JSON.stringify({
-        error: "Spotify blocked this request",
-        status: oResp.status,
-        hint: "Try an Apple Music or YouTube link for better results"
-      }), { status: 502, headers });
     }
 
-    // Search Genius for lyrics — strict matching (75% similarity + lyrics_state=complete)
-    let geniusUrl = "", lyricsFound = false;
-    if (GENIUS_TOKEN && songTitle) {
+    // ── FALLBACK: oEmbed ──
+    if (!fetchedReal) {
       try {
-        const query = encodeURIComponent(`${songTitle} ${artist}`);
-        const gResp = await fetch(`https://api.genius.com/search?q=${query}`, {
-          headers: { "Authorization": `Bearer ${GENIUS_TOKEN}`, "User-Agent": "HitWizard/1.0" }
+        const oembedUrl = "https://open.spotify.com/oembed?url=https://open.spotify.com/track/" + cleanId;
+        const oResp = await fetch(oembedUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Accept": "application/json"
+          }
+        });
+
+        if (oResp.ok) {
+          const oData = await oResp.json();
+          const title = oData.title || "";
+          artworkUrl = oData.thumbnail_url || "";
+          fetchedReal = true;
+          fetchMethod = "oembed";
+          if (title.includes(" · ")) {
+            songTitle = title.split(" · ")[0].trim();
+            artist = title.split(" · ").slice(1).join(" · ").trim();
+          } else if (title.includes(" - ")) {
+            songTitle = title.split(" - ")[0].trim();
+            artist = title.split(" - ").slice(1).join(" - ").trim();
+          } else {
+            songTitle = title;
+          }
+        }
+      } catch (oembedErr) {
+        console.warn("[spotify-fetch] oEmbed error:", oembedErr.message);
+      }
+    }
+
+    // ── GENIUS: lyrics URL only — NEVER sets artist ──
+    let geniusUrl = "";
+    let lyricsFound = false;
+    if (GENIUS_TOKEN && songTitle && artist) {
+      try {
+        const query = encodeURIComponent(songTitle + " " + artist);
+        const gResp = await fetch("https://api.genius.com/search?q=" + query, {
+          headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" }
         });
         if (gResp.ok) {
-          const hits = (await gResp.json())?.response?.hits || [];
-          const sim = (a,b) => { a=(a||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); b=(b||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); if(a===b)return 1; if(!a||!b)return 0; const[lg,sh]=a.length>b.length?[a,b]:[b,a]; let m=0,si=0; for(let i=0;i<lg.length&&si<sh.length;i++)if(lg[i]===sh[si]){m++;si++;} return m/lg.length; };
-          const ct = (songTitle||"").replace(/\s*[\(\[].*?[\)\]]/g,"").trim();
-          let best=null, bs=0;
-          for(const h of hits){ const ht=h.result?.title||"", ha=h.result?.primary_artist?.name||""; const ts=Math.max(sim(ct,ht),sim(ct,ht.replace(/\s*[\(\[].*?[\)\]]/g,""))); const as=artist?Math.max(sim(artist,ha),sim((artist.split(" ")[0]||""),(ha.split(" ")[0]||""))):0.5; const sc=ts*0.65+as*0.35; if(sc>bs){bs=sc;best=h;} }
+          const hits = (await gResp.json()).response.hits || [];
+          const sim = function(a, b) {
+            a = (a || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            b = (b || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            if (a === b) return 1;
+            if (!a || !b) return 0;
+            var lg = a.length > b.length ? a : b;
+            var sh = a.length > b.length ? b : a;
+            var m = 0, si = 0;
+            for (var i = 0; i < lg.length && si < sh.length; i++) {
+              if (lg[i] === sh[si]) { m++; si++; }
+            }
+            return m / lg.length;
+          };
+          var ct = songTitle.replace(/\s*[\(\[].*?[\)\]]/g, "").trim();
+          var best = null;
+          var bs = 0;
+          for (var h of hits) {
+            var ht = h.result.title || "";
+            var ha = h.result.primary_artist.name || "";
+            var ts = Math.max(sim(ct, ht), sim(ct, ht.replace(/\s*[\(\[].*?[\)\]]/g, "")));
+            var as2 = Math.max(sim(artist, ha), sim(artist.split(" ")[0] || "", ha.split(" ")[0] || ""));
+            var sc = ts * 0.65 + as2 * 0.35;
+            if (sc > bs) { bs = sc; best = h; }
+          }
           if (best && bs >= 0.75) {
-            const dr = await fetch(`https://api.genius.com/songs/${best.result.id}?text_format=plain`,{headers:{"Authorization":`Bearer ${GENIUS_TOKEN}`,"User-Agent":"HitWizard/1.0"}});
+            var dr = await fetch("https://api.genius.com/songs/" + best.result.id + "?text_format=plain", {
+              headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" }
+            });
             if (dr.ok) {
-              const ls = (await dr.json())?.response?.song?.lyrics_state || "";
+              var ls = (await dr.json()).response.song.lyrics_state || "";
               if (ls === "complete") {
                 geniusUrl = best.result.url;
                 lyricsFound = true;
-                // Use Genius artist ONLY when: oEmbed gave no artist AND title match is very high (0.88+)
-                // This prevents wrong matches like 'David Wolves' for 'WOLVES DONT CRY'
-                // Genius artist disabled — causes wrong matches for indie artists not in Genius DB
-                // Use Genius artwork if Spotify didn't provide one
-                if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
+                if (!artworkUrl && best.result.song_art_image_url) {
+                  artworkUrl = best.result.song_art_image_url;
+                }
               }
             }
           }
         }
-      } catch(e) { console.warn("Genius:", e.message); }
+      } catch (geniusErr) {
+        console.warn("[spotify-fetch] Genius error:", geniusErr.message);
+      }
     }
 
     return new Response(JSON.stringify({
-      songTitle, artist, artworkUrl,
-      geniusUrl, lyricsFound,
-      fetchedReal,
+      songTitle: songTitle,
+      artist: artist,
+      artworkUrl: artworkUrl,
+      releaseDate: releaseDate,
+      geniusUrl: geniusUrl,
+      lyricsFound: lyricsFound,
+      fetchedReal: fetchedReal,
+      fetchMethod: fetchMethod,
       platform: "spotify",
-      confidence: "medium",
-      note: "Title and artwork from Spotify oEmbed. Add genre/mood manually."
+      confidence: fetchMethod === "web_api" ? "high" : "medium"
     }), { status: 200, headers });
 
   } catch (err) {
-    console.error("Spotify proxy error:", err.message);
+    console.error("[spotify-fetch] Fatal error:", err.message);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
   }
 }
