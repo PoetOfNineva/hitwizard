@@ -85,7 +85,7 @@ export default async function handler(request, context) {
                 lyricsFound = true;
                 // Use Genius artist ONLY when: oEmbed gave no artist AND title match is very high (0.88+)
                 // This prevents wrong matches like 'David Wolves' for 'WOLVES DONT CRY'
-                if (!artist && bs >= 0.75 && best.result.primary_artist?.name) artist = best.result.primary_artist.name;
+                // Genius artist disabled — causes wrong matches for indie artists not in Genius DB
                 // Use Genius artwork if Spotify didn't provide one
                 if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
               }
