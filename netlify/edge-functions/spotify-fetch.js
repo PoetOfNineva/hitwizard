@@ -41,6 +41,7 @@ export default async function handler(request, context) {
       artworkUrl = oData.thumbnail_url || "";
       fetchedReal = true;
       // oEmbed also returns author_name = artist directly on some tracks
+      console.log("[spotify-fetch] oEmbed raw:", JSON.stringify({title: oData.title, author_name: oData.author_name}));
       if (oData.author_name) {
         artist = oData.author_name.trim();
       }
@@ -93,8 +94,8 @@ export default async function handler(request, context) {
               if (ls === "complete") {
                 geniusUrl = best.result.url;
                 lyricsFound = true;
-                // Use Genius artist name — more reliable than oEmbed split
-                if (best.result.primary_artist?.name) artist = best.result.primary_artist.name;
+                // Only use Genius artist if we still have none — oEmbed author_name is more reliable
+                if (!artist && best.result.primary_artist?.name) artist = best.result.primary_artist.name;
                 // Use Genius artwork if Spotify didn't provide one
                 if (!artworkUrl && best.result.song_art_image_url) artworkUrl = best.result.song_art_image_url;
               }
