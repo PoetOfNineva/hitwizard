@@ -50,10 +50,12 @@ export default async function handler(request, context) {
         });
 
         if (tokenResp.ok) {
-          const { access_token } = await tokenResp.json();
+          const tokenData = await tokenResp.json();
+          const access_token = tokenData.access_token;
+          console.log("[spotify-fetch] token ok, type:", tokenData.token_type, "expires:", tokenData.expires_in);
 
           // Step 2: Get track metadata
-          const trackResp = await fetch(`https://api.spotify.com/v1/tracks/${cleanId}`, {
+          const trackResp = await fetch(`https://api.spotify.com/v1/tracks/${cleanId}?market=US`, {
             headers: { "Authorization": `Bearer ${access_token}` }
           });
 
