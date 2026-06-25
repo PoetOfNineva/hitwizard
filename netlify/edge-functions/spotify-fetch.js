@@ -1,6 +1,6 @@
-// HitWizard — Spotify Fetch Edge Function
-// Primary: Spotify Web API (Client Credentials) — full metadata for ALL tracks
-// Fallback: oEmbed — title + artwork only
+// HitWizard — Spotify Metadata Edge Function
+// Server-side: Client Credentials flow — no Premium needed
+// Fetches: title, artist, genre, BPM, key, energy, mood, artwork
 
 export default async function handler(request, context) {
   const headers = {
@@ -9,174 +9,159 @@ export default async function handler(request, context) {
     "Content-Type": "application/json"
   };
 
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
-  if (request.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers });
+  }
+
+  if (request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  }
 
   try {
-    const GENIUS_TOKEN = Deno.env.get("GENIUS_ACCESS_TOKEN");
-    const SPOTIFY_CLIENT_ID = Deno.env.get("SPOTIFY_CLIENT_ID");
-    const SPOTIFY_CLIENT_SECRET = Deno.env.get("SPOTIFY_CLIENT_SECRET");
+    const CLIENT_ID     = Deno.env.get("SPOTIFY_CLIENT_ID");
+    const CLIENT_SECRET = Deno.env.get("SPOTIFY_CLIENT_SECRET");
+
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      return new Response(JSON.stringify({ error: "Spotify credentials not configured" }), { status: 500, headers });
+    }
 
     const body = await request.json();
-    const { url, trackId } = body;
-    if (!trackId) return new Response(JSON.stringify({ error: "No track ID" }), { status: 400, headers });
+    const { url } = body;
 
-    const cleanId = trackId.replace(/[^a-zA-Z0-9]/g, "");
+    if (!url) {
+      return new Response(JSON.stringify({ error: "No URL provided" }), { status: 400, headers });
+    }
 
-    let songTitle = "";
-    let artist = "";
-    let artworkUrl = "";
-    let releaseDate = "";
-    let fetchedReal = false;
-    let fetchMethod = "none";
+    // ── STEP 1: Extract Spotify Track ID from URL ──
+    const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
+    if (!trackMatch) {
+      return new Response(JSON.stringify({ error: "Not a valid Spotify track URL" }), { status: 400, headers });
+    }
+    const trackId = trackMatch[1];
 
-    // ── PRIMARY: Spotify Web API ──
-    if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
-      try {
-        const tokenResp = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": "Basic " + btoa(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET)
-          },
-          body: "grant_type=client_credentials"
-        });
+    // ── STEP 2: Get Access Token via Client Credentials ──
+    const tokenResp = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + btoa(CLIENT_ID + ":" + CLIENT_SECRET)
+      },
+      body: "grant_type=client_credentials"
+    });
 
-        if (tokenResp.ok) {
-          const tokenJson = await tokenResp.json();
-          const accessToken = tokenJson.access_token || "";
+    if (!tokenResp.ok) {
+      const err = await tokenResp.text();
+      console.error("Spotify token error:", err);
+      return new Response(JSON.stringify({ error: "Failed to authenticate with Spotify" }), { status: 502, headers });
+    }
 
-          if (accessToken) {
-            const trackResp = await fetch(
-              "https://api.spotify.com/v1/tracks/" + cleanId + "?market=US",
-              { headers: { "Authorization": "Bearer " + accessToken } }
-            );
+    const tokenData = await tokenResp.json();
+    const accessToken = tokenData.access_token;
 
-            if (trackResp.ok) {
-              const track = await trackResp.json();
-              songTitle = track.name || "";
-              artist = (track.artists || []).map(function(a) { return a.name; }).join(", ");
-              artworkUrl = (track.album && track.album.images && track.album.images[0])
-                ? track.album.images[0].url : "";
-              releaseDate = (track.album && track.album.release_date) ? track.album.release_date : "";
-              fetchedReal = true;
-              fetchMethod = "web_api";
-              console.log("[spotify-fetch] Web API OK:", songTitle, "by", artist);
-            } else {
-              console.warn("[spotify-fetch] Track fetch failed:", trackResp.status);
-            }
-          }
-        } else {
-          console.warn("[spotify-fetch] Token failed:", tokenResp.status);
-        }
-      } catch (webApiErr) {
-        console.warn("[spotify-fetch] Web API error:", webApiErr.message);
+    // ── STEP 3: Fetch Track Metadata ──
+    const [trackResp, featuresResp] = await Promise.all([
+      fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      }),
+      fetch(`https://api.spotify.com/v1/audio-features/${trackId}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      })
+    ]);
+
+    if (!trackResp.ok) {
+      return new Response(JSON.stringify({ error: "Track not found on Spotify" }), { status: 404, headers });
+    }
+
+    const track    = await trackResp.json();
+    const features = featuresResp.ok ? await featuresResp.json() : {};
+
+    // ── STEP 4: Get Artist Genre ──
+    let genre = "";
+    if (track.artists?.[0]?.id) {
+      const artistResp = await fetch(`https://api.spotify.com/v1/artists/${track.artists[0].id}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      if (artistResp.ok) {
+        const artist = await artistResp.json();
+        genre = artist.genres?.[0] || "";
+        // Capitalise first letter
+        if (genre) genre = genre.charAt(0).toUpperCase() + genre.slice(1);
       }
     }
 
-    // ── FALLBACK: oEmbed ──
-    if (!fetchedReal) {
-      try {
-        const oembedUrl = "https://open.spotify.com/oembed?url=https://open.spotify.com/track/" + cleanId;
-        const oResp = await fetch(oembedUrl, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-            "Accept": "application/json"
-          }
-        });
+    // ── STEP 5: Map Audio Features to Human-Readable Values ──
+    const bpm        = features.tempo ? Math.round(features.tempo) : null;
+    const energy     = features.energy != null ? (features.energy >= 0.7 ? "High" : features.energy >= 0.4 ? "Medium" : "Low") : "";
+    const valence    = features.valence; // 0-1: higher = more positive/happy
+    const mood       = valence != null
+      ? valence >= 0.7 ? "Happy / Euphoric"
+      : valence >= 0.5 ? "Upbeat / Positive"
+      : valence >= 0.3 ? "Neutral / Bittersweet"
+      : valence >= 0.15 ? "Melancholic / Sad"
+      : "Dark / Intense"
+      : "";
 
-        if (oResp.ok) {
-          const oData = await oResp.json();
-          const title = oData.title || "";
-          artworkUrl = oData.thumbnail_url || "";
-          fetchedReal = true;
-          fetchMethod = "oembed";
-          if (title.includes(" · ")) {
-            songTitle = title.split(" · ")[0].trim();
-            artist = title.split(" · ").slice(1).join(" · ").trim();
-          } else if (title.includes(" - ")) {
-            songTitle = title.split(" - ")[0].trim();
-            artist = title.split(" - ").slice(1).join(" - ").trim();
-          } else {
-            songTitle = title;
-          }
-        }
-      } catch (oembedErr) {
-        console.warn("[spotify-fetch] oEmbed error:", oembedErr.message);
-      }
-    }
+    // Musical key mapping
+    const KEY_NAMES   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const MODE_NAMES  = ["Minor","Major"];
+    const musicalKey  = features.key != null && features.key >= 0
+      ? KEY_NAMES[features.key] + " " + (MODE_NAMES[features.mode] || "")
+      : "";
 
-    // ── GENIUS: lyrics URL only — NEVER sets artist ──
-    let geniusUrl = "";
-    let lyricsFound = false;
-    if (GENIUS_TOKEN && songTitle && artist) {
+    const danceability = features.danceability != null
+      ? features.danceability >= 0.7 ? "High" : features.danceability >= 0.4 ? "Medium" : "Low"
+      : "";
+
+    // ── STEP 6: Build Response ──
+    const result = {
+      songTitle:    track.name || "",
+      artist:       track.artists?.map(a => a.name).join(", ") || "",
+      album:        track.album?.name || "",
+      artworkUrl:   track.album?.images?.[0]?.url || "",
+      artworkSmall: track.album?.images?.[2]?.url || "",
+      genre:        genre,
+      bpm:          bpm,
+      key:          musicalKey,
+      energy:       energy,
+      mood:         mood,
+      danceability: danceability,
+      duration:     track.duration_ms ? Math.round(track.duration_ms / 1000) : null,
+      explicit:     track.explicit || false,
+      popularity:   track.popularity || 0,
+      releaseDate:  track.album?.release_date || "",
+      spotifyUrl:   track.external_urls?.spotify || url,
+      previewUrl:   track.preview_url || null,
+      trackId:      trackId,
+      fetchedReal:  true,
+      platform:     "spotify"
+    };
+
+    // ── Genius: lyrics URL only ──
+    const GENIUS_TOKEN = Deno.env.get("GENIUS_ACCESS_TOKEN");
+    if (GENIUS_TOKEN && result.songTitle && result.artist) {
       try {
-        const query = encodeURIComponent(songTitle + " " + artist);
-        const gResp = await fetch("https://api.genius.com/search?q=" + query, {
+        const q = encodeURIComponent(result.songTitle + " " + result.artist);
+        const gr = await fetch("https://api.genius.com/search?q=" + q, {
           headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" }
         });
-        if (gResp.ok) {
-          const hits = (await gResp.json()).response.hits || [];
-          const sim = function(a, b) {
-            a = (a || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            b = (b || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            if (a === b) return 1;
-            if (!a || !b) return 0;
-            var lg = a.length > b.length ? a : b;
-            var sh = a.length > b.length ? b : a;
-            var m = 0, si = 0;
-            for (var i = 0; i < lg.length && si < sh.length; i++) {
-              if (lg[i] === sh[si]) { m++; si++; }
-            }
-            return m / lg.length;
-          };
-          var ct = songTitle.replace(/\s*[\(\[].*?[\)\]]/g, "").trim();
-          var best = null;
-          var bs = 0;
-          for (var h of hits) {
-            var ht = h.result.title || "";
-            var ha = h.result.primary_artist.name || "";
-            var ts = Math.max(sim(ct, ht), sim(ct, ht.replace(/\s*[\(\[].*?[\)\]]/g, "")));
-            var as2 = Math.max(sim(artist, ha), sim(artist.split(" ")[0] || "", ha.split(" ")[0] || ""));
-            var sc = ts * 0.65 + as2 * 0.35;
-            if (sc > bs) { bs = sc; best = h; }
-          }
+        if (gr.ok) {
+          const hits = ((await gr.json()).response || {}).hits || [];
+          const sim = (a,b) => { a=(a||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); b=(b||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); if(a===b)return 1; if(!a||!b)return 0; const[lg,sh]=a.length>b.length?[a,b]:[b,a]; let m=0,si=0; for(let i=0;i<lg.length&&si<sh.length;i++)if(lg[i]===sh[si]){m++;si++;} return m/lg.length; };
+          const ct = result.songTitle.replace(/\s*[\(\[].*?[\)\]]/g,"").trim();
+          let best=null, bs=0;
+          for(const h of hits){ const ht=h.result.title||"", ha=h.result.primary_artist.name||""; const ts=Math.max(sim(ct,ht),sim(ct,ht.replace(/\s*[\(\[].*?[\)\]]/g,""))); const as=Math.max(sim(result.artist,ha),sim((result.artist.split(" ")[0]||""),(ha.split(" ")[0]||""))); const sc=ts*0.65+as*0.35; if(sc>bs){bs=sc;best=h;} }
           if (best && bs >= 0.75) {
-            var dr = await fetch("https://api.genius.com/songs/" + best.result.id + "?text_format=plain", {
-              headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" }
-            });
-            if (dr.ok) {
-              var ls = (await dr.json()).response.song.lyrics_state || "";
-              if (ls === "complete") {
-                geniusUrl = best.result.url;
-                lyricsFound = true;
-                if (!artworkUrl && best.result.song_art_image_url) {
-                  artworkUrl = best.result.song_art_image_url;
-                }
-              }
-            }
+            const dr = await fetch("https://api.genius.com/songs/" + best.result.id + "?text_format=plain", { headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" } });
+            if (dr.ok) { const ls = ((await dr.json()).response||{}).song?.lyrics_state||""; if(ls==="complete"){result.geniusUrl=best.result.url; result.lyricsFound=true;} }
           }
         }
-      } catch (geniusErr) {
-        console.warn("[spotify-fetch] Genius error:", geniusErr.message);
-      }
+      } catch(e) { console.warn("Genius:", e.message); }
     }
 
-    return new Response(JSON.stringify({
-      songTitle: songTitle,
-      artist: artist,
-      artworkUrl: artworkUrl,
-      releaseDate: releaseDate,
-      geniusUrl: geniusUrl,
-      lyricsFound: lyricsFound,
-      fetchedReal: fetchedReal,
-      fetchMethod: fetchMethod,
-      platform: "spotify",
-      confidence: fetchMethod === "web_api" ? "high" : "medium"
-    }), { status: 200, headers });
+    return new Response(JSON.stringify(result), { status: 200, headers });
 
   } catch (err) {
-    console.error("[spotify-fetch] Fatal error:", err.message);
+    console.error("Spotify fetch error:", err.message);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
   }
 }
