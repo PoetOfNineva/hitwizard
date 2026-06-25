@@ -34,13 +34,15 @@ export default async function handler(request, context) {
       return new Response(JSON.stringify({ error: "No URL provided" }), { status: 400, headers });
     }
 
-    // ── Extract Apple Music song ID from URL ──
-    // Formats: /album/song-name/123456789 or /song/song-name/123456789
-    const idMatch = url.match(/\/(?:album|song)\/[^\/]+\/(\d+)/);
-    const songId = idMatch?.[1];
+    // ── Extract Apple Music IDs from URL ──
+    // ?i= is the track ID; the last numeric segment is album ID
+    const trackIdMatch = url.match(/[?&]i=(\d+)/);
+    const albumIdMatch = url.match(/\/(?:album|song)\/[^\/]+\/(\d+)/);
+    const trackId = trackIdMatch?.[1];
+    const albumId = albumIdMatch?.[1];
 
-    if (!songId) {
-      return new Response(JSON.stringify({ error: "Could not extract song ID from Apple Music URL" }), { status: 400, headers });
+    if (!trackId && !albumId) {
+      return new Response(JSON.stringify({ error: "Could not extract ID from Apple Music URL" }), { status: 400, headers });
     }
 
     // ── Generate MusicKit JWT ──
@@ -50,8 +52,14 @@ export default async function handler(request, context) {
     const storefrontMatch = url.match(/music\.apple\.com\/([a-z]{2})\//);
     const storefront = storefrontMatch?.[1] || "us";
 
-    // ── Fetch song from Apple Music API ──
-    const apiUrl = `https://api.music.apple.com/v1/catalog/${storefront}/songs/${songId}`;
+    // ── Fetch song: prefer track ID, fall back to first track of album ──
+    let apiUrl;
+    if (trackId) {
+      apiUrl = `https://api.music.apple.com/v1/catalog/${storefront}/songs/${trackId}`;
+    } else {
+      // Album link — fetch album and get first track
+      apiUrl = `https://api.music.apple.com/v1/catalog/${storefront}/albums/${albumId}?include=tracks`;
+    }
     const apiResp = await fetch(apiUrl, {
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -69,7 +77,12 @@ export default async function handler(request, context) {
     }
 
     const apiData = await apiResp.json();
-    const song    = apiData?.data?.[0];
+    let song = apiData?.data?.[0];
+
+    // If album response, get first track
+    if (!trackId && song?.relationships?.tracks?.data?.[0]) {
+      song = song.relationships.tracks.data[0];
+    }
 
     if (!song) {
       return new Response(JSON.stringify({ error: "Song not found on Apple Music" }), { status: 404, headers });
@@ -105,13 +118,15 @@ export default async function handler(request, context) {
         return{geniusUrl:best.result.url,lyricsFound:true};
       }catch(e){return{geniusUrl:"",lyricsFound:false};}
     };
+    const songTitle = attrs.name || "";
+    const artist    = attrs.artistName || "";
     let geniusUrl="",lyricsFound=false;
     if(GENIUS_TOKEN&&songTitle){const gr=await strictGeniusSearch(songTitle,artist,GENIUS_TOKEN);geniusUrl=gr.geniusUrl;lyricsFound=gr.lyricsFound;}
 
 
     return new Response(JSON.stringify({
-      songTitle:   attrs.name || "",
-      artist:      attrs.artistName || "",
+      songTitle:   songTitle,
+      artist:      artist,
       album:       attrs.albumName || "",
       genre:       attrs.genreNames?.[0] || "",
       artworkUrl,
