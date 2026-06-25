@@ -5519,12 +5519,15 @@ function SmartLinks({ showToast }) {
         if (data && data.songTitle) { data.title = data.songTitle; }
       }
 
+      console.log("[SmartLinks Autopilot] raw data:", JSON.stringify(data));
       if (data && (data.title || data.songTitle || data.artist)) {
         const title = data.title || data.songTitle || "";
-        const artist = data.artist || "";
+        // artist can come back empty if oEmbed didn't split — never leave blank
+        const artist = data.artist || data.songTitle?.split(" · ")?.[1] || data.songTitle?.split(" - ")?.[1] || "";
         const artworkUrl = data.artworkUrl || "";
         const releaseDate = data.releaseDate || data.release_date || "";
         const genre = data.genre || "";
+        console.log("[SmartLinks Autopilot] mapped:", {title, artist, artworkUrl, releaseDate, genre});
         setForm(f => ({
           ...f,
           title: title || f.title,
@@ -5536,7 +5539,7 @@ function SmartLinks({ showToast }) {
           appleMusic: url.includes("apple") ? url : f.appleMusic,
           youtube: (url.includes("youtube.com") || url.includes("youtu.be")) ? url : f.youtube,
         }));
-        showToast(artist ? "Song details auto-filled! ⚡" : "Title & artwork fetched — add artist name below ⚡", "⚡");
+        showToast(artist ? "Song details auto-filled! ⚡" : "Title fetched — add artist name below ⚡", "⚡");
       } else {
         showToast("Couldn\'t fetch details — fill in manually below", "⚠️");
       }
@@ -5608,7 +5611,12 @@ function SmartLinks({ showToast }) {
         ),
         React.createElement("div", null,
           React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Genre"),
-          React.createElement("input", { value:form.genre, onChange:e=>inp("genre",e.target.value), placeholder:"R&B / Soul", className:"inp", style:{width:"100%"} })
+          React.createElement("select", { value:form.genre, onChange:e=>inp("genre",e.target.value), className:"inp", style:{width:"100%"} },
+            React.createElement("option", {value:""}, "Select a genre..."),
+            ["Pop","R&B / Soul","Hip-Hop / Rap","Dance / Electronic","Country","Rock","Latin","Afrobeats","Gospel","Jazz","Classical","Reggae","Alternative","Folk","K-Pop","Dancehall","House","Trap","Drill","Lo-Fi","Other"].map(g =>
+              React.createElement("option", {key:g, value:g}, g)
+            )
+          )
         )
       ),
       React.createElement("div", null,
