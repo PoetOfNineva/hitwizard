@@ -5500,7 +5500,7 @@ function SmartLinks({ showToast }) {
             body: JSON.stringify({url, trackId})
           });
           if (res.ok) data = await res.json();
-          // Normalize field names (spotify-fetch returns songTitle not title)
+          console.log("[SmartLinks Spotify] full response:", JSON.stringify(data));
           if (data && data.songTitle) { data.title = data.songTitle; }
         }
       } else if (url.includes("apple")) {
