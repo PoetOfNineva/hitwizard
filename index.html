@@ -5487,36 +5487,70 @@ function SmartLinks({ showToast }) {
   // Auto-fetch from Spotify when URL is pasted into spotify field
   const [fetching, setFetching] = React.useState(false);
   async function autoFetchSpotify(url) {
-    inp("spotify", url);
-    if (!url.includes("open.spotify.com/track/")) return;
+    if (!url || !url.startsWith("http")) return;
     setFetching(true);
     try {
-      const res = await fetch(`/.netlify/edge-functions/spotify-fetch?url=${encodeURIComponent(url)}`);
+      let endpoint = "";
+      if (url.includes("spotify.com")) endpoint = `/.netlify/edge-functions/spotify-fetch?url=${encodeURIComponent(url)}`;
+      else if (url.includes("apple")) endpoint = `/.netlify/edge-functions/apple-fetch?url=${encodeURIComponent(url)}`;
+      else if (url.includes("youtube.com") || url.includes("youtu.be")) endpoint = `/.netlify/edge-functions/youtube-fetch?url=${encodeURIComponent(url)}`;
+      else if (url.includes("soundcloud.com")) endpoint = `/.netlify/edge-functions/spotify-fetch?url=${encodeURIComponent(url)}`;
+      if (!endpoint) { setFetching(false); return; }
+      const res = await fetch(endpoint);
       const data = await res.json();
-      if (data && data.title) {
+      if (data && (data.title || data.artist)) {
         setForm(f => ({
           ...f,
-          spotify: url,
-          title: f.title || data.title || "",
-          artist: f.artist || data.artist || "",
-          artworkUrl: f.artworkUrl || data.artworkUrl || "",
-          releaseDate: f.releaseDate || data.releaseDate || "",
-          genre: f.genre || data.genre || "",
+          title: data.title || f.title,
+          artist: data.artist || f.artist,
+          artworkUrl: data.artworkUrl || f.artworkUrl,
+          releaseDate: data.releaseDate || f.releaseDate,
+          genre: data.genre || f.genre,
+          spotify: url.includes("spotify.com") ? url : f.spotify,
+          appleMusic: url.includes("apple") ? url : f.appleMusic,
+          youtube: (url.includes("youtube.com") || url.includes("youtu.be")) ? url : f.youtube,
+          soundcloud: url.includes("soundcloud.com") ? url : f.soundcloud,
         }));
-        showToast("Song details auto-filled from Spotify! ⚡", "⚡");
+        showToast("Song details auto-filled! ⚡", "⚡");
       }
-    } catch(e) { console.warn("Spotify autofill:", e); }
+    } catch(e) { console.warn("Autopilot fetch:", e); showToast("Couldn\'t fetch — fill in manually", "⚠️"); }
     setFetching(false);
   }
 
   // ── VIEWS ──
   if (view === "create") return React.createElement("div", { style: { maxWidth: 680, margin: "0 auto" } },
     // Header
-    React.createElement("div", { style: { display:"flex", alignItems:"center", gap:12, marginBottom:32 } },
+    React.createElement("div", { style: { display:"flex", alignItems:"center", gap:12, marginBottom:24 } },
       React.createElement("button", { onClick: () => setView("list"), style: { background:"rgba(255,255,255,.06)", border:"1px solid rgba(255,255,255,.1)", color:"var(--txt)", borderRadius:8, padding:"8px 16px", cursor:"pointer", fontSize:13 } }, "← Back"),
       React.createElement("div", null,
         React.createElement("div", { style: { fontFamily:"Cinzel,serif", fontSize:20, fontWeight:900, color:"var(--txt)" } }, "Create Smart Link"),
         React.createElement("div", { style: { fontSize:12, color:"var(--muted)", marginTop:2 } }, "One link that opens all your streaming platforms")
+      )
+    ),
+
+    // ── AUTOPILOT BAR ──
+    React.createElement("div", { className:"card", style:{marginBottom:20, border:"1px solid rgba(0,229,153,.15)", background:"rgba(0,229,153,.03)"} },
+      React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"#00E599",marginBottom:12} }, "🔗 AUTOPILOT — PASTE A SONG LINK"),
+      React.createElement("div", { style:{display:"flex",gap:10} },
+        React.createElement("input", {
+          id: "sl-autopilot-inp",
+          placeholder: "Spotify, Apple Music, SoundCloud or YouTube link...",
+          className: "inp", style: { flex:1, fontFamily:"JetBrains Mono,monospace", fontSize:13 },
+          onKeyDown: e => { if(e.key === "Enter") autoFetchSpotify(e.target.value); }
+        }),
+        React.createElement("button", {
+          onClick: () => autoFetchSpotify(document.getElementById("sl-autopilot-inp")?.value),
+          disabled: fetching,
+          style: { background:"#00E599", color:"#000", border:"none", borderRadius:10, padding:"0 18px", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity: fetching ? 0.6 : 1 }
+        }, fetching ? "Fetching..." : "⚡ Fetch Song")
+      ),
+      React.createElement("div", { style:{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"} },
+        ["🟢 Spotify","🍎 Apple Music","🟠 SoundCloud","▶️ YouTube"].map((p,i) =>
+          React.createElement("div", { key:i, style:{fontSize:11,color:"var(--muted)",padding:"3px 8px",background:"rgba(255,255,255,.04)",borderRadius:6} }, p)
+        )
+      ),
+      form.title && React.createElement("div", { style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"rgba(0,229,153,.06)",border:"1px solid rgba(0,229,153,.2)",fontSize:13,color:"#00E599"} },
+        `✓ Auto-filled: ${form.title} — ${form.artist}${form.artworkUrl ? " · Artwork ready" : ""}`
       )
     ),
 
@@ -5544,7 +5578,7 @@ function SmartLinks({ showToast }) {
         )
       ),
       React.createElement("div", null,
-        React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Artwork URL (optional — paste direct image link)"),
+        React.createElement("label", { style:{fontSize:12,color:"var(--muted)",display:"block",marginBottom:6} }, "Artwork URL (auto-filled or paste direct image link)"),
         React.createElement("input", { value:form.artworkUrl, onChange:e=>inp("artworkUrl",e.target.value), placeholder:"https://...", className:"inp", style:{width:"100%"} })
       )
     ),
@@ -5552,14 +5586,12 @@ function SmartLinks({ showToast }) {
     // Platform Links
     React.createElement("div", { className:"card", style:{marginBottom:20} },
       React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "🔗 STREAMING PLATFORM LINKS"),
-      React.createElement("div", { style:{fontSize:12,color:"var(--muted)",marginBottom:16} }, fetching ? "⚡ Fetching song details from Spotify..." : "Paste your Spotify link first — title, artist & artwork auto-fill. Add other platforms below."),
+      React.createElement("div", { style:{fontSize:12,color:"var(--muted)",marginBottom:16} }, "Only platforms with links will appear on your Smart Link page."),
       PLATFORMS.map(p => React.createElement("div", { key:p.key, style:{marginBottom:12} },
         React.createElement("label", { style:{fontSize:13,color:p.color,display:"flex",alignItems:"center",gap:8,marginBottom:6,fontWeight:600} },
           React.createElement("span", null, p.icon), p.label
         ),
-        p.key === "spotify"
-          ? React.createElement("input", { value:form[p.key], onChange:e=>autoFetchSpotify(e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%",borderColor: form.spotify ? "#1DB95466" : ""} })
-          : React.createElement("input", { value:form[p.key], onChange:e=>inp(p.key,e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%"} })
+        React.createElement("input", { value:form[p.key], onChange:e=>inp(p.key,e.target.value), placeholder:p.placeholder, className:"inp", style:{width:"100%"} })
       ))
     ),
 
