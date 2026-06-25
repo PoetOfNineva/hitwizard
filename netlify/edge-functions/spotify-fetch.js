@@ -20,14 +20,14 @@ export default async function handler(request, context) {
     const { url, trackId } = body;
     if (!trackId) return new Response(JSON.stringify({ error: "No track ID" }), { status: 400, headers });
 
-    // Clean trackId — strip any query params
     const cleanId = trackId.split("?")[0].replace(/[^a-zA-Z0-9]/g, "");
-
     let songTitle = "", artist = "", artworkUrl = "", releaseDate = "";
     let fetchedReal = false;
 
+    // DIAGNOSTIC — remove after confirmed working
+    console.log("[spotify-fetch] v2-webapi starting. hasClientId:", !!SPOTIFY_CLIENT_ID, "hasSecret:", !!SPOTIFY_CLIENT_SECRET, "trackId:", cleanId);
+
     // ── SPOTIFY WEB API (Client Credentials) ──
-    // Guaranteed: title, artist, artwork, release date. Zero guessing.
     if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
       try {
         // Step 1: Get access token
