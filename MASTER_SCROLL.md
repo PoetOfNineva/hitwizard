@@ -26,7 +26,7 @@
 | Stripe | Payments | ✅ Configured | Webhook + checkout edge functions exist |
 | Resend | Transactional email | ✅ Account exists (hitwizard.ai@gmail.com) | API key needed in Netlify as RESEND_API_KEY |
 | Genius API | Lyrics search | ✅ Live | Returns URL only — no raw lyrics (copyright) |
-| Spotify API | Track metadata | ✅ Live | oEmbed only — title/artist/artwork |
+| Spotify API | Track metadata | ✅ Live | Web API (Client Credentials) — full metadata: title/artist/artwork/release date. Env: SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET. oEmbed fallback if API fails. |
 | YouTube API | Video metadata | ✅ Live | YouTube Data API v3 |
 | Apple Music | Track metadata | ✅ Live | MusicKit JWT |
 | GitHub Token | Direct repo commits | ✅ Active | ghp_[STORED_IN_CAPTAIN_MEMORY] (verify each session) |
