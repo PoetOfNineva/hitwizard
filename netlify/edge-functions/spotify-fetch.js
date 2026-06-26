@@ -81,17 +81,15 @@ export default async function handler(request, context) {
             const ha = (hits[h].result.primary_artist.name || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
             const ts = ht === tc ? 1 : ht.indexOf(tc) >= 0 || tc.indexOf(ht) >= 0 ? 0.8 : 0;
             const ac = artist.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            const as2 = ac && ha ? (ha === ac ? 1 : ha.indexOf(ac.split(" ")[0]) >= 0 ? 0.7 : 0) : 0.4;
+            const as2 = ac && ha ? (ha === ac ? 1 : ha.indexOf(ac.split(" ")[0]) >= 0 ? 0.7 : 0) : 0;
             const sc = ts * 0.65 + as2 * 0.35;
             if (sc > bestScore) { bestScore = sc; best = hits[h]; }
           }
-          if (best && bestScore >= 0.75) {
+          // Require higher confidence when artist unknown to avoid wrong Genius matches
+          if (best && bestScore >= (artist ? 0.75 : 0.9)) {
             geniusUrl = best.result.url;
             lyricsFound = true;
-            // Fill artist from Genius ONLY when oEmbed returned no artist
-            if (!artist && best.result.primary_artist && best.result.primary_artist.name) {
-              artist = best.result.primary_artist.name;
-            }
+            // Never fill artist from Genius — causes wrong names for indie artists not in DB
           }
         }
       } catch(e) { console.warn("Genius:", e.message); }
