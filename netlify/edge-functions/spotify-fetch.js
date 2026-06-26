@@ -20,7 +20,6 @@ export default async function handler(request, context) {
   try {
     const CLIENT_ID     = Deno.env.get("SPOTIFY_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("SPOTIFY_CLIENT_SECRET");
-    const GENIUS_TOKEN  = Deno.env.get("GENIUS_ACCESS_TOKEN");
 
     if (!CLIENT_ID || !CLIENT_SECRET) {
       return new Response(JSON.stringify({ error: "Spotify credentials not configured" }), { status: 500, headers });
@@ -33,14 +32,14 @@ export default async function handler(request, context) {
       return new Response(JSON.stringify({ error: "No URL provided" }), { status: 400, headers });
     }
 
-    // Extract Spotify Track ID from URL
+    // ── STEP 1: Extract Spotify Track ID from URL ──
     const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
     if (!trackMatch) {
       return new Response(JSON.stringify({ error: "Not a valid Spotify track URL" }), { status: 400, headers });
     }
     const trackId = trackMatch[1];
 
-    // Get Access Token via Client Credentials
+    // ── STEP 2: Get Access Token via Client Credentials ──
     const tokenResp = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
@@ -59,13 +58,13 @@ export default async function handler(request, context) {
     const tokenData = await tokenResp.json();
     const accessToken = tokenData.access_token;
 
-    // Fetch Track + Audio Features in parallel
+    // ── STEP 3: Fetch Track Metadata ──
     const [trackResp, featuresResp] = await Promise.all([
-      fetch("https://api.spotify.com/v1/tracks/" + trackId, {
-        headers: { "Authorization": "Bearer " + accessToken }
+      fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
       }),
-      fetch("https://api.spotify.com/v1/audio-features/" + trackId, {
-        headers: { "Authorization": "Bearer " + accessToken }
+      fetch(`https://api.spotify.com/v1/audio-features/${trackId}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
       })
     ]);
 
@@ -76,34 +75,36 @@ export default async function handler(request, context) {
     const track    = await trackResp.json();
     const features = featuresResp.ok ? await featuresResp.json() : {};
 
-    // Get Artist Genre
+    // ── STEP 4: Get Artist Genre ──
     let genre = "";
-    if (track.artists && track.artists[0] && track.artists[0].id) {
-      const artistResp = await fetch("https://api.spotify.com/v1/artists/" + track.artists[0].id, {
-        headers: { "Authorization": "Bearer " + accessToken }
+    if (track.artists?.[0]?.id) {
+      const artistResp = await fetch(`https://api.spotify.com/v1/artists/${track.artists[0].id}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` }
       });
       if (artistResp.ok) {
-        const artistData = await artistResp.json();
-        genre = (artistData.genres && artistData.genres[0]) ? artistData.genres[0] : "";
+        const artist = await artistResp.json();
+        genre = artist.genres?.[0] || "";
+        // Capitalise first letter
         if (genre) genre = genre.charAt(0).toUpperCase() + genre.slice(1);
       }
     }
 
-    // Map Audio Features
-    const bpm      = features.tempo ? Math.round(features.tempo) : null;
-    const energy   = features.energy != null ? (features.energy >= 0.7 ? "High" : features.energy >= 0.4 ? "Medium" : "Low") : "";
-    const valence  = features.valence;
-    const mood     = valence != null
-      ? valence >= 0.7  ? "Happy / Euphoric"
-      : valence >= 0.5  ? "Upbeat / Positive"
-      : valence >= 0.3  ? "Neutral / Bittersweet"
+    // ── STEP 5: Map Audio Features to Human-Readable Values ──
+    const bpm        = features.tempo ? Math.round(features.tempo) : null;
+    const energy     = features.energy != null ? (features.energy >= 0.7 ? "High" : features.energy >= 0.4 ? "Medium" : "Low") : "";
+    const valence    = features.valence; // 0-1: higher = more positive/happy
+    const mood       = valence != null
+      ? valence >= 0.7 ? "Happy / Euphoric"
+      : valence >= 0.5 ? "Upbeat / Positive"
+      : valence >= 0.3 ? "Neutral / Bittersweet"
       : valence >= 0.15 ? "Melancholic / Sad"
       : "Dark / Intense"
       : "";
 
-    const KEY_NAMES  = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-    const MODE_NAMES = ["Minor","Major"];
-    const musicalKey = (features.key != null && features.key >= 0)
+    // Musical key mapping
+    const KEY_NAMES   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const MODE_NAMES  = ["Minor","Major"];
+    const musicalKey  = features.key != null && features.key >= 0
       ? KEY_NAMES[features.key] + " " + (MODE_NAMES[features.mode] || "")
       : "";
 
@@ -111,14 +112,13 @@ export default async function handler(request, context) {
       ? features.danceability >= 0.7 ? "High" : features.danceability >= 0.4 ? "Medium" : "Low"
       : "";
 
-    const artistName = track.artists ? track.artists.map(function(a) { return a.name; }).join(", ") : "";
-
+    // ── STEP 6: Build Response ──
     const result = {
       songTitle:    track.name || "",
-      artist:       artistName,
-      album:        track.album ? track.album.name : "",
-      artworkUrl:   (track.album && track.album.images && track.album.images[0]) ? track.album.images[0].url : "",
-      artworkSmall: (track.album && track.album.images && track.album.images[2]) ? track.album.images[2].url : "",
+      artist:       track.artists?.map(a => a.name).join(", ") || "",
+      album:        track.album?.name || "",
+      artworkUrl:   track.album?.images?.[0]?.url || "",
+      artworkSmall: track.album?.images?.[2]?.url || "",
       genre:        genre,
       bpm:          bpm,
       key:          musicalKey,
@@ -128,8 +128,8 @@ export default async function handler(request, context) {
       duration:     track.duration_ms ? Math.round(track.duration_ms / 1000) : null,
       explicit:     track.explicit || false,
       popularity:   track.popularity || 0,
-      releaseDate:  (track.album && track.album.release_date) ? track.album.release_date : "",
-      spotifyUrl:   (track.external_urls && track.external_urls.spotify) ? track.external_urls.spotify : url,
+      releaseDate:  track.album?.release_date || "",
+      spotifyUrl:   track.external_urls?.spotify || url,
       previewUrl:   track.preview_url || null,
       trackId:      trackId,
       fetchedReal:  true,
@@ -138,7 +138,9 @@ export default async function handler(request, context) {
       lyricsFound:  false
     };
 
-    // Genius: lyrics URL only — no artist override ever
+
+    // ── Genius: lyrics URL only — never sets artist ──
+    const GENIUS_TOKEN = Deno.env.get("GENIUS_ACCESS_TOKEN");
     if (GENIUS_TOKEN && result.songTitle && result.artist) {
       try {
         const gQuery = encodeURIComponent(result.songTitle + " " + result.artist);
@@ -147,19 +149,17 @@ export default async function handler(request, context) {
         });
         if (gResp.ok) {
           const gData = await gResp.json();
-          const hits = (gData.response && gData.response.hits) ? gData.response.hits : [];
-          let best = null;
-          let bestScore = 0;
-          const titleClean = result.songTitle.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-          const artistClean = result.artist.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+          const hits = gData.response ? gData.response.hits || [] : [];
+          let best = null, bestScore = 0;
+          const tc = result.songTitle.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+          const ac = result.artist.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
           for (let h = 0; h < hits.length; h++) {
-            const hit = hits[h];
-            const ht = (hit.result.title || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            const ha = (hit.result.primary_artist.name || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            const titleScore = ht === titleClean ? 1 : (ht.includes(titleClean) || titleClean.includes(ht)) ? 0.8 : 0;
-            const artistScore = ha === artistClean ? 1 : (ha.includes(artistClean.split(" ")[0])) ? 0.7 : 0;
-            const score = titleScore * 0.65 + artistScore * 0.35;
-            if (score > bestScore) { bestScore = score; best = hit; }
+            const ht = (hits[h].result.title || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            const ha = (hits[h].result.primary_artist.name || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            const ts = ht === tc ? 1 : (ht.indexOf(tc) >= 0 || tc.indexOf(ht) >= 0) ? 0.8 : 0;
+            const as = ha === ac ? 1 : ac.length > 0 && ha.indexOf(ac.split(" ")[0]) >= 0 ? 0.7 : 0;
+            const sc = ts * 0.65 + as * 0.35;
+            if (sc > bestScore) { bestScore = sc; best = hits[h]; }
           }
           if (best && bestScore >= 0.75) {
             const dr = await fetch("https://api.genius.com/songs/" + best.result.id + "?text_format=plain", {
@@ -167,15 +167,15 @@ export default async function handler(request, context) {
             });
             if (dr.ok) {
               const drData = await dr.json();
-              const lyricsState = (drData.response && drData.response.song) ? drData.response.song.lyrics_state : "";
-              if (lyricsState === "complete") {
+              const ls = drData.response && drData.response.song ? drData.response.song.lyrics_state : "";
+              if (ls === "complete") {
                 result.geniusUrl = best.result.url;
                 result.lyricsFound = true;
               }
             }
           }
         }
-      } catch(gErr) {
+      } catch (gErr) {
         console.warn("Genius error:", gErr.message);
       }
     }
