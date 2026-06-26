@@ -411,3 +411,36 @@ Full DNA strings locked in `index.html` source. Proportion tags non-negotiable.
 | Jun 8, 2026 | Supabase keepalive, Video Engine master scroll doctrine, STARFIRE deploy |
 | Jun 23, 2026 | Landing page full rebuild (light/dark hybrid, Playfair Display, nebula starfield, lyric demo with Heaven In Your Eyes chorus, testimonials, comparison table, FAQ, auth modal inline). Fixed React error #310 (hooks after conditional return). Auth gate moved to bootAuth(). auth.js moved to <head>. App fully restored and working. Landing page gates logged-out users. |
 
+
+
+---
+
+## SESSION NOTES — June 25-26 2026
+
+### Spotify Fetch — Platform Limitations (CRITICAL)
+- **Spotify Web API blocked in Dev Mode since Feb 2026** — requires Premium subscription or 250k MAU Extended Quota (not available to us yet)
+- **Spotify oEmbed** returns `"Title · Artist"` for major label tracks but just `"Title"` for indie/DistroKid artists — inconsistent
+- **Apple Music API** returns FULL metadata for ALL artists (major, indie, DistroKid, AI) — title, artist, genre, BPM, artwork, release date
+- **YouTube** returns title, artist, artwork reliably
+- **Current approach:** oEmbed + Claude Haiku AI inference for genre/mood/BPM/key. Artist fills only when oEmbed title contains separator.
+- **TODO:** When Spotify Extended Quota approved OR when we have 250k MAU, switch back to Web API for full metadata on all platforms regardless of link type
+
+### Smart Link Cover Art Bug
+- `artwork_url` stored in Supabase for "Heaven In Your Eyes" is a truncated YouTube thumbnail URL — blocked cross-origin
+- Fix Artwork button added to Smart Link detail view for in-app repair
+- New Smart Links via autopilot now get proper Spotify CDN artwork
+- TODO: Fix existing broken link — user needs to click Fix Artwork and paste Spotify CDN URL
+
+### Ad Creative History Bug
+- `result` column was missing from Supabase `history` table — added via SQL
+- `_fullSession` now passed correctly through addHistory
+- `color` column exists in history table
+- Supabase saves result as JSON string (stringify on save, parse on load)
+- TODO: Verify persistence after login/logout cycle
+
+### PLANNED FEATURES
+1. **Hosted Creative URLs** — upload quote cards to Supabase Storage, serve at `/c/slug` with OG meta tags
+2. **Real Ad Generation** — user uploads photo/video, selects song segment (start→end time), generate actual video ads with real imagery, not just text/color cards
+3. **Song Segment Selector** — waveform UI showing song, user drags handles to select which 15/30/60 second segment to use for the ad
+4. **Full metadata fetch regardless of platform** — must work for ALL platforms with ANY artist (indie, AI, major label)
+
