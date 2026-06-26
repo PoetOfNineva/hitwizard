@@ -20,6 +20,7 @@ export default async function handler(request, context) {
   try {
     const CLIENT_ID     = Deno.env.get("SPOTIFY_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("SPOTIFY_CLIENT_SECRET");
+    const GENIUS_TOKEN  = Deno.env.get("GENIUS_ACCESS_TOKEN");
 
     if (!CLIENT_ID || !CLIENT_SECRET) {
       return new Response(JSON.stringify({ error: "Spotify credentials not configured" }), { status: 500, headers });
@@ -32,14 +33,14 @@ export default async function handler(request, context) {
       return new Response(JSON.stringify({ error: "No URL provided" }), { status: 400, headers });
     }
 
-    // ── STEP 1: Extract Spotify Track ID from URL ──
+    // Extract Spotify Track ID from URL
     const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
     if (!trackMatch) {
       return new Response(JSON.stringify({ error: "Not a valid Spotify track URL" }), { status: 400, headers });
     }
     const trackId = trackMatch[1];
 
-    // ── STEP 2: Get Access Token via Client Credentials ──
+    // Get Access Token via Client Credentials
     const tokenResp = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
@@ -58,13 +59,13 @@ export default async function handler(request, context) {
     const tokenData = await tokenResp.json();
     const accessToken = tokenData.access_token;
 
-    // ── STEP 3: Fetch Track Metadata ──
+    // Fetch Track + Audio Features in parallel
     const [trackResp, featuresResp] = await Promise.all([
-      fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
-        headers: { "Authorization": `Bearer ${accessToken}` }
+      fetch("https://api.spotify.com/v1/tracks/" + trackId, {
+        headers: { "Authorization": "Bearer " + accessToken }
       }),
-      fetch(`https://api.spotify.com/v1/audio-features/${trackId}`, {
-        headers: { "Authorization": `Bearer ${accessToken}` }
+      fetch("https://api.spotify.com/v1/audio-features/" + trackId, {
+        headers: { "Authorization": "Bearer " + accessToken }
       })
     ]);
 
@@ -75,36 +76,34 @@ export default async function handler(request, context) {
     const track    = await trackResp.json();
     const features = featuresResp.ok ? await featuresResp.json() : {};
 
-    // ── STEP 4: Get Artist Genre ──
+    // Get Artist Genre
     let genre = "";
-    if (track.artists?.[0]?.id) {
-      const artistResp = await fetch(`https://api.spotify.com/v1/artists/${track.artists[0].id}`, {
-        headers: { "Authorization": `Bearer ${accessToken}` }
+    if (track.artists && track.artists[0] && track.artists[0].id) {
+      const artistResp = await fetch("https://api.spotify.com/v1/artists/" + track.artists[0].id, {
+        headers: { "Authorization": "Bearer " + accessToken }
       });
       if (artistResp.ok) {
-        const artist = await artistResp.json();
-        genre = artist.genres?.[0] || "";
-        // Capitalise first letter
+        const artistData = await artistResp.json();
+        genre = (artistData.genres && artistData.genres[0]) ? artistData.genres[0] : "";
         if (genre) genre = genre.charAt(0).toUpperCase() + genre.slice(1);
       }
     }
 
-    // ── STEP 5: Map Audio Features to Human-Readable Values ──
-    const bpm        = features.tempo ? Math.round(features.tempo) : null;
-    const energy     = features.energy != null ? (features.energy >= 0.7 ? "High" : features.energy >= 0.4 ? "Medium" : "Low") : "";
-    const valence    = features.valence; // 0-1: higher = more positive/happy
-    const mood       = valence != null
-      ? valence >= 0.7 ? "Happy / Euphoric"
-      : valence >= 0.5 ? "Upbeat / Positive"
-      : valence >= 0.3 ? "Neutral / Bittersweet"
+    // Map Audio Features
+    const bpm      = features.tempo ? Math.round(features.tempo) : null;
+    const energy   = features.energy != null ? (features.energy >= 0.7 ? "High" : features.energy >= 0.4 ? "Medium" : "Low") : "";
+    const valence  = features.valence;
+    const mood     = valence != null
+      ? valence >= 0.7  ? "Happy / Euphoric"
+      : valence >= 0.5  ? "Upbeat / Positive"
+      : valence >= 0.3  ? "Neutral / Bittersweet"
       : valence >= 0.15 ? "Melancholic / Sad"
       : "Dark / Intense"
       : "";
 
-    // Musical key mapping
-    const KEY_NAMES   = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-    const MODE_NAMES  = ["Minor","Major"];
-    const musicalKey  = features.key != null && features.key >= 0
+    const KEY_NAMES  = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const MODE_NAMES = ["Minor","Major"];
+    const musicalKey = (features.key != null && features.key >= 0)
       ? KEY_NAMES[features.key] + " " + (MODE_NAMES[features.mode] || "")
       : "";
 
@@ -112,13 +111,14 @@ export default async function handler(request, context) {
       ? features.danceability >= 0.7 ? "High" : features.danceability >= 0.4 ? "Medium" : "Low"
       : "";
 
-    // ── STEP 6: Build Response ──
+    const artistName = track.artists ? track.artists.map(function(a) { return a.name; }).join(", ") : "";
+
     const result = {
       songTitle:    track.name || "",
-      artist:       track.artists?.map(a => a.name).join(", ") || "",
-      album:        track.album?.name || "",
-      artworkUrl:   track.album?.images?.[0]?.url || "",
-      artworkSmall: track.album?.images?.[2]?.url || "",
+      artist:       artistName,
+      album:        track.album ? track.album.name : "",
+      artworkUrl:   (track.album && track.album.images && track.album.images[0]) ? track.album.images[0].url : "",
+      artworkSmall: (track.album && track.album.images && track.album.images[2]) ? track.album.images[2].url : "",
       genre:        genre,
       bpm:          bpm,
       key:          musicalKey,
@@ -128,34 +128,56 @@ export default async function handler(request, context) {
       duration:     track.duration_ms ? Math.round(track.duration_ms / 1000) : null,
       explicit:     track.explicit || false,
       popularity:   track.popularity || 0,
-      releaseDate:  track.album?.release_date || "",
-      spotifyUrl:   track.external_urls?.spotify || url,
+      releaseDate:  (track.album && track.album.release_date) ? track.album.release_date : "",
+      spotifyUrl:   (track.external_urls && track.external_urls.spotify) ? track.external_urls.spotify : url,
       previewUrl:   track.preview_url || null,
       trackId:      trackId,
       fetchedReal:  true,
-      platform:     "spotify"
+      platform:     "spotify",
+      geniusUrl:    "",
+      lyricsFound:  false
     };
 
-    // ── Genius: lyrics URL only ──
-    const GENIUS_TOKEN = Deno.env.get("GENIUS_ACCESS_TOKEN");
+    // Genius: lyrics URL only — no artist override ever
     if (GENIUS_TOKEN && result.songTitle && result.artist) {
       try {
-        const q = encodeURIComponent(result.songTitle + " " + result.artist);
-        const gr = await fetch("https://api.genius.com/search?q=" + q, {
+        const gQuery = encodeURIComponent(result.songTitle + " " + result.artist);
+        const gResp = await fetch("https://api.genius.com/search?q=" + gQuery, {
           headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" }
         });
-        if (gr.ok) {
-          const hits = ((await gr.json()).response || {}).hits || [];
-          const sim = (a,b) => { a=(a||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); b=(b||"").toLowerCase().replace(/[^a-z0-9 ]/g,"").trim(); if(a===b)return 1; if(!a||!b)return 0; const[lg,sh]=a.length>b.length?[a,b]:[b,a]; let m=0,si=0; for(let i=0;i<lg.length&&si<sh.length;i++)if(lg[i]===sh[si]){m++;si++;} return m/lg.length; };
-          const ct = result.songTitle.replace(/\s*[\(\[].*?[\)\]]/g,"").trim();
-          let best=null, bs=0;
-          for(const h of hits){ const ht=h.result.title||"", ha=h.result.primary_artist.name||""; const ts=Math.max(sim(ct,ht),sim(ct,ht.replace(/\s*[\(\[].*?[\)\]]/g,""))); const as=Math.max(sim(result.artist,ha),sim((result.artist.split(" ")[0]||""),(ha.split(" ")[0]||""))); const sc=ts*0.65+as*0.35; if(sc>bs){bs=sc;best=h;} }
-          if (best && bs >= 0.75) {
-            const dr = await fetch("https://api.genius.com/songs/" + best.result.id + "?text_format=plain", { headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" } });
-            if (dr.ok) { const ls = ((await dr.json()).response||{}).song?.lyrics_state||""; if(ls==="complete"){result.geniusUrl=best.result.url; result.lyricsFound=true;} }
+        if (gResp.ok) {
+          const gData = await gResp.json();
+          const hits = (gData.response && gData.response.hits) ? gData.response.hits : [];
+          let best = null;
+          let bestScore = 0;
+          const titleClean = result.songTitle.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+          const artistClean = result.artist.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+          for (let h = 0; h < hits.length; h++) {
+            const hit = hits[h];
+            const ht = (hit.result.title || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            const ha = (hit.result.primary_artist.name || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            const titleScore = ht === titleClean ? 1 : (ht.includes(titleClean) || titleClean.includes(ht)) ? 0.8 : 0;
+            const artistScore = ha === artistClean ? 1 : (ha.includes(artistClean.split(" ")[0])) ? 0.7 : 0;
+            const score = titleScore * 0.65 + artistScore * 0.35;
+            if (score > bestScore) { bestScore = score; best = hit; }
+          }
+          if (best && bestScore >= 0.75) {
+            const dr = await fetch("https://api.genius.com/songs/" + best.result.id + "?text_format=plain", {
+              headers: { "Authorization": "Bearer " + GENIUS_TOKEN, "User-Agent": "HitWizard/1.0" }
+            });
+            if (dr.ok) {
+              const drData = await dr.json();
+              const lyricsState = (drData.response && drData.response.song) ? drData.response.song.lyrics_state : "";
+              if (lyricsState === "complete") {
+                result.geniusUrl = best.result.url;
+                result.lyricsFound = true;
+              }
+            }
           }
         }
-      } catch(e) { console.warn("Genius:", e.message); }
+      } catch(gErr) {
+        console.warn("Genius error:", gErr.message);
+      }
     }
 
     return new Response(JSON.stringify(result), { status: 200, headers });
