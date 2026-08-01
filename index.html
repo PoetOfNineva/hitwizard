@@ -5335,7 +5335,7 @@ function Pricing(_ref53) {
 // ══════════════════════════════════════════════════════════════════
 
 function SmartLinks({ showToast }) {
-  const [view, setView] = React.useState("list"); // list | create | detail
+  const [view, setView] = React.useState("list"); // list | create | detail | collection
   const [links, setLinks] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [selected, setSelected] = React.useState(null);
@@ -5347,6 +5347,27 @@ function SmartLinks({ showToast }) {
     presave: false, downloadGate: false, downloadUrl: "",
     bgColor: "#0a0a0f", accentColor: "#FFB800"
   });
+
+  // Collection form state
+  const [colForm, setColForm] = React.useState({
+    collectionTitle: "",
+    collectionDescription: "",
+    slug: "",
+    bgColor: "#0a0a0f",
+    accentColor: "#FFB800",
+    songs: [
+      { title: "", artist: "", artworkUrl: "", spotify: "", appleMusic: "", youtube: "" },
+      { title: "", artist: "", artworkUrl: "", spotify: "", appleMusic: "", youtube: "" }
+    ]
+  });
+  const setCol = (k, v) => setColForm(p => ({...p, [k]: v}));
+  const setSong = (i, k, v) => setColForm(p => {
+    const songs = [...p.songs];
+    songs[i] = {...songs[i], [k]: v};
+    return {...p, songs};
+  });
+  const addSong = () => setColForm(p => ({...p, songs: [...p.songs, {title:"",artist:"",artworkUrl:"",spotify:"",appleMusic:"",youtube:""}]}));
+  const removeSong = (i) => setColForm(p => ({...p, songs: p.songs.filter((_,idx)=>idx!==i)}));
 
   const sb = () => {
     if (!window.supabase) return null;
@@ -5450,6 +5471,55 @@ function SmartLinks({ showToast }) {
     showToast("Smart Link deleted", "🗑");
   }
 
+  async function saveCollection() {
+    if (!colForm.collectionTitle.trim()) { showToast("Add a collection title", "⚠️"); return; }
+    const filledSongs = colForm.songs.filter(s => s.title.trim());
+    if (filledSongs.length < 2) { showToast("Add at least 2 songs", "⚠️"); return; }
+    const client = sb();
+    if (!client) { showToast("Not logged in", "⚠️"); return; }
+    setSaving(true);
+    try {
+      const slug = colForm.slug.trim() ||
+        colForm.collectionTitle.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").substring(0,50) +
+        "-" + Math.random().toString(36).substring(2,6);
+
+      const songs = filledSongs.map(s => ({
+        title: s.title,
+        artist: s.artist,
+        artwork_url: s.artworkUrl,
+        platforms: {
+          ...(s.spotify ? { spotify: s.spotify } : {}),
+          ...(s.appleMusic ? { apple_music: s.appleMusic } : {}),
+          ...(s.youtube ? { youtube: s.youtube } : {}),
+        }
+      }));
+
+      const { data, error } = await client.from("smart_links").insert([{
+        user_id: (await client.auth.getUser()).data?.user?.id,
+        slug,
+        title: colForm.collectionTitle,
+        artist: filledSongs[0]?.artist || "",
+        link_type: "collection",
+        collection_title: colForm.collectionTitle,
+        collection_description: colForm.collectionDescription,
+        songs,
+        platforms: {},
+        bg_color: colForm.bgColor,
+        accent_color: colForm.accentColor,
+        active: true
+      }]).select().single();
+
+      if (error) throw new Error(error.message);
+      setLinks(prev => [data, ...prev]);
+      setSelected(data);
+      setView("detail");
+      showToast("Collection created! Share the link below.", "🔗");
+    } catch(e) {
+      showToast("Error: " + e.message, "⚠️");
+    }
+    setSaving(false);
+  }
+
   const publicUrl = slug => `https://hitwizardai.com/l/${slug}`;
 
   function copyLink(slug) {
@@ -5549,6 +5619,96 @@ function SmartLinks({ showToast }) {
   }
 
   // ── VIEWS ──
+  // ── COLLECTION VIEW ──
+  if (view === "collection") return React.createElement("div", {style:{maxWidth:680,margin:"0 auto"}},
+    React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},
+      React.createElement("button", {onClick:()=>setView("list"),style:{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",color:"var(--txt)",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:13}}, "← Back"),
+      React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:20,fontWeight:900,color:"var(--txt)"}}, "Multi-Song Collection"),
+      React.createElement("span", {className:"badge b-gold"}, "New")
+    ),
+    React.createElement("div", {style:{background:"rgba(255,184,0,.05)",border:"1px solid rgba(255,184,0,.2)",borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:12,color:"var(--muted)",lineHeight:1.7}},
+      "One link — multiple songs. Perfect for sharing an EP, a playlist, or a set of recommendations. Each song gets its own streaming buttons."
+    ),
+
+    // Collection Title & Slug
+    React.createElement("div", {className:"card",style:{marginBottom:16}},
+      React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:700,marginBottom:12,color:"var(--gold)"}}, "Collection Details"),
+      React.createElement("div", {className:"field"},
+        React.createElement("label", {className:"lbl"}, "Collection Title *"),
+        React.createElement("input", {className:"inp",placeholder:"e.g. Celine's Best Songs • Recommended for You",value:colForm.collectionTitle,onChange:e=>setCol("collectionTitle",e.target.value)})
+      ),
+      React.createElement("div", {className:"field"},
+        React.createElement("label", {className:"lbl"}, "Description ", React.createElement("span", {className:"lbl-n"}, "— optional")),
+        React.createElement("input", {className:"inp",placeholder:"e.g. Four songs I think you'll love",value:colForm.collectionDescription,onChange:e=>setCol("collectionDescription",e.target.value)})
+      ),
+      React.createElement("div", {className:"field"},
+        React.createElement("label", {className:"lbl"}, "Custom URL slug ", React.createElement("span", {className:"lbl-n"}, "— optional, auto-generated if blank")),
+        React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8}},
+          React.createElement("span", {style:{fontSize:12,color:"var(--muted)",fontFamily:"JetBrains Mono,monospace",flexShrink:0}}, "hitwizardai.com/l/"),
+          React.createElement("input", {className:"inp",placeholder:"my-collection",value:colForm.slug,onChange:e=>setCol("slug",e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,""))})
+        )
+      )
+    ),
+
+    // Songs
+    React.createElement("div", {style:{marginBottom:16}},
+      React.createElement("div", {style:{fontFamily:"Cinzel,serif",fontSize:14,fontWeight:700,marginBottom:12,color:"var(--txt)"}}, `Songs (${colForm.songs.length})`),
+      colForm.songs.map((song, i) =>
+        React.createElement("div", {key:i,className:"card",style:{marginBottom:12,borderLeft:`3px solid ${i===0?"var(--gold)":"rgba(255,255,255,.1)"}`}},
+          React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+            React.createElement("div", {style:{fontWeight:700,color:"var(--gold)",fontSize:13,fontFamily:"JetBrains Mono,monospace"}}, `TRACK ${String(i+1).padStart(2,"0")}`),
+            colForm.songs.length > 2 && React.createElement("button", {
+              onClick:()=>removeSong(i),
+              style:{background:"rgba(255,100,100,.15)",border:"1px solid rgba(255,100,100,.3)",borderRadius:6,color:"#FF6B6B",fontSize:12,padding:"4px 10px",cursor:"pointer"}
+            }, "Remove")
+          ),
+          React.createElement("div", {className:"g2"},
+            React.createElement("div", {className:"field"},
+              React.createElement("label", {className:"lbl"}, "Song Title *"),
+              React.createElement("input", {className:"inp",placeholder:"Heaven In Your Eyes",value:song.title,onChange:e=>setSong(i,"title",e.target.value)})
+            ),
+            React.createElement("div", {className:"field"},
+              React.createElement("label", {className:"lbl"}, "Artist Name"),
+              React.createElement("input", {className:"inp",placeholder:"Celine Enya Houston",value:song.artist,onChange:e=>setSong(i,"artist",e.target.value)})
+            )
+          ),
+          React.createElement("div", {className:"field"},
+            React.createElement("label", {className:"lbl"}, "Artwork URL ", React.createElement("span", {className:"lbl-n"}, "— Spotify/Apple cover art URL")),
+            React.createElement("input", {className:"inp",placeholder:"https://i.scdn.co/image/...",value:song.artworkUrl,onChange:e=>setSong(i,"artworkUrl",e.target.value)})
+          ),
+          React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"var(--muted)",letterSpacing:2,marginBottom:8,fontFamily:"JetBrains Mono,monospace"}}, "STREAMING LINKS"),
+          React.createElement("div", {className:"g2"},
+            React.createElement("div", {className:"field"},
+              React.createElement("label", {className:"lbl"}, "🎵 Spotify"),
+              React.createElement("input", {className:"inp",placeholder:"https://open.spotify.com/track/...",value:song.spotify,onChange:e=>setSong(i,"spotify",e.target.value)})
+            ),
+            React.createElement("div", {className:"field"},
+              React.createElement("label", {className:"lbl"}, "🍎 Apple Music"),
+              React.createElement("input", {className:"inp",placeholder:"https://music.apple.com/...",value:song.appleMusic,onChange:e=>setSong(i,"appleMusic",e.target.value)})
+            ),
+            React.createElement("div", {className:"field"},
+              React.createElement("label", {className:"lbl"}, "▶ YouTube"),
+              React.createElement("input", {className:"inp",placeholder:"https://youtube.com/watch?v=...",value:song.youtube,onChange:e=>setSong(i,"youtube",e.target.value)})
+            )
+          )
+        )
+      ),
+      React.createElement("button", {
+        onClick:addSong,
+        className:"btn btn-out",
+        style:{width:"100%",borderStyle:"dashed",borderColor:"rgba(255,255,255,.2)",color:"var(--muted)"}
+      }, "+ Add Another Song")
+    ),
+
+    // Save button
+    React.createElement("button", {
+      className:"btn btn-gold",
+      style:{width:"100%",padding:"14px",fontWeight:800,fontSize:15},
+      onClick:saveCollection,
+      disabled:saving
+    }, saving ? "Creating Collection..." : `🔗 Create Collection (${colForm.songs.filter(s=>s.title.trim()).length} songs)`)
+  );
+
   if (view === "create") return React.createElement("div", { style: { maxWidth: 680, margin: "0 auto" } },
     // Header
     React.createElement("div", { style: { display:"flex", alignItems:"center", gap:12, marginBottom:24 } },
@@ -5788,11 +5948,18 @@ function SmartLinks({ showToast }) {
       React.createElement("div", null,
         React.createElement("div", { style:{fontSize:13,color:"var(--muted)"} }, `${links.length} Smart Link${links.length!==1?"s":""} created`)
       ),
-      React.createElement("button", {
-        onClick: () => setView("create"),
-        className: "btn btn-gold",
-        style: { padding:"10px 22px", fontWeight:700 }
-      }, "⚡ Create Smart Link")
+      React.createElement("div", {style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        React.createElement("button", {
+          onClick: () => setView("create"),
+          className: "btn btn-gold",
+          style: { padding:"10px 22px", fontWeight:700 }
+        }, "⚡ Single Song"),
+        React.createElement("button", {
+          onClick: () => setView("collection"),
+          className: "btn btn-out",
+          style: { padding:"10px 22px", fontWeight:700, borderColor:"var(--gold)", color:"var(--gold)" }
+        }, "📂 Multi-Song Collection")
+      )
     ),
 
     loading
@@ -5817,8 +5984,15 @@ function SmartLinks({ showToast }) {
                     ? React.createElement("img", { src:link.artwork_url, style:{width:56,height:56,borderRadius:10,objectFit:"cover",flexShrink:0} })
                     : React.createElement("div", { style:{width:56,height:56,borderRadius:10,background:"rgba(255,184,0,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0} }, "🎵"),
                   React.createElement("div", { style:{flex:1,minWidth:0} },
-                    React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:15,fontWeight:700,color:"var(--txt)",marginBottom:2} }, link.title),
-                    React.createElement("div", { style:{fontSize:13,color:"var(--muted)",marginBottom:6} }, link.artist),
+                    React.createElement("div", { style:{fontFamily:"Cinzel,serif",fontSize:15,fontWeight:700,color:"var(--txt)",marginBottom:2} },
+                      link.title,
+                      link.link_type === "collection" && React.createElement("span", {style:{marginLeft:8,fontSize:10,background:"rgba(0,204,255,.15)",color:"#00CCFF",border:"1px solid rgba(0,204,255,.3)",borderRadius:4,padding:"2px 6px",fontFamily:"JetBrains Mono,monospace",letterSpacing:1}}, "COLLECTION")
+                    ),
+                    React.createElement("div", { style:{fontSize:13,color:"var(--muted)",marginBottom:6} },
+                      link.link_type === "collection"
+                        ? `${(link.songs||[]).length} songs`
+                        : link.artist
+                    ),
                     React.createElement("div", { style:{fontFamily:"JetBrains Mono,monospace",fontSize:11,color:"rgba(255,184,0,.5)"} }, `hitwizardai.com/l/${link.slug}`)
                   ),
                   React.createElement("div", { style:{textAlign:"right",flexShrink:0} },
