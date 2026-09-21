@@ -48,33 +48,35 @@ export default async function handler(request, context) {
 
     const attr = { source, utm_source, utm_campaign, utm_medium, utm_content, referrer: referrerHost };
 
-    // Fire-and-forget: page_view event + increment clicks counter
-    Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/smart_links?id=eq.${link.id}`, {
-        method: "PATCH",
-        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ clicks: (link.clicks || 0) + 1 })
-      }),
-      fetch(`${SUPABASE_URL}/rest/v1/link_clicks`, {
-        method: "POST",
-        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({
-          smart_link_id: link.id,
-          user_id:       link.user_id,
-          event_type:    "page_view",
-          platform:      null,
-          device:        device,
-          country:       country,
-          source:        source,
-          utm_source:    utm_source,
-          utm_campaign:  utm_campaign,
-          utm_medium:    utm_medium,
-          utm_content:   utm_content,
-          referrer:      referrerHost,
-          created_at:    new Date().toISOString()
+    // Awaited writes — fire-and-forget is killed by edge runtime before promises resolve
+    try {
+      await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/smart_links?id=eq.${link.id}`, {
+          method: "PATCH",
+          headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ clicks: (link.clicks || 0) + 1 })
+        }),
+        fetch(`${SUPABASE_URL}/rest/v1/link_clicks`, {
+          method: "POST",
+          headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+          body: JSON.stringify({
+            smart_link_id: link.id,
+            user_id:       link.user_id,
+            event_type:    "page_view",
+            platform:      null,
+            device:        device,
+            country:       country,
+            source:        source,
+            utm_source:    utm_source,
+            utm_campaign:  utm_campaign,
+            utm_medium:    utm_medium,
+            utm_content:   utm_content,
+            referrer:      referrerHost,
+            created_at:    new Date().toISOString()
+          })
         })
-      })
-    ]).catch(() => {});
+      ]);
+    } catch(e) { console.warn("page_view write:", e.message); }
 
     const isCollection = link.link_type === "collection";
     const html = isCollection ? collectionPage(link, slug, attr) : singlePage(link, slug, attr);
