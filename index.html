@@ -5610,10 +5610,10 @@ function SmartLinks({ showToast }) {
     const client = sb();
     const { data } = await client
       .from("link_clicks")
-      .select("platform, country, device, created_at")
+      .select("event_type, platform, country, device, source, utm_source, utm_campaign, created_at")
       .eq("smart_link_id", link.id)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(500);
     return data || [];
   }
 
@@ -5963,11 +5963,24 @@ function SmartLinks({ showToast }) {
 
   // ── DETAIL VIEW ──
   if (view === "detail" && selected) {
+    // Separate page views from platform clicks
+    const pageViews = analytics.filter(c => c.event_type === "page_view" || c.event_type == null && !c.platform || c.platform === null);
+    const clickEvents = analytics.filter(c => c.event_type === "click" || (c.event_type == null && c.platform && c.platform !== "direct"));
+    // Legacy rows (no event_type) with a platform are clicks; without are views
+    const allClicks = analytics.filter(c => c.platform && c.platform !== "direct" && c.platform !== null);
     const platformClicks = {};
-    analytics.forEach(c => { platformClicks[c.platform] = (platformClicks[c.platform]||0)+1; });
+    allClicks.forEach(c => { platformClicks[c.platform] = (platformClicks[c.platform]||0)+1; });
     const countries = {};
     analytics.forEach(c => { if(c.country) countries[c.country] = (countries[c.country]||0)+1; });
     const topCountries = Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    // Source breakdown (from page_views — the attributed entry point)
+    const sources = {};
+    analytics.filter(c => c.source).forEach(c => { sources[c.source] = (sources[c.source]||0)+1; });
+    const topSources = Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    // Conversion rate: page_views that led to a click (approximated by ratio)
+    const totalViews = analytics.filter(c => c.event_type === "page_view").length;
+    const totalClicks = allClicks.length;
+    const convRate = totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : null;
 
     return React.createElement("div", { style:{maxWidth:720,margin:"0 auto"} },
       React.createElement("div", { style:{display:"flex",alignItems:"center",gap:12,marginBottom:32} },
@@ -6008,9 +6021,11 @@ function SmartLinks({ showToast }) {
       // Analytics
       React.createElement("div", { style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20} },
         ...[
-          ["Total Clicks", selected.clicks || 0, "👆"],
-          ["This Month", analytics.length, "📅"],
-          ["Top Platform", Object.entries(platformClicks).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—", "🏆"]
+          ["Total Clicks", totalClicks, "👆"],
+          ["Page Views", totalViews || analytics.length, "👁"],
+          ["Top Platform", Object.entries(platformClicks).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—", "🏆"],
+          ["Conv. Rate", convRate !== null ? convRate + "%" : "—", "🎯"],
+          ["Top Source", topSources[0]?.[0] || "direct", "📡"]
         ].map(([label, val, icon]) =>
           React.createElement("div", { key:label, className:"card", style:{textAlign:"center"} },
             React.createElement("div", { style:{fontSize:28,marginBottom:4} }, icon),
@@ -6018,6 +6033,27 @@ function SmartLinks({ showToast }) {
             React.createElement("div", { style:{fontSize:11,color:"var(--muted)",letterSpacing:1} }, label)
           )
         )
+      ),
+
+      // Source breakdown (new)
+      topSources.length > 0 && React.createElement("div", { className:"card", style:{marginBottom:20} },
+        React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "📡 TRAFFIC SOURCES"),
+        topSources.map(([src, cnt]) => {
+          const total = Object.values(sources).reduce((a,b)=>a+b,0)||1;
+          const pct = Math.round((cnt/total)*100);
+          const label = src === "facebook.com" || src === "l.facebook.com" ? "Meta (Facebook)" :
+                        src === "instagram.com" || src === "l.instagram.com" ? "Instagram" :
+                        src === "direct" ? "Direct / Unknown" : src;
+          return React.createElement("div", { key:src, style:{marginBottom:10} },
+            React.createElement("div", { style:{display:"flex",justifyContent:"space-between",marginBottom:4} },
+              React.createElement("span", { style:{fontSize:13,color:"var(--txt)",fontWeight:600} }, label),
+              React.createElement("span", { style:{fontSize:13,color:"var(--muted)"} }, `${cnt} (${pct}%)`)
+            ),
+            React.createElement("div", { style:{height:6,background:"rgba(255,255,255,.06)",borderRadius:3} },
+              React.createElement("div", { style:{height:6,width:pct+"%",background:"var(--gold)",borderRadius:3,transition:"width .3s"} })
+            )
+          );
+        })
       ),
 
       // Platform breakdown
