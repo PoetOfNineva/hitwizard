@@ -5963,24 +5963,38 @@ function SmartLinks({ showToast }) {
 
   // ── DETAIL VIEW ──
   if (view === "detail" && selected) {
-    // Separate page views from platform clicks
-    const pageViews = analytics.filter(c => c.event_type === "page_view" || c.event_type == null && !c.platform || c.platform === null);
-    const clickEvents = analytics.filter(c => c.event_type === "click" || (c.event_type == null && c.platform && c.platform !== "direct"));
-    // Legacy rows (no event_type) with a platform are clicks; without are views
+    // ── Analytics separation ──
+    // Post-upgrade rows have explicit event_type; legacy rows have no event_type
+    // RULE: never mix legacy rows into funnel calculations (no session_id to pair them)
+
+    // Outbound clicks = explicit "click" events only (post-upgrade)
+    const newClicks = analytics.filter(c => c.event_type === "click");
+    // Page views = explicit "page_view" events only (post-upgrade)
+    const newPageViews = analytics.filter(c => c.event_type === "page_view");
+    // All platform activity for historical platform breakdown (includes legacy)
     const allClicks = analytics.filter(c => c.platform && c.platform !== "direct" && c.platform !== null);
     const platformClicks = {};
     allClicks.forEach(c => { platformClicks[c.platform] = (platformClicks[c.platform]||0)+1; });
+
+    // Countries from all events
     const countries = {};
     analytics.forEach(c => { if(c.country) countries[c.country] = (countries[c.country]||0)+1; });
     const topCountries = Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    // Source breakdown (from page_views — the attributed entry point)
+
+    // Traffic Sources = page_view events by source only (1 event = 1 visit, not double-counted)
     const sources = {};
-    analytics.filter(c => c.source).forEach(c => { sources[c.source] = (sources[c.source]||0)+1; });
+    newPageViews.filter(c => c.source).forEach(c => {
+      sources[c.source] = (sources[c.source]||0)+1;
+    });
     const topSources = Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    // Conversion rate: page_views that led to a click (approximated by ratio)
-    const totalViews = analytics.filter(c => c.event_type === "page_view").length;
-    const totalClicks = allClicks.length;
-    const convRate = totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : null;
+
+    // Conversion rate: post-upgrade only — new outbound clicks ÷ new page views
+    // Only shown when both exist to avoid misleading math
+    const totalViews = newPageViews.length;
+    const totalClicks = newClicks.length;
+    const convRate = totalViews > 0 && totalClicks > 0
+      ? Math.round((totalClicks / totalViews) * 100)
+      : null;
 
     return React.createElement("div", { style:{maxWidth:720,margin:"0 auto"} },
       React.createElement("div", { style:{display:"flex",alignItems:"center",gap:12,marginBottom:32} },
@@ -6021,11 +6035,11 @@ function SmartLinks({ showToast }) {
       // Analytics
       React.createElement("div", { style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20} },
         ...[
-          ["Total Clicks", totalClicks, "👆"],
-          ["Page Views", totalViews || analytics.length, "👁"],
+          ["Outbound Clicks", allClicks.length, "👆"],
+          ["Page Views", totalViews, "👁"],
           ["Top Platform", Object.entries(platformClicks).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—", "🏆"],
           ["Conv. Rate", convRate !== null ? convRate + "%" : "—", "🎯"],
-          ["Top Source", topSources[0]?.[0] || "direct", "📡"]
+          ["Top Source", topSources[0]?.[0] || "—", "📡"]
         ].map(([label, val, icon]) =>
           React.createElement("div", { key:label, className:"card", style:{textAlign:"center"} },
             React.createElement("div", { style:{fontSize:28,marginBottom:4} }, icon),
@@ -6037,7 +6051,7 @@ function SmartLinks({ showToast }) {
 
       // Source breakdown (new)
       topSources.length > 0 && React.createElement("div", { className:"card", style:{marginBottom:20} },
-        React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "📡 TRAFFIC SOURCES"),
+        React.createElement("div", { style:{fontSize:11,fontFamily:"JetBrains Mono,monospace",letterSpacing:2,color:"var(--gold)",marginBottom:16} }, "📡 PAGE VIEWS BY SOURCE"),
         topSources.map(([src, cnt]) => {
           const total = Object.values(sources).reduce((a,b)=>a+b,0)||1;
           const pct = Math.round((cnt/total)*100);
