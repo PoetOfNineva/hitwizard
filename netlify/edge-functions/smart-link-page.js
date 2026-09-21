@@ -24,15 +24,60 @@ export default async function handler(request, context) {
     const ua = request.headers.get("user-agent") || "";
     const device = /mobile|android|iphone|ipad/i.test(ua) ? "mobile" : "desktop";
 
-    // Fire-and-forget click tracking
-    fetch(`${SUPABASE_URL}/rest/v1/smart_links?id=eq.${link.id}`, {
-      method: "PATCH",
-      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ clicks: (link.clicks || 0) + 1 })
-    }).catch(() => {});
+    // ── Attribution extraction ──
+    const utm_source   = url.searchParams.get("utm_source")   || null;
+    const utm_campaign = url.searchParams.get("utm_campaign") || null;
+    const utm_medium   = url.searchParams.get("utm_medium")   || null;
+    const utm_content  = url.searchParams.get("utm_content")  || null;
+    const ref          = url.searchParams.get("ref")          || null;
+    const referrerHdr  = request.headers.get("referer")       || null;
+    const country      = context.geo && context.geo.country ? context.geo.country.code : null;
+
+    // source: utm_source > ref param > referrer hostname > "direct"
+    let source = utm_source || ref || null;
+    if (!source && referrerHdr) {
+      try { source = new URL(referrerHdr).hostname.replace("www.", ""); } catch(e) {}
+    }
+    if (!source) source = "direct";
+
+    // Referrer stored as hostname only (privacy-respecting, no full path)
+    let referrerHost = null;
+    if (referrerHdr) {
+      try { referrerHost = new URL(referrerHdr).hostname.replace("www.", ""); } catch(e) {}
+    }
+
+    const attr = { source, utm_source, utm_campaign, utm_medium, utm_content, referrer: referrerHost };
+
+    // Fire-and-forget: page_view event + increment clicks counter
+    Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/smart_links?id=eq.${link.id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ clicks: (link.clicks || 0) + 1 })
+      }),
+      fetch(`${SUPABASE_URL}/rest/v1/link_clicks`, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({
+          smart_link_id: link.id,
+          user_id:       link.user_id,
+          event_type:    "page_view",
+          platform:      null,
+          device:        device,
+          country:       country,
+          source:        source,
+          utm_source:    utm_source,
+          utm_campaign:  utm_campaign,
+          utm_medium:    utm_medium,
+          utm_content:   utm_content,
+          referrer:      referrerHost,
+          created_at:    new Date().toISOString()
+        })
+      })
+    ]).catch(() => {});
 
     const isCollection = link.link_type === "collection";
-    const html = isCollection ? collectionPage(link, slug) : singlePage(link, slug);
+    const html = isCollection ? collectionPage(link, slug, attr) : singlePage(link, slug, attr);
 
     return new Response(html, {
       status: 200,
@@ -45,7 +90,7 @@ export default async function handler(request, context) {
 }
 
 // ── SINGLE SONG PAGE (existing behaviour) ──
-function singlePage(link, slug) {
+function singlePage(link, slug, attr) {
   const platforms = link.platforms || {};
   const bg = link.bg_color || "#0a0a0f";
   const accent = link.accent_color || "#FFB800";
@@ -92,12 +137,12 @@ ${baseStyles(bg, accent)}
   </a>` : ""}
   <div class="powered">Powered by <a href="https://hitwizardai.com" target="_blank">HitWizard</a> · Music Marketing from the Future</div>
 </div>
-${trackScript(slug)}
+${trackScript(slug, attr)}
 </body></html>`;
 }
 
 // ── MULTI-SONG COLLECTION PAGE (new) ──
-function collectionPage(link, slug) {
+function collectionPage(link, slug, attr) {
   const bg = link.bg_color || "#0a0a0f";
   const accent = link.accent_color || "#FFB800";
   const songs = Array.isArray(link.songs) ? link.songs : [];
@@ -203,7 +248,7 @@ ${baseStyles(bg, accent)}
     Powered by <a href="https://hitwizardai.com" target="_blank">HitWizard</a> · Music Marketing from the Future
   </div>
 </div>
-${trackScript(slug)}
+${trackScript(slug, attr)}
 </body></html>`;
 }
 
@@ -230,13 +275,23 @@ function artworkHtml(url, title) {
   return `<div class="artwork-placeholder">🎵</div>`;
 }
 
-function trackScript(slug) {
+function trackScript(slug, attr) {
+  const a = attr || {};
+  const attrJson = JSON.stringify({
+    source:       a.source       || "direct",
+    utm_source:   a.utm_source   || null,
+    utm_campaign: a.utm_campaign || null,
+    utm_medium:   a.utm_medium   || null,
+    utm_content:  a.utm_content  || null,
+    referrer:     a.referrer     || null
+  });
   return `<script>
+var _hw_attr=${attrJson};
 function track(platform){
   fetch('/api/track-click',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({slug:'${escJs(slug)}',platform,device:window.innerWidth<768?'mobile':'desktop'})
+    body:JSON.stringify(Object.assign({slug:'${escJs(slug)}',platform:platform,device:window.innerWidth<768?'mobile':'desktop'},_hw_attr))
   }).catch(()=>{});
 }
 </script>`;
