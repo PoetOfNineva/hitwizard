@@ -1208,133 +1208,272 @@ function VideoEngine(_ref0) {
     try {
       const totalSecs = getSeconds();
       const clipLen = parseInt(form.clipLength || 10);
-      const rawClips = Math.ceil(totalSecs / clipLen);
-      // Cap at 50 clips — 10 batches of 5 — handles songs up to ~8 minutes at 10s clips
-      const totalClips = Math.min(rawClips, 50);
-      const arollCount = Math.ceil(totalClips * 0.65);
-      const brollCount = totalClips - arollCount;
-      const charDNA = selectedCharData.map(c => "".concat(c.name, ": ").concat(c.dna, ", ").concat(c.tag)).join("\n\n");
+      const charDNA = selectedCharData.map(c => c.name + ": " + c.dna + ", " + c.tag).join("\n\n");
       const aiToolName = {grok:"Grok AI",veo3:"Veo 3",kling:"Kling AI",runway:"Runway ML",pika:"Pika Labs"}[form.aiTool||"grok"]||"Grok AI";
-      // ── CHUNKED VIDEO GENERATION — batches of 10 clips to prevent JSON breaks ──
-      const BATCH_SIZE = 5;
-      const totalBatches = Math.ceil(totalClips / BATCH_SIZE);
+      const lyricsText = (form.lyrics || "").trim();
+      const castNames = (form.selectedChars||[]).map(cid => {
+        const vaultChars = (function(){ try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} })();
+        const ch = vaultChars.find(c=>c.id===cid)||{name:cid};
+        const role = (form.charRoles||{})[cid]||"lead";
+        const roleMap = {lead:"A-Roll lead — never singing in B-roll",love:"B-Roll only, never singing",rival:"B-Roll only, never singing",support:"B-Roll atmosphere",both:"A-Roll and B-Roll"};
+        return ch.name + " [" + (roleMap[role]||"B-Roll") + "]";
+      }).join(", ");
 
-      // ── SCENE SHUFFLE — unique order per generation run, never the same twice ──
-      const ALL_SCENE_TYPES = [
-        "TOGETHER — RESTAURANT/DINING: They sit at a candlelit restaurant table. She is sideways on his lap, one arm around his neck, leaning to say something in his ear. He listens with a slow private smile, his hand on her waist. City glow soft focus behind them.",
-        "HER ALONE — HEAD THROWN BACK: She is mid-laugh, head tilted back, eyes closed, one hand at her collarbone. Completely unselfconscious. Caught in genuine joy, not performing for anyone. Warm golden light on her throat and cascading hair.",
-        "TOGETHER — SOFA INTIMACY: They are on a deep velvet sofa. Her legs draped across his lap. She traces something on his forearm with one finger as she talks. He watches her face, not her hand. Amber light. Champagne on the side table.",
-        "HIM ALONE — WATCHING HER: He leans against the bar, whiskey in hand, watching her across the room. She has not noticed him yet. His expression is unguarded — pure longing. Camera tight on his face and the gold chain at his chest.",
-        "TOGETHER — WALKING/MOVEMENT: They walk side by side down a rain-slicked street or marble corridor. She tilts her head to rest against his shoulder mid-stride. His arm tightens around her without breaking stride. Neither speaks. Both smiling faintly.",
-        "TOGETHER — THE ALMOST-KISS: Extreme close-up. His hand mid-motion brushing a strand of hair from her face. Foreheads nearly touching. Her eyes half-closed. The kiss does not happen. More charged than if it did. Candle flame bokeh extreme foreground.",
-        "HER ALONE — CORRIDOR GLANCE: She walks away down a long candlelit corridor or terrace. Her dress, her heels, her hair. Five steps away she glances back over one shoulder — just enough, just long enough. Then keeps walking.",
-        "TOGETHER — WHISPER TENSION: He stands behind her, lips near her ear, saying something only she can hear. Her chin tilts slightly. Eyes not fully open. His hand rests on her waist from behind. Camera low, tight, intimate. City light through glass behind them.",
-        "HER ALONE — WINDOW REFLECTION: She stands at a rain-streaked window but watches his REFLECTION in the glass — he is somewhere behind her in the room. She does not turn around. Her expression holds everything unsaid.",
-        "TOGETHER — MID-CONVERSATION ARREST: They sit across a rooftop table. She is mid-sentence, champagne glass gesturing. He has stopped hearing her words — just watching her face. She notices, trails off, meets his eyes. A beat of silence between them.",
-        "HIM ALONE — CAR AT NIGHT: He sits in the back of a dark luxury car, city lights streaking the window. Jaw set. Looking at nothing. Thinking about her. Tight shot on his profile, the gold chain pendant, the watch catching passing lights.",
-        "TOGETHER — FOREHEAD TO FOREHEAD: They stand chest to chest, her hands on his lapels, his hands cradling her face. Foreheads touching. Eyes closed. Neither moving. Not a kiss — more private than a kiss. The world is very still.",
-      ];
-      const shuffledScenes = ALL_SCENE_TYPES.slice();
-      for (let i = shuffledScenes.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledScenes[i], shuffledScenes[j]] = [shuffledScenes[j], shuffledScenes[i]];
+      // ══════════════════════════════════════════════════════
+      // PASS 1 — DIRECTOR: CreativeBrief + VisualLanguage + Editor + SceneSpecs
+      // One AI call does all conceptual work before a single prompt is written
+      // ══════════════════════════════════════════════════════
+      showToast("Director reading lyrics and building creative brief…", "🎬");
+
+      const directorSys = `You are HitWizard's Director Engine V2. You reason about WHAT to show before writing a single word of prompt copy.
+
+Your pipeline for every project:
+1. ANALYZE the lyrics emotionally — find the thesis, not the nouns
+2. DECLARE a VisualLanguage that makes all clips feel like one director made them
+3. ACT AS EDITOR — decide which time intervals actually need B-roll vs staying on performance
+4. For each B-roll interval: generate 5 genuinely different concepts at CONCEPT level (not just location), score each, select the winner
+5. BUILD a SceneSpec for each winning concept — model-independent, physics-checked
+
+ANTI-LITERALIZATION RULE (always active):
+These mappings are CLICHÉS. They require exceptional justification or are banned:
+time→clock, memory→photograph, promise→ring, sadness→crying, loneliness→window, future→sunset, silence→finger-over-lips, love→kissing, years→elderly, dream→sleeping
+
+SCORING DIMENSIONS per concept:
+- lyricIntelligence: 0-25 (does this concept emerge from the emotional thesis, not a literal noun?)
+- scrollStop: 0-20 (would a stranger stop scrolling for this image alone?)
+- originality: 0-20 (has this NOT been done in every music video?)
+- emotionalRelevance: 0-15 (does it amplify the specific lyric moment?)
+- physicalFeasibility: 0-10 (can a video AI render this without floating/morphing?)
+- continuityCompatibility: 0-5 (does it differ meaningfully from other scenes in the pack?)
+- modelFeasibility: 0-5 (is the blocking simple enough for Grok/Kling to execute?)
+THRESHOLD: 78/100. Regenerate concept if below.
+
+PHYSICAL REALISM — before approving any SceneSpec:
+- What surface supports each character? Name it.
+- Are both feet accounted for when visible?
+- Can the camera physically occupy its stated position?
+- Are characters intersecting architecture? (veto if yes)
+- MORPH RISK: overlapping bodies, hidden hands, entwined fingers, entering vehicles, character crossing — high risk = simplify
+- When in doubt: SIMPLIFY THE SCENE. Do not add negative prompts. Simplify.
+
+PERFORMANCE DIRECTION philosophy:
+- restrained, natural, micro-expressions, natural blinking
+- describe INTENT not choreography
+- BAD: "She turns 37 degrees, raises hand, takes two steps"
+- GOOD: "She notices him and tries not to reveal how much that affects her"
+
+CHARACTER DNA (inject AFTER scene conception, not before):
+${charDNA}
+
+CAST: ${castNames}
+Cast members are AVAILABLE, not a rotation. A scene may contain: one character, both, neither, an object, an environment, abstract imagery.
+NEVER alternate characters mechanically. NEVER distribute screen time equally.
+Casting follows concept. Concept NEVER follows casting.
+
+ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized reproduction = IP theft.
+
+Respond ONLY with valid JSON matching this exact schema:
+{
+  "creativeBrief": {
+    "emotionalThesis": "what this song is REALLY about (not its nouns)",
+    "primaryEmotion": "one word",
+    "secondaryEmotions": ["word","word"],
+    "dramaticQuestion": "the question the song is asking",
+    "emotionalProgression": "how the emotion arc moves across the duration",
+    "thingsNotToLiteralize": ["noun that should NOT become its obvious visual"],
+    "potentialMotifs": ["motif idea"]
+  },
+  "visualLanguage": {
+    "style": "e.g. intimate cinematic realism",
+    "cameraGrammar": "e.g. observational restrained",
+    "performancePhilosophy": "micro-expression over theatrical",
+    "lightingPhilosophy": "one sentence",
+    "motif": "the recurring visual idea that unifies the pack",
+    "prohibited": ["specific clichés banned FOR THIS SONG based on its emotional thesis"]
+  },
+  "editDecisions": [
+    {
+      "startTime": "0:00",
+      "endTime": "0:09",
+      "type": "USE_A_ROLL",
+      "reason": "why performance is stronger here"
+    },
+    {
+      "startTime": "0:09",
+      "endTime": "0:14",
+      "type": "B_ROLL",
+      "lyricContext": "exact lyric line this interval covers",
+      "emotionalFunction": "what emotional work this B-roll does"
+    }
+  ],
+  "sceneSpecs": [
+    {
+      "id": "scene_1",
+      "editIndex": 1,
+      "startTime": "0:09",
+      "endTime": "0:14",
+      "lyricContext": "exact lyric line",
+      "emotionalFunction": "what this scene does emotionally",
+      "candidateConcepts": [
+        {"concept": "concept description at idea level not location","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}}
+      ],
+      "selectedConcept": "the winning concept (highest score ≥78)",
+      "selectionReason": "why this concept wins",
+      "cast": ["CHARACTER_NAME or NONE"],
+      "environment": "specific physical place",
+      "subjectBlocking": "where each character's body is, what surface supports them, feet accounted for",
+      "physicalSupports": "seat/floor/railing/etc that prevents floating",
+      "action": "the specific human action in this moment",
+      "performanceIntent": "what the character is feeling/trying-not-to-reveal (not choreography)",
+      "cameraPosition": "where camera physically is",
+      "cameraMovement": "static/slow push/etc",
+      "composition": "extreme close / medium / wide",
+      "lighting": "specific lighting condition",
+      "physicsAudit": {
+        "passed": true,
+        "morphRisk": "low/medium/high",
+        "groundingVerified": "what surface, confirmed",
+        "simplificationsApplied": "any simplifications made to reduce morph risk"
+      },
+      "forbiddenActions": ["no floating","no singing","no camera eye contact"]
+    }
+  ]
+}`;
+
+      const directorUsr = `SONG: "${form.songTitle || "Untitled"}"
+TOTAL DURATION: ${totalSecs} seconds
+AI TOOL: ${aiToolName}
+${lyricsText ? "LYRICS:\n" + lyricsText : "No lyrics provided — infer emotional arc from song title and build accordingly."}
+
+${priorHistoryBlock ? "PRIOR REEL HISTORY (never repeat these):\n" + priorHistoryBlock : ""}
+
+TASK:
+1. Analyze the lyrics and produce a CreativeBrief
+2. Declare a VisualLanguage for this project
+3. As Editor: decide which time intervals benefit from B-roll vs staying on A-roll performance. You do NOT need to fill every 10 seconds. Prefer 2-4 strong surgical B-roll moments over 6 mediocre ones.
+4. For each B-roll interval: generate 5 genuinely different concepts (different at CONCEPT level, not just location), score all 5, select the winner scoring ≥78
+5. Build a full SceneSpec for each selected concept with physics audit
+
+Remember: duration=${totalSecs}s. The user assumes a singing A-roll performance exists underneath. B-roll is punctuation, not mandatory coverage.`;
+
+      const directorRaw = await hwAI(directorSys, directorUsr);
+      const directorData = parseJ(directorRaw);
+      if (!directorData || !directorData.sceneSpecs || directorData.sceneSpecs.length === 0) {
+        throw new Error("Director returned no scene specs. Raw: " + (directorRaw||"").substring(0, 200));
       }
 
-      showToast("Generating " + totalClips + " clips in parallel — should take 30-60 seconds...", "\u26A1");
+      const { creativeBrief, visualLanguage, editDecisions, sceneSpecs } = directorData;
+      const approvedScenes = sceneSpecs.filter(s => s.physicsAudit && s.physicsAudit.passed !== false);
 
-      // ── PARALLEL GENERATION — all batches fire simultaneously ──
-      const batchPromises = Array.from({length: totalBatches}, function(_, batch) {
-        const bStart = batch * BATCH_SIZE + 1;
-        const bEnd = Math.min(bStart + BATCH_SIZE - 1, totalClips);
-        return hwAI(
-          "You are HitWizard's Cinematic Director — the AI that reads lyrics and translates them into images that make people stop scrolling.\n\nYou do NOT work from templates. You do NOT have a preset list of locations. You READ the lyric, FEEL what it needs, and BUILD the visual from scratch for that exact emotional moment.\n\n" + priorHistoryBlock + "\n\n═══════════════════════════════════════════════════════\nTHE ONLY STANDARD THAT MATTERS\n═══════════════════════════════════════════════════════\n\nIf you removed the audio and showed the frame to a stranger, they should still FEEL what the lyric means.\nThat is the only test. Everything else follows from it.\n\n═══════════════════════════════════════════════════════\nHOW GREAT DIRECTORS THINK\n═══════════════════════════════════════════════════════\n\nWhen a director reads \"Will you love me then\" they do not think: penthouse, candle, window.\nThey think: WHEN is \"then\"? What fear or hope lives in that word?\nThen they build the ONE image that answers that question without words.\n\nSTEP 1 — FEEL THE LINE. What emotion does this specific lyric carry?\nSTEP 2 — FIND THE HUMAN MOMENT that embodies that emotion.\nSTEP 3 — CHOOSE THE ENVIRONMENT that amplifies it. (Not the other way around.)\nSTEP 4 — FIND THE ONE MICRO-DETAIL that makes it feel stolen, not staged.\nSTEP 5 — WRITE IT AS A FILM STILL YOU CAN ACTUALLY SEE IN YOUR MIND.\n\n═══════════════════════════════════════════════════════\nVISUAL FREEDOM — NO LOCATION PRISON\n═══════════════════════════════════════════════════════\n\nThe right location is whatever the lyric needs. You are not limited to luxury interiors.\n\nBUILD LOCATIONS FROM EMOTION:\n- Woman on the trunk of a convertible on a desert highway at golden hour, one boot on the bumper, looking at nothing — longing\n- Couple on a fire escape at 3am, city below, her back against the railing, his hand on the wall beside her head — tension\n- Her alone in an open-roof sports car on a coastal road, one hand on wheel, hair alive in wind, eyes on the horizon — freedom\n- Them on a crowded rooftop party, bodies everywhere, but they have found each other and the crowd has dissolved into blur — connection\n- Him sitting on the hood of a car in an empty parking garage, city lights through concrete gaps — isolation\n- Her on a hotel balcony at dawn, robe and bare feet, coffee in both hands, watching the city wake — quiet resolve\n- Them in the back of a taxi at night, rain on windows, her head on his shoulder, neither speaking — comfort\n- Her in a dressing room mirror, half-costumed, looking at her own reflection with an expression that says something — becoming\n- A slow-motion walk through a crowd where everyone blurs and only they are sharp — singularity\n- Him at the end of a pier at dusk, back to camera, watching the water, gold chain glinting — weight\n\nAND ALSO: penthouse, casino, yacht, Monaco terrace — when the lyric calls for it, not as a default.\n\n═══════════════════════════════════════════════════════\nCHARACTER DNA — MEMORIZE, USE IN FULL\n═══════════════════════════════════════════════════════\n\nEMILY (THE BLONDE):\n- Long voluminous curly honey-blonde hair, cascading past shoulders, wild and free\n- Light-medium tan sun-kissed skin, glowing\n- Feminine curvy figure, full and naturally feminine, never athletic or stick-thin\n- Face: high cheekbones, full lips, bright eyes, effortlessly glamorous\n- Energy: confident, magnetic — the woman the camera cannot leave\n\nKIKO (THE MAN):\n- Light-skinned Black biracial man, mid-20s, caramel warm golden skin\n- Thick voluminous curly afro, 3B curl pattern — his most recognizable feature\n- Full goatee connecting to mustache, clean and well-groomed\n- Athletic muscular build, broad shoulders, defined chest\n- ALWAYS: gold chain pendant necklace, luxury watch on left wrist\n- NEVER: skinny build, painted nails, missing chain\n- Energy: wealthy, magnetic, quietly powerful\n\nWARDROBE ROTATION (never repeat within one pack):\nEMILY: Satin mini slip dress (champagne/navy/burgundy/ivory). Sequined corset mini (red/black/gold). Black lace gown thigh slit. Metallic silver bodycon. Red fringe mini. Structured blazer dress. White corset plus leather jacket. ALWAYS: strappy heels, gold jewelry.\nKIKO: Tailored suit slim cut open collar (navy/black/charcoal). Black turtleneck. White linen shirt open chest. Dark bomber. Burgundy ribbed T-shirt. Brown suede jacket. ALWAYS: gold chain, luxury watch, clean shoes.\n\n═══════════════════════════════════════════════════════\nHUMAN MOMENTS THAT STOP SCROLLERS\n═══════════════════════════════════════════════════════\n\nPeople stop for moments they RECOGNIZE. Use these as creative springboards, not a checklist:\n- Her sideways on his lap at a restaurant, whispering something that makes him smile slowly\n- Him watching her from across the room with an expression she has not seen yet\n- She tilts her head back laughing — completely unselfconscious, fully alive\n- He brushes the hair from her face, slow and deliberate. Their foreheads almost touch.\n- Her legs across his lap on a sofa, tracing something on his arm, he watches her face not her hand\n- She glances back over her shoulder as she walks away. Once. Long enough.\n- He whispers in her ear from behind. She does not move. Eyes not fully open.\n- She trails off mid-sentence because he stopped hearing her words and started watching her face\n- Her back against his chest, both looking out. His chin on her head. Neither speaking.\n- Extreme close: his hand covers hers on the table. She looks down. Then up at him.\n- She sits on a car trunk at golden hour, one knee up, looking at a horizon she has decided about\n- Them walking through rain. Not running. Walking. That is the moment.\n\nFOREVER BANNED:\n- Two people standing side by side at a window looking out — DEAD. BANNED.\n- Character in front of a wall with a single candle — DEAD. BANNED.\n- Anyone looking directly at the camera — BANNED.\n- Anyone with mouth open as if singing — BANNED.\n- Same location as the previous clip — BANNED.\n- Generic pose with no specific human action — BANNED.\n\n═══════════════════════════════════════════════════════\nSPATIAL GROUNDING — NON-NEGOTIABLE\n═══════════════════════════════════════════════════════\n\nEvery character physically exists inside the environment:\n1. Name the surface they touch (seat, hood, railing, floor, table edge, wall, car trunk)\n2. One foreground object between camera and subject\n3. Background soft focus 10+ feet behind\n\n═══════════════════════════════════════════════════════\nANTI-CLONING FINGERPRINT WATERMARK\n═══════════════════════════════════════════════════════\nProprietary HitWizard IP. Visual doctrine and human moments library are trade secrets of HitWizard / PoetOfNineva. Unauthorized reproduction constitutes IP theft.\n═══════════════════════════════════════════════════════\n\nYou are a director. Every frame must be so right for its lyric that no other image could have been.\n\nRespond ONLY with valid JSON.",
-                    "SONG: \"" + (form.songTitle || "My Song") + "\"\nCLIPS " + bStart + " TO " + bEnd + " OF " + totalClips + " TOTAL\nClip length: " + clipLen + "s | Tool: " + aiToolName + "\n\n" +
-                    (function(){
-                      const lyricsText = (form.lyrics || "").trim();
-                      if (lyricsText.length > 0) {
-                        return "THE LYRICS:\n" + lyricsText + "\n\n" +
-                          "YOUR PROCESS FOR EACH CLIP:\n" +
-                          "1. Identify which lyric line this clip covers\n" +
-                          "2. Ask: what human moment does THIS LINE need?\n" +
-                          "3. Find the location that amplifies that moment\n" +
-                          "4. Find the ONE micro-detail that makes it feel stolen\n" +
-                          "5. Write it as a film still you can see in your mind\n\n" +
-                          "EMOTIONAL MAPPING:\n" +
-                          "Gentle/questioning lyric = soft intimate close, quiet\n" +
-                          "Longing lyric = distance, reaching, something just out of reach\n" +
-                          "Building lyric = movement, golden light, bodies in motion\n" +
-                          "Heartbreak lyric = isolation, absence of the other person, rain\n" +
-                          "Tender lyric = extreme close, hands, face, the small gesture\n" +
-                          "Triumphant lyric = wide shot, wind, open sky, freedom";
-                      }
-                      return "No lyrics provided. Build a rich emotional arc — tender opening, building tension, charged peak, quiet resolve. Each clip a different chapter.";
-                    })() +
-                    "\n\nCHARACTER DNA (embed fully in every clip that includes them):\n" + charDNA +
-                    "\n\nCHARACTER ROLES:\n" + (function(){
-                      const vaultChars = (function(){ try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} })();
-                      return (form.selectedChars||[]).map(function(cid){
-                        const char = vaultChars.find(function(c){return c.id===cid;})||{name:cid};
-                        const role = (form.charRoles||{})[cid]||"lead";
-                        const roleMap = {
-                          lead:"A-Roll — performance clips. Caught mid-emotion. NOT mid-pose.",
-                          love:"B-Roll only. Never singing. Never camera-facing. Living a private moment.",
-                          rival:"B-Roll only. Never singing.",
-                          support:"B-Roll atmosphere. Never singing.",
-                          both:"A-Roll and B-Roll as the lyric dictates."
-                        };
-                        return char.name + ": " + (roleMap[role]||"B-Roll. Never singing. Never posing.");
-                      }).join("\n");
-                    })() +
-                    "\n\nVISUAL SPARK FOR THIS BATCH — starting point only, override if lyric demands something better:\n" + shuffledScenes[(bStart-1) % shuffledScenes.length] +
-                    "\n\nVARIETY MANDATE across these clips: vary location type (indoor/outdoor/moving), shot size (close/medium/wide), character combination (together/her alone/him alone), and energy level (quiet/charged/kinetic). If two clips feel similar — one is wrong.\n\n" +
-                    "FOREVER BANNED: couple at window side by side — BANNED. Character in front of wall with candle — BANNED. Camera eye contact — BANNED. Open mouth singing — BANNED. Same location twice — BANNED.\n\n" +
-                    "SPATIAL GROUNDING in every prompt: name the surface touched, name one foreground object between camera and subject, background soft 10ft+ behind.\n\n" +
-                    "grokPrompt: one clean flowing paragraph. No headers. No labels. A cinematographer describing a film still they can actually see. Character DNA + exact outfit + the specific human action of this moment (from the lyric) + location with physical detail + camera angle + lighting. End: photorealistic cinematic quality, hyperdetailed, 8K, music video B-roll still, 9:16 vertical format.\n\n" +
-                    "Return ONLY this JSON:\n{\"clips\":[{\"number\":" + bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"lyricLine\":\"exact lyric line this clip responds to\",\"emotionalEnergy\":\"one word\",\"sceneDescription\":\"the human moment in one sentence\",\"grokPrompt\":\"one flowing paragraph no headers no labels\"}]}"
-        ).then(function(batchRaw) {
-          try {
-            const batchData = parseJ(batchRaw);
-            return (batchData && batchData.clips) ? batchData.clips : [];
-          } catch(e) {
-            console.warn("Batch " + bStart + "-" + bEnd + " parse failed:", e.message);
-            return [];
-          }
-        }).catch(function(e) {
-          console.warn("Batch " + bStart + "-" + bEnd + " failed:", e.message);
-          return [];
-        });
+      showToast("Director approved " + approvedScenes.length + " B-roll scenes. Compiling Grok prompts…", "🎬");
+
+      // ══════════════════════════════════════════════════════
+      // PASS 2 — GROK PROMPT COMPILER: SceneSpec → concise Grok-specific prompt
+      // Separate from Director — never contaminate creative logic with provider syntax
+      // ══════════════════════════════════════════════════════
+      const compilerSys = `You are HitWizard's GrokPromptCompiler. You receive a SceneSpec (model-independent) and translate it into a concise Grok video prompt.
+
+GROK PROMPT PHILOSOPHY:
+- Grok responds to PERFORMANCE DIRECTION, not cinematic prose
+- Give Grok a scene it can execute, not a novella to admire
+- Structure: [WHO + WHERE] → [PHYSICAL GROUNDING] → [PERFORMANCE INTENT] → [MOTION] → [CAMERA] → [CRITICAL CONTINUITY] → [DO NOT]
+- Length: 80-150 words. Concise. Every word earns its place.
+- Avoid: "the micro-detail that makes this feel stolen", "the world dissolves into", "like something holy" — these mean nothing to a video model
+- Do NOT append "8K hyperdetailed cinematic masterpiece" automatically
+- DO specify: both feet on surface, physical support named, one primary action, natural blinking/breathing
+
+CHARACTER DNA to inject precisely where scene includes them:
+${charDNA}
+
+Respond ONLY with valid JSON:
+{"compiledClips":[{"sceneId":"scene_1","grokPrompt":"the prompt","warningFlags":["any concern about this prompt"]}]}`;
+
+      const compilerUsr = "Compile Grok prompts for these approved SceneSpecs:\n\n" +
+        JSON.stringify(approvedScenes, null, 2);
+
+      const compilerRaw = await hwAI(compilerSys, compilerUsr);
+      const compilerData = parseJ(compilerRaw);
+      const compiledMap = {};
+      if (compilerData && compilerData.compiledClips) {
+        compilerData.compiledClips.forEach(c => { compiledMap[c.sceneId] = c; });
+      }
+
+      // ══════════════════════════════════════════════════════
+      // ASSEMBLE FINAL OUTPUT
+      // ══════════════════════════════════════════════════════
+      const finalClips = approvedScenes.map((spec, idx) => {
+        const compiled = compiledMap[spec.id] || {};
+        return {
+          number: idx + 1,
+          sceneId: spec.id,
+          timestamp: spec.startTime,
+          endTime: spec.endTime,
+          type: "B_ROLL",
+          lyricLine: spec.lyricContext,
+          emotionalEnergy: spec.emotionalFunction,
+          sceneDescription: spec.selectedConcept,
+          cast: spec.cast,
+          physicsAudit: spec.physicsAudit,
+          selectedScore: spec.candidateConcepts ? Math.max(...spec.candidateConcepts.map(c=>c.score&&c.score.total||0)) : null,
+          grokPrompt: compiled.grokPrompt || "[Compiler failed for " + spec.id + "]",
+          warningFlags: compiled.warningFlags || []
+        };
       });
 
-      const batchResults = await Promise.all(batchPromises);
-      const allClips = batchResults.flat().sort(function(a, b) { return (a.number||0) - (b.number||0); });
+      // A-roll intervals from edit decisions
+      const arollIntervals = (editDecisions||[]).filter(d=>d.type==="USE_A_ROLL").map(d=>({
+        number: null,
+        timestamp: d.startTime,
+        endTime: d.endTime,
+        type: "USE_A_ROLL",
+        lyricLine: "",
+        emotionalEnergy: "performance",
+        sceneDescription: d.reason || "Stay on A-roll performance",
+        grokPrompt: ""
+      }));
 
       const raw = JSON.stringify({
-        songTitle: form.songTitle || "My Song",
-        totalClips,
-        arollCount,
-        brollCount,
-        totalSeconds: totalSecs,
-        clipLength: clipLen,
-        grokInstructions: "Open " + aiToolName + " and start ONE new chat. Paste ALL clips in order in the SAME chat — never start a new chat mid-video. Use the Extend button after each clip. Character consistency requires same session.",
-        capCutGuide: "Import clips in numbered order. A-roll on main track. B-roll as overlays. Match cuts to lyric beats. Color grade warm golden throughout.",
-        clips: allClips
+        songTitle: form.songTitle || "Untitled",
+        directorEngineVersion: "V2",
+        creativeBrief,
+        visualLanguage,
+        totalDuration: totalSecs,
+        brollCount: finalClips.length,
+        arollIntervals: arollIntervals.length,
+        editDecisions: editDecisions || [],
+        grokInstructions: "Open Grok and start ONE new chat. Paste B-roll clips in the order the edit plan shows them. Use the Extend button. Character consistency requires same session. A-roll intervals = keep your performance clip.",
+        clips: finalClips,
+        // Debug inspector data — Director Debug Mode (section 19 of spec)
+        _debug: {
+          creativeBrief,
+          visualLanguage,
+          editDecisions,
+          allSceneSpecs: sceneSpecs,
+          approvedSceneCount: approvedScenes.length,
+          rejectedSceneCount: sceneSpecs.length - approvedScenes.length,
+          compiledClips: compilerData && compilerData.compiledClips
+        }
       });
+
       const p = JSON.parse(raw);
       setResults(p);
       addHistory({
         type: "video",
         weapon: "Video Engine",
         title: p.songTitle || "Video Script",
-        preview: (p.clips ? p.clips.length : p.totalClips) + " clips — " + (p.songTitle || "Video Script"),
+        preview: p.brollCount + " B-roll clips, " + p.arollIntervals + " A-roll intervals — " + (p.songTitle || "Video Script"),
         result: p
       });
-      // ── REEL HISTORY VAULT — persist this scene pack so AI never repeats ──
-      if (allClips.length > 0) {
-        saveReelHistory(allClips, form.videoType).catch(e => console.warn("[ReelVault]", e.message));
+      if (finalClips.length > 0) {
+        saveReelHistory(finalClips, form.videoType).catch(e => console.warn("[ReelVault]", e.message));
       }
-      showToast("Shooting script ready! ".concat(p.clips ? p.clips.length : p.totalClips, " clips generated."), "🎬");
+      showToast("Director V2 complete — " + finalClips.length + " surgical B-roll clips ready.", "🎬");
     } catch (e) {
-      setErr("Script generation failed: ".concat(e.message));
+      setErr("Director Engine V2 failed: " + e.message);
     }
     setLoading(false);
   };
@@ -1597,19 +1736,19 @@ function VideoEngine(_ref0) {
       marginBottom: 20
     }
   }, [{
-    v: results.totalClips,
-    l: "Total Clips",
+    v: results.brollCount || (results.clips ? results.clips.length : 0),
+    l: "B-Roll Clips",
     ic: "🎬"
   }, {
-    v: results.arollCount,
-    l: "Performance",
+    v: results.arollIntervals || "—",
+    l: "A-Roll Holds",
     ic: "🎤"
   }, {
-    v: results.brollCount,
-    l: "Story Scenes",
+    v: results.directorEngineVersion || "V1",
+    l: "Director",
     ic: "🎭"
   }, {
-    v: "".concat(results.totalSeconds, "s"),
+    v: "".concat(results.totalDuration || results.totalSeconds || 0, "s"),
     l: "Video Length",
     ic: "⏱"
   }].map((s, i) => /*#__PURE__*/React.createElement("div", {
@@ -1646,7 +1785,63 @@ function VideoEngine(_ref0) {
     style: {
       paddingRight: 0
     }
-  }, results.grokInstructions)), /*#__PURE__*/React.createElement("div", {
+  }, results.grokInstructions)), results.creativeBrief && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(123,47,190,.3)",borderRadius:12,overflow:"hidden"}},
+    /*#__PURE__*/React.createElement("div", {style:{background:"rgba(123,47,190,.15)",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"},
+      onClick:function(){var el=document.getElementById("hw-brief-body"); el.style.display=el.style.display==="none"?"block":"none";}},
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"#b57bee",letterSpacing:.5}}, "DIRECTOR CREATIVE BRIEF"),
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:11,color:"rgba(255,255,255,.4)"}}, "click to expand")
+    ),
+    /*#__PURE__*/React.createElement("div", {id:"hw-brief-body",style:{display:"none",padding:"14px 16px",fontSize:12,lineHeight:1.9,color:"rgba(255,255,255,.8)"}},
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:8}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#b57bee"}}, "Emotional Thesis: "), results.creativeBrief.emotionalThesis),
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:8}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#b57bee"}}, "Dramatic Question: "), results.creativeBrief.dramaticQuestion),
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:8}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#b57bee"}}, "Arc: "), results.creativeBrief.emotionalProgression),
+      results.creativeBrief.thingsNotToLiteralize && /*#__PURE__*/React.createElement("div", {style:{marginBottom:8}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#ff6b6b"}}, "Anti-Literalize: "), results.creativeBrief.thingsNotToLiteralize.join(", "))
+    )
+  ), results.visualLanguage && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(0,229,153,.2)",borderRadius:12,overflow:"hidden"}},
+    /*#__PURE__*/React.createElement("div", {style:{background:"rgba(0,229,153,.08)",padding:"10px 16px",cursor:"pointer"},
+      onClick:function(){var el=document.getElementById("hw-vl-body"); el.style.display=el.style.display==="none"?"block":"none";}},
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"#00E599",letterSpacing:.5}}, "VISUAL LANGUAGE — " + (results.visualLanguage.style||"") + " | Motif: " + (results.visualLanguage.motif||""))
+    ),
+    /*#__PURE__*/React.createElement("div", {id:"hw-vl-body",style:{display:"none",padding:"12px 16px",fontSize:12,lineHeight:1.9,color:"rgba(255,255,255,.8)"}},
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:6}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#00E599"}}, "Camera: "), results.visualLanguage.cameraGrammar),
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:6}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#00E599"}}, "Lighting: "), results.visualLanguage.lightingPhilosophy),
+      results.visualLanguage.prohibited && /*#__PURE__*/React.createElement("div", {style:{marginBottom:6}}, /*#__PURE__*/React.createElement("strong", {style:{color:"#ff6b6b"}}, "Banned for this song: "), results.visualLanguage.prohibited.join(", "))
+    )
+  ), results.editDecisions && results.editDecisions.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(255,184,0,.2)",borderRadius:12,overflow:"hidden"}},
+    /*#__PURE__*/React.createElement("div", {style:{background:"rgba(255,184,0,.08)",padding:"10px 16px",cursor:"pointer"},
+      onClick:function(){var el=document.getElementById("hw-edit-body"); el.style.display=el.style.display==="none"?"block":"none";}},
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"var(--gold)",letterSpacing:.5}}, "EDITORIAL PLAN — " + results.editDecisions.length + " intervals")
+    ),
+    /*#__PURE__*/React.createElement("div", {id:"hw-edit-body",style:{display:"none",padding:"12px 16px"}},
+      results.editDecisions.map(function(d,i){
+        return /*#__PURE__*/React.createElement("div", {key:i,style:{padding:"7px 12px",marginBottom:5,borderRadius:7,background:d.type==="USE_A_ROLL"?"rgba(255,184,0,.06)":"rgba(123,47,190,.1)",border:"1px solid "+(d.type==="USE_A_ROLL"?"rgba(255,184,0,.2)":"rgba(123,47,190,.3)")}},
+          /*#__PURE__*/React.createElement("span", {style:{fontFamily:"JetBrains Mono,monospace",fontSize:11,color:d.type==="USE_A_ROLL"?"var(--gold)":"#b57bee",fontWeight:700,marginRight:10}}, d.startTime+" → "+d.endTime),
+          /*#__PURE__*/React.createElement("span", {style:{fontSize:11,color:"rgba(255,255,255,.7)"}}, d.type==="USE_A_ROLL"?"A-ROLL: "+(d.reason||"Stay on performance"):"B-ROLL: "+(d.lyricContext||d.emotionalFunction||""))
+        );
+      })
+    )
+  ), results._debug && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(255,100,100,.2)",borderRadius:12,overflow:"hidden"}},
+    /*#__PURE__*/React.createElement("div", {style:{background:"rgba(255,100,100,.06)",padding:"10px 16px",cursor:"pointer"},
+      onClick:function(){var el=document.getElementById("hw-debug-body"); el.style.display=el.style.display==="none"?"block":"none";}},
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR — Approved: "+(results._debug.approvedSceneCount||0)+" / Rejected: "+(results._debug.rejectedSceneCount||0)+"  (click to expand)")
+    ),
+    /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:380,overflowY:"auto"}},
+      (results._debug.allSceneSpecs||[]).map(function(spec,i){
+        const bestScore = spec.candidateConcepts ? Math.max.apply(null,spec.candidateConcepts.map(function(c){return (c.score&&c.score.total)||0;})) : 0;
+        const passed = spec.physicsAudit && spec.physicsAudit.passed !== false;
+        return /*#__PURE__*/React.createElement("div", {key:i,style:{marginBottom:10,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",background:"rgba(0,0,0,.3)"}},
+          /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8,marginBottom:5}},
+            /*#__PURE__*/React.createElement("span", {style:{fontSize:11,fontWeight:700,fontFamily:"JetBrains Mono,monospace",color:"rgba(255,120,120,.9)"}}, spec.id),
+            /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:passed?"rgba(0,229,153,.15)":"rgba(255,100,100,.15)",color:passed?"#00E599":"#ff6b6b",fontWeight:700}}, passed?"PASS":"FAIL"),
+            /*#__PURE__*/React.createElement("span", {style:{fontSize:10,color:"rgba(255,184,0,.7)"}}, "score: "+bestScore+"/100"),
+            spec.physicsAudit && spec.physicsAudit.morphRisk && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:spec.physicsAudit.morphRisk==="low"?"rgba(0,229,153,.1)":spec.physicsAudit.morphRisk==="medium"?"rgba(255,184,0,.1)":"rgba(255,100,100,.15)",color:spec.physicsAudit.morphRisk==="low"?"#00E599":spec.physicsAudit.morphRisk==="medium"?"var(--gold)":"#ff6b6b",fontWeight:700}}, "morph: "+spec.physicsAudit.morphRisk)
+          ),
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Lyric: "), spec.lyricContext),
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)"}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Won: "), spec.selectedConcept)
+        );
+      })
+    )
+  ), /*#__PURE__*/React.createElement("div", {
     className: "sh"
   }, /*#__PURE__*/React.createElement("div", {
     className: "st"
@@ -1694,7 +1889,7 @@ function VideoEngine(_ref0) {
     style: {
       color: "var(--txt)"
     }
-  }, "Lyric moment:"), " ", clip.lyricMoment), /*#__PURE__*/React.createElement("div", {
+  }, "Lyric moment:"), " ", clip.lyricLine), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--muted)",
