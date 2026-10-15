@@ -1249,7 +1249,7 @@ function VideoEngine(_ref0) {
                 "Distribute clips proportionally across sections. More clips where the emotional weight is highest.";
             }
             return "No lyrics provided — generate cinematic performance clips with luxury visual doctrine.";
-          })() + "\n\nSPATIAL DOCTRINE: 3-4 physical objects with exact distances. TRACKING CAMERA always moving. 5-7 micro-movements per clip. Eye level always. 18-inch formula for close-ups. Warm golden lighting.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"section\":\"section name\",\"lyricMoment\":\"exact lyric\",\"emotionalEnergy\":\"energy tone\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
+          })() + "\n\nSPATIAL DOCTRINE: 3-4 physical objects with exact distances. TRACKING CAMERA always moving. 5-7 micro-movements per clip. Eye level always. 18-inch formula for close-ups. Warm golden lighting.\n\nFor the grokPrompt field: write a SINGLE STANDALONE PARAGRAPH that can be pasted directly into Grok Aurora with zero editing. It must contain: full character physical description (skin tone, hair, eyes, build), exact location and set dressing (3-4 objects with distances), camera angle and movement, 2-3 micro-movements happening in the shot, lighting setup, and end with the format tag. No headers. No labels like CAMERA: or LIGHTING:. No line breaks. One flowing cinematic paragraph. This is what the user pastes into Grok — make it complete and self-contained.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"section\":\"section name\",\"lyricMoment\":\"exact lyric\",\"emotionalEnergy\":\"energy tone\",\"sceneDescription\":\"one sentence scene summary\",\"grokPrompt\":\"full standalone paste-ready paragraph for Grok Aurora with character DNA location camera micro-movements lighting and format tag\"}]}"
         ).then(function(batchRaw) {
           try {
             const batchData = parseJ(batchRaw);
@@ -1643,13 +1643,7 @@ function VideoEngine(_ref0) {
     }
   }, clip.timestamp), /*#__PURE__*/React.createElement("span", {
     className: "badge ".concat(clip.type === "A-ROLL" ? "b-gold" : "b-pur")
-  }, clip.type)), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost btn-sm",
-    onClick: () => {
-      safeCopy(clip.grokPrompt);
-      showToast("Clip ".concat(clip.number, " prompt copied!"), "✓");
-    }
-  }, "Copy Prompt")), /*#__PURE__*/React.createElement("div", {
+  }, clip.type))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--muted)",
@@ -1670,17 +1664,22 @@ function VideoEngine(_ref0) {
       color: "var(--txt)"
     }
   }, "Scene:"), " ", clip.sceneDescription), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "rgba(0,0,0,.4)",
-      borderRadius: 7,
-      padding: 12,
-      fontFamily: "JetBrains Mono,monospace",
-      fontSize: 11,
-      color: "var(--txt)",
-      lineHeight: 1.8,
-      whiteSpace: "pre-wrap"
-    }
-  }, clip.grokPrompt))), results.capCutGuide && /*#__PURE__*/React.createElement("div", {
+    style:{borderRadius:8,border:"1px solid rgba(0,229,153,.2)",overflow:"hidden",marginTop:4}
+  },
+    /*#__PURE__*/React.createElement("div", {
+      style:{background:"rgba(0,229,153,.08)",padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid rgba(0,229,153,.15)"}
+    },
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:10,fontWeight:700,color:"#00E599",letterSpacing:1,fontFamily:"JetBrains Mono,monospace"}}, "⚡ PASTE INTO GROK AURORA"),
+      /*#__PURE__*/React.createElement("button", {
+        className:"btn btn-ghost btn-sm",
+        style:{fontSize:11,padding:"3px 10px",borderColor:"rgba(0,229,153,.4)",color:"#00E599"},
+        onClick:function(e){e.stopPropagation();safeCopy(clip.grokPrompt);showToast("Clip "+clip.number+" copied — paste into Grok!","✓");}
+      }, "Copy →")
+    ),
+    /*#__PURE__*/React.createElement("div", {
+      style:{padding:12,fontFamily:"JetBrains Mono,monospace",fontSize:11,color:"rgba(255,255,255,.85)",lineHeight:1.9,whiteSpace:"pre-wrap",background:"rgba(0,0,0,.35)"}
+    }, clip.grokPrompt)
+  ))), results.capCutGuide && /*#__PURE__*/React.createElement("div", {
     className: "rbox",
     style: {
       marginTop: 4
