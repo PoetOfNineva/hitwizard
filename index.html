@@ -584,7 +584,7 @@ const BUILTIN_CHARACTERS = [
     id:"blonde",
     name:"THE BLONDE",
     emoji:"👱\u200d♀️",
-    color:"#FF4466",
+    color:"#F59E0B",
     role:"Rival Woman",
     dna:"Light-skinned woman mid 20\'s with warm beige peachy skin tone, long wavy honey-blonde hair with natural sun-kissed highlights falling past shoulders, bright hazel green eyes, soft feminine features, warm approachable face, slim to average build, feminine elegant posture, REALISTIC HUMAN PROPORTIONS NON-NEGOTIABLE",
     tag:"use the same rival woman as before for consistency, warm golden lighting, 9:16 vertical format, photorealistic cinematic quality"
@@ -1454,14 +1454,14 @@ function VideoEngine(_ref0) {
     style: {
       padding: "14px 16px",
       borderRadius: 10,
-      border: "2px solid ".concat(form.selectedChars.includes(c.id) ? c.color : "rgba(255,255,255,.08)"),
-      background: form.selectedChars.includes(c.id) ? c.color + "20" : "rgba(8,8,14,.5)",
+      border: "2px solid ".concat(form.selectedChars.includes(c.id) ? "#00E599" : "rgba(255,255,255,.08)"),
+      background: form.selectedChars.includes(c.id) ? "rgba(0,229,153,.1)" : "rgba(8,8,14,.5)",
       cursor: "pointer",
       transition: "all .2s",
       display: "flex",
       alignItems: "center",
       gap: 10,
-      boxShadow: form.selectedChars.includes(c.id) ? "0 0 16px "+c.color+"40" : "none"
+      boxShadow: form.selectedChars.includes(c.id) ? "0 0 18px rgba(0,229,153,.25)" : "none"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: { fontSize: 26 }
@@ -1474,7 +1474,7 @@ function VideoEngine(_ref0) {
   }, c.name), /*#__PURE__*/React.createElement("div", {
     style: { fontSize: 11, color: "var(--muted)", marginTop: 2 }
   }, c.role || "Artist"), form.selectedChars.includes(c.id) ? /*#__PURE__*/React.createElement("div", {
-    style:{fontSize:10,color:c.color,marginTop:3,fontWeight:700}
+    style:{fontSize:10,color:"#00E599",marginTop:3,fontWeight:700}
   }, "✓ SELECTED") : null))))),
 
   // ── CHARACTER ROLE ASSIGNMENT ──
