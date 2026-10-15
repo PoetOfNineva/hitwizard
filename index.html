@@ -332,13 +332,14 @@ function DownloadModal(_ref3) {
 // ── AI CALL ──
 async function hwAI(sys, usr) {
   let retries = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 2;
+  let opts = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   for (let i = 0; i <= retries; i++) {
     try {
       const res = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          max_tokens: 8000,
+          max_tokens: opts.max_tokens || 8000,
           system: sys,
           messages: [{role: "user", content: usr}]
         })
@@ -425,20 +426,53 @@ function parseJ(raw) {
       });
     return JSON.parse(repaired);
   } catch(_){}
-  // Step 5: nuclear option — extract key arrays manually if full parse fails
+  // Step 5: truncation repair — try to close a truncated JSON object
+  try {
+    // Count unclosed braces/brackets and attempt to close them
+    let repaired = s.replace(/[\u0000-\u001F\u007F]/g, c => {
+      if(c==="\n") return "\\n";
+      if(c==="\r") return "\\r";
+      if(c==="\t") return "\\t";
+      return "";
+    });
+    // Strip trailing comma before attempting close
+    repaired = repaired.replace(/,\s*$/, "");
+    let opens = 0, arrOpens = 0;
+    for (const ch of repaired) {
+      if (ch === "{") opens++;
+      else if (ch === "}") opens--;
+      else if (ch === "[") arrOpens++;
+      else if (ch === "]") arrOpens--;
+    }
+    let closer = "";
+    while (arrOpens > 0) { closer += "]"; arrOpens--; }
+    while (opens > 0) { closer += "}"; opens--; }
+    if (closer) {
+      try { return JSON.parse(repaired + closer); } catch(_) {}
+    }
+  } catch(_) {}
+  // Step 6: nuclear option — extract key arrays manually if full parse fails
   try {
     const titleM = s.match(/"songTitle"\s*:\s*"([^"]+)"/);
-    // V2: try sceneSpecs first
-    const specsM = s.match(/"sceneSpecs"\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
+    // V2: try sceneSpecs first — match greedily to handle nested arrays
+    const specsM = s.match(/"sceneSpecs"\s*:\s*(\[[\s\S]*)/);
     if(specsM) {
-      const specsStr = specsM[1].replace(/[\u0000-\u001F]/g, c => c==="\n"?"\\n":c==="\t"?"\\t":"");
-      const sceneSpecs = JSON.parse(specsStr);
-      return {
-        songTitle: titleM?titleM[1]:"Your Song",
-        directorEngineVersion: "V2.2",
-        sceneSpecs: sceneSpecs,
-        _partialParse: true
-      };
+      // Try to extract a valid sceneSpecs array even if truncated
+      let specsStr = specsM[1].replace(/[\u0000-\u001F]/g, c => c==="\n"?"\\n":c==="\t"?"\\t":"");
+      // Find last complete scene spec by finding last complete closing } before truncation
+      const lastComplete = specsStr.lastIndexOf("},\n") !== -1 ? specsStr.lastIndexOf("},\n") + 2 : specsStr.lastIndexOf("}");
+      if (lastComplete > 0) {
+        specsStr = specsStr.substring(0, lastComplete + 1) + "]";
+      }
+      try {
+        const sceneSpecs = JSON.parse(specsStr);
+        return {
+          songTitle: titleM?titleM[1]:"Your Song",
+          directorEngineVersion: "V2.2",
+          sceneSpecs: sceneSpecs,
+          _partialParse: true
+        };
+      } catch(_) {}
     }
     // V1 fallback: clips array
     const clipsM = s.match(/"clips"\s*:\s*(\[[\s\S]*?\}[\s\S]*?\])/);
@@ -1735,7 +1769,7 @@ Remember: duration=${totalSecs}s. Excellent A-roll performance exists underneath
 
 THE CRITIC'S QUESTION for every B-roll: "After 2 seconds, what specific unresolved visual question makes the viewer watch the rest? Name it. If you cannot name it, viewerCuriosity is low and this scene probably loses to A-roll."`;
 
-      const directorRaw = await hwAI(directorSys, directorUsr);
+      const directorRaw = await hwAI(directorSys, directorUsr, 2, {max_tokens: 16000});
       const directorData = parseJ(directorRaw);
       if (!directorData || !directorData.sceneSpecs || directorData.sceneSpecs.length === 0) {
         throw new Error("Director returned no scene specs. Raw: " + (directorRaw||"").substring(0, 200));
