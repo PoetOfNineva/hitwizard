@@ -1219,6 +1219,27 @@ function VideoEngine(_ref0) {
       const BATCH_SIZE = 5;
       const totalBatches = Math.ceil(totalClips / BATCH_SIZE);
 
+      // ── SCENE SHUFFLE — unique order per generation run, never the same twice ──
+      const ALL_SCENE_TYPES = [
+        "TOGETHER — RESTAURANT/DINING: They sit at a candlelit restaurant table. She is sideways on his lap, one arm around his neck, leaning to say something in his ear. He listens with a slow private smile, his hand on her waist. City glow soft focus behind them.",
+        "HER ALONE — HEAD THROWN BACK: She is mid-laugh, head tilted back, eyes closed, one hand at her collarbone. Completely unselfconscious. Caught in genuine joy, not performing for anyone. Warm golden light on her throat and cascading hair.",
+        "TOGETHER — SOFA INTIMACY: They are on a deep velvet sofa. Her legs draped across his lap. She traces something on his forearm with one finger as she talks. He watches her face, not her hand. Amber light. Champagne on the side table.",
+        "HIM ALONE — WATCHING HER: He leans against the bar, whiskey in hand, watching her across the room. She has not noticed him yet. His expression is unguarded — pure longing. Camera tight on his face and the gold chain at his chest.",
+        "TOGETHER — WALKING/MOVEMENT: They walk side by side down a rain-slicked street or marble corridor. She tilts her head to rest against his shoulder mid-stride. His arm tightens around her without breaking stride. Neither speaks. Both smiling faintly.",
+        "TOGETHER — THE ALMOST-KISS: Extreme close-up. His hand mid-motion brushing a strand of hair from her face. Foreheads nearly touching. Her eyes half-closed. The kiss does not happen. More charged than if it did. Candle flame bokeh extreme foreground.",
+        "HER ALONE — CORRIDOR GLANCE: She walks away down a long candlelit corridor or terrace. Her dress, her heels, her hair. Five steps away she glances back over one shoulder — just enough, just long enough. Then keeps walking.",
+        "TOGETHER — WHISPER TENSION: He stands behind her, lips near her ear, saying something only she can hear. Her chin tilts slightly. Eyes not fully open. His hand rests on her waist from behind. Camera low, tight, intimate. City light through glass behind them.",
+        "HER ALONE — WINDOW REFLECTION: She stands at a rain-streaked window but watches his REFLECTION in the glass — he is somewhere behind her in the room. She does not turn around. Her expression holds everything unsaid.",
+        "TOGETHER — MID-CONVERSATION ARREST: They sit across a rooftop table. She is mid-sentence, champagne glass gesturing. He has stopped hearing her words — just watching her face. She notices, trails off, meets his eyes. A beat of silence between them.",
+        "HIM ALONE — CAR AT NIGHT: He sits in the back of a dark luxury car, city lights streaking the window. Jaw set. Looking at nothing. Thinking about her. Tight shot on his profile, the gold chain pendant, the watch catching passing lights.",
+        "TOGETHER — FOREHEAD TO FOREHEAD: They stand chest to chest, her hands on his lapels, his hands cradling her face. Foreheads touching. Eyes closed. Neither moving. Not a kiss — more private than a kiss. The world is very still.",
+      ];
+      const shuffledScenes = ALL_SCENE_TYPES.slice();
+      for (let i = shuffledScenes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledScenes[i], shuffledScenes[j]] = [shuffledScenes[j], shuffledScenes[i]];
+      }
+
       showToast("Generating " + totalClips + " clips in parallel — should take 30-60 seconds...", "\u26A1");
 
       // ── PARALLEL GENERATION — all batches fire simultaneously ──
@@ -1250,21 +1271,11 @@ function VideoEngine(_ref0) {
             }
             return "No lyrics provided — generate cinematic performance clips with luxury visual doctrine.";
           })() + (function(){
-  // Pre-assign mandatory scene types per clip slot so AI cannot default to same scene
-  const sceneRotation = [
-    "TOGETHER — RESTAURANT/DINING: They are seated at a candlelit table, her sideways on his lap OR leaning across toward him mid-conversation. NOT at a window. NOT standing.",
-    "HER ALONE — PRIVATE MOMENT: She is caught unaware — tilting her head back laughing, tracing something with her finger, checking her reflection, sitting at a bed edge looking out. NOT posing.",
-    "TOGETHER — SOFA/LOUNGE: They are on a velvet sofa or chaise — her legs across his lap, or her back against his chest, or him leaning toward her mid-sentence. Warm amber indoor light.",
-    "HIM ALONE — POWER MOMENT: He stands at a window OR sits in a car OR leans at a bar — but he is WATCHING HER from across the room, or THINKING, jaw set. NOT posing for camera.",
-    "TOGETHER — OUTDOOR/MOVEMENT: They are walking, or on a yacht railing, or on a terrace — HER HEAD ON HIS SHOULDER, or him pulling her close mid-stride, or them both laughing at something shared.",
-    "TOGETHER — INTIMATE CLOSE: Extreme close-up — his hand brushing hair from her face, her fingers on his jaw, their foreheads nearly touching, the almost-kiss that does not happen. Candle bokeh foreground.",
-    "HER ALONE — SULTRY: She walks away down a corridor or terrace and glances back over one shoulder. OR she sits at a bar alone, wine glass in hand, secret smile, aware she is being watched.",
-    "TOGETHER — TENSION: He whispers something in her ear from behind, lips near her neck, her eyes close slightly. OR she presses her palm flat on his chest looking up at him. Charged. Unresolved.",
-  ];
-  const clipIndex = (bStart - 1) % sceneRotation.length;
-  const assignedScene = sceneRotation[clipIndex];
+  // Pull from this generation run's shuffled scene order — no two runs the same
+  const clipIndex = (bStart - 1) % shuffledScenes.length;
+  const assignedScene = shuffledScenes[clipIndex];
 
-  return "\n\nMANDATORY SCENE TYPE FOR CLIPS " + bStart + "-" + bEnd + ":\n" + assignedScene + "\n\nYou MUST build the grokPrompt around this scene type. No substitutions.\n\nABSOLUTELY BANNED IN EVERY PROMPT:\n- Two people standing at a window side by side looking out — BANNED\n- Character standing in front of wall with a candle — BANNED\n- Anyone looking directly at the camera — BANNED  \n- Anyone with mouth open as if singing — BANNED\n- Same location as the previous clip — BANNED\n\nSPATIAL GROUNDING REQUIRED:\n1. Name the surface the character is physically touching\n2. Name one foreground object between camera and subject (champagne, candle, his shoulder, rain-streaked glass)\n3. Background at soft focus 10+ feet behind\n\nReturn ONLY valid JSON. No apostrophes in any string values.\n\nTHE grokPrompt FIELD — one clean paragraph, no headers or labels, flowing prose like a cinematographer describing a film still they can actually see. Include: character full physical DNA, exact outfit, the specific human action happening RIGHT NOW in this frame (from the mandatory scene type above), exact location with 2-3 grounding details, camera angle and movement, lighting. End with: photorealistic cinematic quality, hyperdetailed, 8K, music video B-roll still, 9:16 vertical format.\n\nReturn ONLY this JSON:\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"B-ROLL\",\"characters\":[\"KIKO\",\"THE BLONDE\"],\"section\":\"Verse 1\",\"lyricMoment\":\"exact lyric line this visual responds to\",\"emotionalEnergy\":\"melancholic\",\"sceneDescription\":\"one sentence director summary of the specific human moment\",\"grokPrompt\":\"flowing prose paragraph — character DNA + exact action + location + camera + lighting + quality tags\"}]}";
+  return "\n\nMANDATORY SCENE FOR CLIPS " + bStart + "-" + bEnd + " (locked, no substitutions):\n" + assignedScene + "\n\nYou MUST build the grokPrompt around this scene type. No substitutions.\n\nABSOLUTELY BANNED IN EVERY PROMPT:\n- Two people standing at a window side by side looking out — BANNED\n- Character standing in front of wall with a candle — BANNED\n- Anyone looking directly at the camera — BANNED  \n- Anyone with mouth open as if singing — BANNED\n- Same location as the previous clip — BANNED\n\nSPATIAL GROUNDING REQUIRED:\n1. Name the surface the character is physically touching\n2. Name one foreground object between camera and subject (champagne, candle, his shoulder, rain-streaked glass)\n3. Background at soft focus 10+ feet behind\n\nReturn ONLY valid JSON. No apostrophes in any string values.\n\nTHE grokPrompt FIELD — one clean paragraph, no headers or labels, flowing prose like a cinematographer describing a film still they can actually see. Include: character full physical DNA, exact outfit, the specific human action happening RIGHT NOW in this frame (from the mandatory scene type above), exact location with 2-3 grounding details, camera angle and movement, lighting. End with: photorealistic cinematic quality, hyperdetailed, 8K, music video B-roll still, 9:16 vertical format.\n\nReturn ONLY this JSON:\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"B-ROLL\",\"characters\":[\"KIKO\",\"THE BLONDE\"],\"section\":\"Verse 1\",\"lyricMoment\":\"exact lyric line this visual responds to\",\"emotionalEnergy\":\"melancholic\",\"sceneDescription\":\"one sentence director summary of the specific human moment\",\"grokPrompt\":\"flowing prose paragraph — character DNA + exact action + location + camera + lighting + quality tags\"}]}";
 })()
         ).then(function(batchRaw) {
           try {
