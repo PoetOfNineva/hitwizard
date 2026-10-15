@@ -1346,208 +1346,124 @@ function VideoEngine(_ref0) {
       perfMark("total_start");
 
       // ── V3 CALL 1: DIRECTOR PLANNER ──────────────────────────────
-      const plannerSys = `You are HitWizard's Director Engine V3 — Planner Pass.
+      const plannerSys = `You are HitWizard's Director Engine V3.1 — Planner Pass.
 
 PRODUCT CONTRACT:
-HitWizard has four jobs:
 1. Understand the RECORD (not merely the lyrics)
-2. Decide whether the existing A-roll performance should remain on screen
-3. When B-roll can genuinely improve an interval, invent a visually compelling cinematic situation
-4. Give the generator enough to understand the world and dramatic intention — leave performance to the generator
+2. Decide A-roll vs B-roll per interval — A-roll is the default
+3. For B-roll: invent EXACTLY 3 visually distinct concept seeds, risk-classified
+4. Leave performance to the generator — supply world + situation only
 
-CORE DOCTRINE: HITWIZARD CONTROLS THE SEED. THE GENERATOR CONTROLS THE PERFORMANCE.
+RECORD INTERPRETATION (compact):
+RecordIntent = { literalMeaning, performanceDelivery (given ${perfVibe}), relationshipDynamic, viewerFeel, visualBehavior, contraindicated[] }
 
-RECORD INTERPRETATION:
-Produce a compact RecordIntent that answers:
-- What do the lyrics literally say?
-- How is the performer emotionally delivering it (given the selected Performance Vibe)?
-- What is the relationship dynamic?
-- What should the VIEWER feel?
-- What visual behavior belongs to this record?
-- What visual behavior would CONTRADICT this record?
+CRITICAL: Performance Vibe OVERRIDES lyric mood.
+${perfVibe === "SEDUCTIVE" ? `SEDUCTIVE VIBE ACTIVE — this means: playful attraction, teasing confidence, stylish charisma, magnetic presence, flirtatious social behavior, unexpected reversals.
+SEDUCTIVE ≠ solemn eye contact, slow walking alone, sustained staring, melancholy symbolism, frailty, empty rooms.
+SEDUCTIVE seeds must include at least one of: playful provocation, confident entrance, teasing withdrawal, flirtatious social competition, surprising reversal, stylish nonchalance, pursuit/approach game.` : `Vibe is ${perfVibe} — let it drive seed character and energy.`}
 
-CRITICAL: Lyrics NEVER override an explicit Performance Vibe.
-Example: "Will you love me when my hands grow weak?" + SEDUCTIVE does NOT mean frailty, sadness, mortality symbolism, weak hands, empty rooms, or melancholy domestic scenes.
+A-ROLL IS THE DEFAULT. Zero B-roll is valid. Never generate B-roll merely because an interval exists.
 
-A-ROLL IS THE DEFAULT:
-Assume a complete singing performance clip exists. Every proposed B-roll must answer: "Why should an editor cut away from a charismatic performer RIGHT NOW?" If the answer is weak, keep A-roll.
-Zero B-roll is valid. One exceptional cutaway is valid. Never generate B-roll merely because an interval exists.
+CONCEPT SEED GENERATION: EXACTLY 3 seeds per B-roll interval. No more.
+Format: WHO + SITUATION + ACTIVE VISUAL HOOK + EMOTIONAL PURPOSE (one sentence)
 
-CONCEPT SEED GENERATION (for B-roll intervals only):
-Generate 4-6 ONE-SENTENCE CONCEPT SEEDS per B-roll interval.
-A concept seed describes only: WHO + SITUATION + ACTIVE VISUAL HOOK + EMOTIONAL PURPOSE
+SEED DIVERSITY REQUIREMENT:
+All 3 seeds for an interval MUST use DIFFERENT visual mechanisms from this taxonomy:
+- LOCOMOTION-APPROACH: subject moves toward another (walking toward, entering room)
+- LOCOMOTION-DEPARTURE: subject moves away (walking ahead, leaving, exiting)
+- SOCIAL-INTERACTION: conversation, reaction, flirtation, playful exchange (neither person primarily in transit)
+- ENVIRONMENTAL-ACTIVITY: subject engaged with physical environment/objects (not primarily with another person)
+- REVEAL-TRANSFORMATION: something changes, is uncovered, or changes state
+- ENTRANCE-ARRIVAL: stylish arrival, door, crowd entrance, camera finds subject
+- PURSUIT-GAME: one person follows, chases, or plays spatial game with another
+- INTERRUPTION: unexpected event disrupts an existing scene
+Do NOT generate two seeds with the same mechanism. Label each seed's mechanism.
 
-Good seed grammar:
-"She walks ahead through an elegant corridor, enjoying how completely his attention follows her."
-"At a crowded gathering, they keep finding each other across the room while life continues around them."
-"She playfully steals something of his and walks away, forcing him to follow while pretending not to enjoy the chase."
+ACTIVE VISUAL ENGINE: every seed must have at least one of:
+locomotion, pursuit, playful social behavior, environmental interaction, reveal, transformation, entrance/exit, interruption, physical task, social tension, charismatic behavior, unexpected event
 
-Seeds must have an ACTIVE VISUAL ENGINE — at least one of:
-locomotion, pursuit/following, playful social behavior, environmental interaction, reveal, transformation, entrance/exit, interruption, physical task, social tension, charismatic behavior, unexpected event
+BANNED seeds: staring, sitting still, hand-holding, face-touching, hair-touching, emotion-objects, empty furniture, shadows, mirrors, photographs, standing motionless.
 
-Avoid seeds whose ENTIRE value is: staring, sitting, holding hands, touching a face, touching hair, an object symbolizing emotion, empty furniture, shadows, mirrors, mugs, photographs, standing motionless.
+GENERATOR RISK:
+LOW: natural movement, social situations, locomotion, action-reaction with spatial separation
+MEDIUM: simple touch with complexity, close two-shots with blocking
+HIGH: hands on face/hair, intertwined bodies, sequential contacts, precise finger behavior, synchronized choreography
+HIGH: ELIMINATE. MEDIUM: simplify to LOW or flag +15 margin.
 
-GENERATOR RISK CLASSIFICATION (classify EVERY seed BEFORE returning it):
-LOW: natural movement, people in environments, social situations, locomotion, action-reaction with clear spatial separation
-MEDIUM: simple touch with spatial complexity, close two-shots with significant blocking, furniture transitions
-HIGH: hands interacting with faces/hair, intertwined bodies, multiple sequential contacts, object handoffs, precise finger behavior, entering/exiting complicated seating, multiple people executing synchronized choreography
-
-HIGH risk seeds: ELIMINATE before returning. Do not send them to the Critic.
-MEDIUM risk seeds: SIMPLIFY the concept until it is LOW, or mark as MEDIUM for +15 margin requirement.
-
-CHARACTER DNA (inject into concept seeds where characters appear):
-${charDNA}
-
-CAST: ${castNames}
-Cast members are AVAILABLE, not a rotation. A scene may contain one character, both, or an environment.
-NEVER alternate characters mechanically. Concept follows intent. Casting follows concept.
+CHARACTER DNA: ${charDNA}
+CAST: ${castNames} — casting follows concept, never mechanical alternation.
 
 ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized reproduction = IP theft.
 
 Respond ONLY with valid JSON:
 {
-  "recordIntent": {
-    "literalMeaning": "what lyric literally says",
-    "performanceDelivery": "how performer delivers it given ${perfVibe} vibe",
-    "relationshipDynamic": "what is happening between characters",
-    "viewerFeel": "what viewer should feel",
-    "visualBehavior": "what belongs visually to this record",
-    "contraindicated": ["visual behaviors that contradict this record"]
-  },
-  "visualLanguage": {
-    "style": "e.g. seductive intimate realism",
-    "motif": "recurring visual idea unifying the edit",
-    "lightingPhilosophy": "one sentence",
-    "prohibited": ["clichés banned for this song + vibe combination"]
-  },
+  "recordIntent": { "literalMeaning":"","performanceDelivery":"","relationshipDynamic":"","viewerFeel":"","visualBehavior":"","contraindicated":[] },
+  "visualLanguage": { "style":"","motif":"","lightingPhilosophy":"","prohibited":[] },
   "intervals": [
-    {
-      "startTime": "0:00",
-      "endTime": "0:09",
-      "decision": "A_ROLL",
-      "lyricContext": "lyric line covered",
-      "editRationale": "why A-roll is stronger here"
-    },
-    {
-      "startTime": "0:09",
-      "endTime": "0:19",
-      "decision": "B_ROLL",
-      "lyricContext": "lyric line covered",
-      "editRationale": "why this moment could benefit from B-roll",
+    { "startTime":"0:00","endTime":"0:09","decision":"A_ROLL","lyricContext":"" },
+    { "startTime":"0:09","endTime":"0:19","decision":"B_ROLL","lyricContext":"",
       "conceptSeeds": [
-        { "seed": "one-sentence concept description", "generatorRisk": "LOW" },
-        { "seed": "another concept", "generatorRisk": "LOW" },
-        { "seed": "a riskier concept (simplified)", "generatorRisk": "MEDIUM" }
+        { "seed":"","mechanism":"LOCOMOTION-APPROACH","generatorRisk":"LOW" },
+        { "seed":"","mechanism":"SOCIAL-INTERACTION","generatorRisk":"LOW" },
+        { "seed":"","mechanism":"ENVIRONMENTAL-ACTIVITY","generatorRisk":"LOW" }
       ]
     }
   ]
 }
+CRITICAL: Return ONLY this JSON. No editRationale, no sceneSpecs, no scoring, no prompts.`;
 
-CRITICAL: Return ONLY this JSON. Do not include sceneSpecs, scoring, or prompts.`;
-
-// ── V3 CALL 2: CRITIC SYSTEM ─────────────────────────────
-      const criticSys = `You are HitWizard's Director Engine V3 — Adversarial Critic.
-
-You receive: RecordIntent, VisualLanguage, and ALL B-roll intervals with their concept seeds in ONE batch.
-You return: a winner (or USE_A_ROLL) for EACH interval in ONE response.
+// ── V3.1 CALL 2: CRITIC SYSTEM ───────────────────────────
+      const criticSys = `You are HitWizard's Director Engine V3.1 — Adversarial Critic.
+Batch input: RecordIntent + ALL B-roll intervals + seeds. Batch output: one winner per interval.
 
 ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized reproduction = IP theft.
 
-═══════════════════════════════════════════
-CORE DOCTRINE
-═══════════════════════════════════════════
-A-ROLL IS THE DEFAULT. B-roll must earn the right to interrupt a charismatic performer.
-The bar: "Does THIS visual, at THIS lyric moment, deliver MORE emotional intelligence than watching the performer's face?"
-If not clearly yes: USE_A_ROLL wins.
+A-ROLL IS THE DEFAULT. B-roll must beat performer's face at this lyric moment. If not clearly yes: USE_A_ROLL.
 
-═══════════════════════════════════════════
-GENERATOR RISK — ALREADY GATED UPSTREAM
-═══════════════════════════════════════════
-Seeds you receive are already risk-classified by the Planner:
-LOW = cleared for scoring
-MEDIUM = simplified before reaching you; require +15 margin over A-roll (not +8) to win
-HIGH = should not appear; if one slips through, eliminate it before scoring
+${perfVibe === "SEDUCTIVE" ? `SEDUCTIVE VIBE — scoring bonus criteria:
+performanceVibeAlignment BONUS (+3) if seed includes: playful provocation, confident entrance, teasing withdrawal, flirtatious social competition, surprising reversal, pursuit/approach game, stylish nonchalance, unexpected behavior.
+PENALTY (-4) for: sustained eye contact only, slow walking alone, solemn staring, melancholy symbolism. These are NOT seductive.` : `Vibe is ${perfVibe} — weight performanceVibeAlignment accordingly.`}
 
-MEDIUM-risk seeds whose success DEPENDS on exact finger/hand/wrist/hair/face contact
-require +20 margin if BOTH morphRisk and renderRisk would be MEDIUM.
+RISK GATES:
+LOW → cleared. MEDIUM → +15 margin required. MEDIUM+precision-contact → +20 margin. HIGH → eliminate.
+Precision-contact (jaw/palm/hair/finger/face chains): physicalFeasibility max 2, renderability max 2.
 
-Precision-contact concepts (jaw tracing, palm cradling, hair tucking, intertwined fingers,
-hand-to-face contact chains) carry explicit renderability penalty:
-physicalFeasibility max 2/5, renderability max 2/5.
+SCROLL_STOP MANDATORY GATES (ALL must pass or USE_A_ROLL):
+cutawayValue≥16, viewerCuriosity≥15, visualActivity≥7, performanceVibeAlignment≥12, renderRisk≠HIGH, progressionStrength≥MODERATE
 
-═══════════════════════════════════════════
-SCROLL_STOP MANDATORY GATES
-═══════════════════════════════════════════
-When brollEnergy = SCROLL_STOP, a concept CANNOT win regardless of score if ANY gate fails:
-- cutawayValue < 16/20
-- viewerCuriosity < 15/20
-- visualActivity < 7/10
-- performanceVibeAlignment < 12/15
-- renderRisk = HIGH
-- progressionStrength < MODERATE
+SCORING (sum to total/100):
+pva:0-15 (performanceVibeAlignment), li:0-15 (lyricIntelligence), cv:0-20 (cutawayValue), vc:0-20 (viewerCuriosity), va:0-10 (visualActivity), er:0-10 (emotionalRelevance), or:0-5 (originality), pf:0-5 (physicalFeasibility), rd:0-5 (renderability)
 
-═══════════════════════════════════════════
-SCORING DIMENSIONS per concept
-═══════════════════════════════════════════
-- performanceVibeAlignment: 0-15
-- lyricIntelligence: 0-15 (emotional thesis, not literal noun)
-- cutawayValue: 0-20 (would editor cover singer with this?)
-- viewerCuriosity: 0-20 (after 2s, what unresolved question keeps viewer watching? EVIDENCE-BASED ONLY)
-- visualActivity: 0-10 (behavior/reveal/change — not blinking or hair drift)
-- emotionalRelevance: 0-10
-- originality: 0-5 (specific dramatic context, not abstract novelty)
-- physicalFeasibility: 0-5 (grounded, non-floating, renderer-safe)
-- renderability: 0-5 (low render risk = higher; HIGH risk = 0)
-TOTAL: /100
+ACTIVE VISUAL ENGINE required for SCROLL_STOP — at least one: locomotion, pursuit, playful social behavior, environmental interaction, reveal, transformation, entrance/exit, interruption, physical task, social tension, charismatic behavior, unexpected event.
+"Two people stare intensely" = FAIL.
 
-ACTIVE VISUAL ENGINE REQUIREMENT (SCROLL_STOP):
-At least one must be present: locomotion, pursuit/following, playful social behavior,
-environmental interaction, reveal, transformation, entrance/exit, interruption,
-physical task, social tension, charismatic behavior, unexpected event.
-"Two attractive people stare intensely" does NOT qualify.
+ADVERSARIAL TESTS: BORING (no unresolved visual question→-vc), A-ROLL (face beats it→-cv), POSTER (still image→-va), SYMBOL (inert idea→-cv-vc).
 
-MIN_BROLL_WIN_MARGIN:
-- LOW risk seed: +8 over A-roll
-- MEDIUM risk seed: +15 over A-roll
-- MEDIUM + precision-contact: +20 over A-roll
+VISUAL MECHANISM DIVERSITY GATE — runs after scoring, before finalizing:
+Each seed has a mechanism label from: LOCOMOTION-APPROACH, LOCOMOTION-DEPARTURE, SOCIAL-INTERACTION, ENVIRONMENTAL-ACTIVITY, REVEAL-TRANSFORMATION, ENTRANCE-ARRIVAL, PURSUIT-GAME, INTERRUPTION.
+LOCOMOTION-APPROACH and LOCOMOTION-DEPARTURE count as THE SAME MECHANISM (both = locomotion+convergence/divergence).
+If two winners share the same mechanism: the lower-scoring one becomes USE_A_ROLL. No exceptions.
+Require mechanism labels in output.
 
-ADVERSARIAL TESTS (apply to every seed):
-BORING TEST: After 2s, what SPECIFIC UNRESOLVED VISUAL QUESTION makes viewer watch rest? If none: penalize viewerCuriosity.
-A-ROLL TEST: Would singer's face be more emotionally compelling than this at this lyric? If yes: penalize cutawayValue.
-POSTER TEST: Is this a still image pretending to be video? If yes: penalize visualActivity.
-SYMBOL TEST: Intellectually meaningful but visually inert? If yes: penalize cutawayValue + viewerCuriosity.
+WIN MARGIN: LOW=+8, MEDIUM=+15, MEDIUM+precision=+20 over arollScore.
 
-DIVERSITY: After selecting winners, inspect the FULL sequence.
-If 2+ winners share the same visual mechanism (staring, hand-touching, sitting proximity),
-reject the weaker one and default that interval to USE_A_ROLL.
-
-BANNED JUSTIFICATION LANGUAGE (use observable evidence only):
-magnetic / iconic / unforgettable / cinematic / one of cinema's most / deeply powerful
-→ always follow with: "at 0-2s X happens, at 3-5s Y changes, viewer's unresolved question is Z"
-
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON — keep strings SHORT (under 15 words each):
 {
   "intervalResults": [
     {
-      "startTime": "0:09",
-      "endTime": "0:19",
-      "winner": "the winning one-sentence seed concept OR USE_A_ROLL",
-      "winnerRisk": "LOW|MEDIUM",
-      "arollScore": 0,
-      "winnerScore": 0,
-      "winMargin": 0,
-      "scrollStopGatesPassed": true,
-      "activeVisualEngine": "what active mechanism exists in winner",
-      "viewerCuriosityEvidence": "what specifically happens second by second that keeps viewer watching",
-      "selectionReason": "observable evidence — what SPECIFICALLY happens on screen",
-      "rejectedSeeds": ["seed text — reason rejected"]
+      "startTime":"0:09","endTime":"0:19",
+      "winner":"winning seed OR USE_A_ROLL",
+      "winnerMechanism":"SOCIAL-INTERACTION",
+      "winnerRisk":"LOW",
+      "arollScore":0,"winnerScore":0,"winMargin":0,
+      "scrollStopGatesPassed":true,
+      "activeVisualEngine":"mechanism keyword",
+      "reject":["seed1:CODE","seed2:CODE"]
     }
   ],
-  "_debug": {
-    "recordIntent": "summary",
-    "diversityCheck": "any seeds dropped for visual repetition"
-  }
-}`;
+  "_debug":{"diversityCheck":"mechanism conflicts resolved"}
+}
+Rejection codes: BORING|POSTER|SYMBOL|AROLL|RISK|GATES|MECHANISM-DUPE|MARGIN`;
 
       // ── V3 CALL 3: COMPILER SYSTEM ────────────────────────────
       const compilerSys = `You are HitWizard's GrokPromptCompiler V3 — Intention-First / Batched.
@@ -1653,7 +1569,7 @@ MEDIUM risk seeds: simplify before returning, flag generatorRisk: "MEDIUM".
 LOW risk seeds: include as-is.
 0 B-roll intervals is a valid outcome if A-roll is stronger throughout.`;
 
-      const plannerRaw = await hwAI(plannerSys, plannerUsr, 2, {max_tokens: 4000});
+      const plannerRaw = await hwAI(plannerSys, plannerUsr, 2, {max_tokens: 2500});
       perfMark("planner_end");
       const plannerData = parseJ(plannerRaw);
       if (!plannerData || !plannerData.intervals) {
@@ -1685,8 +1601,7 @@ ${JSON.stringify(brollIntervals.map(i => ({
   startTime: i.startTime,
   endTime: i.endTime,
   lyricContext: i.lyricContext,
-  editRationale: i.editRationale,
-  conceptSeeds: i.conceptSeeds || []
+  conceptSeeds: (i.conceptSeeds || []).map(s => ({ seed: s.seed, mechanism: s.mechanism || "UNKNOWN", generatorRisk: s.generatorRisk }))
 })), null, 2)}
 
 TASK: Judge ALL intervals in this ONE response.
@@ -1694,7 +1609,7 @@ For each interval: score all seeds, apply adversarial tests, select winner or US
 Apply diversity check across all winners — reject repetitive visual mechanisms.
 Return intervalResults array with one entry per interval.`;
 
-        const criticRaw = await hwAI(criticSys, criticUsr, 1, {max_tokens: 8000});
+        const criticRaw = await hwAI(criticSys, criticUsr, 1, {max_tokens: 5000});
         perfMark("critic_end");
         criticData = parseJ(criticRaw);
         if (criticData && criticData.intervalResults) {
@@ -1726,7 +1641,7 @@ ${JSON.stringify(approvedWinners.map(w => ({
   selectionReason: w.selectionReason || ""
 })), null, 2)}`;
 
-        const compilerRaw = await hwAI(compilerSys, compilerUsr, 1, {max_tokens: 6000});
+        const compilerRaw = await hwAI(compilerSys, compilerUsr, 1, {max_tokens: 4000});
         perfMark("compiler_end");
         compilerData = parseJ(compilerRaw);
         console.log("[HW-DEBUG] V3 Compiler: compiledClips=" + (compilerData&&compilerData.compiledClips?compilerData.compiledClips.length:0));
@@ -1850,7 +1765,7 @@ ${JSON.stringify(approvedWinners.map(w => ({
 
       const raw = JSON.stringify({
         songTitle: form.songTitle || "Untitled",
-        directorEngineVersion: "V3",
+        directorEngineVersion: "V3.1",
         recordIntent: plannerData.recordIntent || null,
         visualLanguage: plannerData.visualLanguage || null,
         totalDuration: totalSecs,
@@ -2276,7 +2191,7 @@ ${JSON.stringify(approvedWinners.map(w => ({
   ), results._debug && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(255,100,100,.2)",borderRadius:12,overflow:"hidden"}},
     /*#__PURE__*/React.createElement("div", {style:{background:"rgba(255,100,100,.06)",padding:"10px 16px",cursor:"pointer"},
       onClick:function(){var el=document.getElementById("hw-debug-body"); el.style.display=el.style.display==="none"?"block":"none";}},
-      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR V3 — B-roll: "+(results._debug.brollCount||0)+" | A-roll: "+(results._debug.arollCount||0)+" | Calls: "+(results._debug.perfReport&&results._debug.perfReport.modelCallCount||"?")+" | "+((results._debug.perfReport&&results._debug.perfReport.totalGenerationLatencyMs)?Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000)+"s total":"")+"  (click to expand)")
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR V3.1 — B-roll: "+(results._debug.brollCount||0)+" | A-roll: "+(results._debug.arollCount||0)+" | Calls: "+(results._debug.perfReport&&results._debug.perfReport.modelCallCount||"?")+" | "+((results._debug.perfReport&&results._debug.perfReport.totalGenerationLatencyMs)?Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000)+"s total":"")+"  (click to expand)")
     ),
     /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:600,overflowY:"auto"}},
       results._debug.perfReport && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(100,200,255,.2)",background:"rgba(100,200,255,.04)"}},
