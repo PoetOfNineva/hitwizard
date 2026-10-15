@@ -1593,7 +1593,7 @@ MEDIUM risk seeds: simplify before returning, flag generatorRisk: "MEDIUM".
 LOW risk seeds: include as-is.
 0 B-roll intervals is a valid outcome if A-roll is stronger throughout.`;
 
-      let plannerTokens = {};
+      let plannerTokens = {}, criticTokens = {}, compilerTokens = {};
       const plannerRaw = await hwAI(plannerSys, plannerUsr, 2, {max_tokens: 2500, _stage:"planner", _tokenSink: t => { plannerTokens = t; }});
       perfMark("planner_end");
       const plannerData = parseJ(plannerRaw);
@@ -1634,7 +1634,6 @@ For each interval: score all seeds, apply adversarial tests, select winner or US
 Apply diversity check across all winners — reject repetitive visual mechanisms.
 Return intervalResults array with one entry per interval.`;
 
-        let criticTokens = {};
         const criticRaw = await hwAI(criticSys, criticUsr, 1, {max_tokens: 5000, _stage:"critic", _tokenSink: t => { criticTokens = t; }});
         perfMark("critic_end");
         criticData = parseJ(criticRaw);
@@ -1692,7 +1691,6 @@ ${JSON.stringify(approvedWinners.map(w => {
   };
 }), null, 2)}`;
 
-        let compilerTokens = {};
         const compilerRaw = await hwAI(compilerSys, compilerUsr, 1, {max_tokens: 4000, _stage:"compiler", _tokenSink: t => { compilerTokens = t; }});
         perfMark("compiler_end");
         compilerData = parseJ(compilerRaw);
