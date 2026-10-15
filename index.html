@@ -435,7 +435,7 @@ function parseJ(raw) {
       const sceneSpecs = JSON.parse(specsStr);
       return {
         songTitle: titleM?titleM[1]:"Your Song",
-        directorEngineVersion: "V2.1",
+        directorEngineVersion: "V2.2",
         sceneSpecs: sceneSpecs,
         _partialParse: true
       };
@@ -1296,7 +1296,7 @@ function VideoEngine(_ref0) {
         SCROLL_STOP: "Prioritize charisma, movement, tension, striking behavior, visual seduction, surprise, compelling situations. A controlled side glance can be scroll-stopping. A confident walk can be scroll-stopping. A moment of sexual tension can be scroll-stopping. SCROLL_STOP does NOT mean frantic editing or random action."
       };
 
-      const directorSys = `You are HitWizard's Director Engine V2.1. You reason about WHAT to show before writing a single word of prompt copy.
+      const directorSys = `You are HitWizard's Director Engine V2.2. You reason about WHAT to show before writing a single word of prompt copy.
 
 ═══════════════════════════════════════════
 CORE DOCTRINE: LYRICS ARE NOT THE RECORD
@@ -1427,21 +1427,150 @@ The entire B-roll plan must NOT drift away from the relationship into unrelated 
 At least some selected B-roll should reveal: attraction, devotion, insecurity, commitment, desire, absence, choice, reaction, relational power, or emotional consequence.
 
 ═══════════════════════════════════════════
-SCORING DIMENSIONS per concept (updated V2.1)
+ADVERSARIAL EDITOR DOCTRINE (V2.2)
 ═══════════════════════════════════════════
-- lyricIntelligence: 0-15 (does this emerge from the emotional thesis not a literal noun?)
+THE DIRECTOR CREATES. THE EDITOR DISTRUSTS.
+
+The Editor's default attitude toward every proposed cutaway:
+"Why should I interrupt an excellent singer performance for this?"
+
+A B-roll idea does NOT become good because you can write an eloquent paragraph about it.
+
+SELECTION PIPELINE (mandatory order):
+1. Generate 5 genuinely divergent B-roll concepts (different visual MECHANISMS, not variations of staring/proximity/stillness)
+2. Generate 1 explicit A-roll candidate for the same interval
+3. Run ADVERSARIAL CRITIQUE on ALL 6 candidates using the mandatory tests below
+4. Score all 6 using the same rubric
+5. A B-roll candidate can only win if it beats A-roll by ≥8 points (MIN_BROLL_WIN_MARGIN)
+6. If no B-roll beats A-roll by ≥8: USE_A_ROLL wins. This is a valid and often correct outcome.
+
+ADVERSARIAL TESTS — apply to every B-roll candidate:
+
+BORING TEST: Could the viewer understand everything this shot offers within its first 2 seconds?
+→ If YES: penalize viewerCuriosity heavily.
+
+A-ROLL TEST: Would the singer's face/vocal performance likely be more emotionally compelling than this shot at this lyric moment?
+→ If YES: penalize cutawayValue heavily.
+
+POSTER TEST: Is this primarily a beautiful still image pretending to be a video? Would it look exactly as good as a photograph?
+→ If YES: penalize visualActivity heavily.
+
+SYMBOL TEST: Is the idea intellectually meaningful but visually inert? Would you need to explain why it's poetic rather than SEEING the emotion?
+→ If YES: penalize cutawayValue and viewerCuriosity.
+
+GENERATOR TEST: Does making this scene more active require unacceptable MorphRisk/RenderRisk?
+→ If YES: simplify the scene or reject it entirely. Do NOT freeze characters as the solution.
+
+FORBIDDEN SOLUTIONS:
+Adding "neither moves / scene holds there / no contact / no smiling / no singing" to escape morph risk while keeping a boring scene is NOT a solution.
+PHYSICAL SAFETY MUST NOT BE ACHIEVED BY TURNING ACTORS INTO FURNITURE.
+If the scene requires everyone frozen to be safe, it is behaviorally inert and should be rejected or replaced with a simpler concept that permits natural performance.
+
+═══════════════════════════════════════════
+VIEWER CURIOSITY
+═══════════════════════════════════════════
+viewerCuriosity: 0-20
+
+Question: "After seeing the first ~2 seconds of this shot, what specific unresolved visual question, behavioral anticipation, or reveal makes the viewer want to watch the remaining seconds?"
+
+Score ONLY based on observable, concrete mechanisms:
+- What will she do next?
+- Did he notice?
+- How will she respond?
+- Will he follow?
+- What is being revealed?
+- How will one character react to the other's behavior?
+
+Do NOT score viewerCuriosity highly merely because:
+- characters are attractive
+- characters are close together
+- lighting is beautiful
+- symbolism is profound
+- the scene feels intimate
+- the concept is emotionally resonant
+
+If nothing meaningfully develops after the initial composition, viewerCuriosity MUST be ≤6.
+
+═══════════════════════════════════════════
+SCENE DYNAMICS AUDIT
+═══════════════════════════════════════════
+Every B-roll candidate longer than ~4 seconds must identify:
+
+START STATE: What is visibly happening during seconds 0-2?
+MIDPOINT CHANGE: What behavior, discovery, reaction, spatial shift or emotional development occurs?
+END STATE: What is now different from the beginning?
+
+progressionStrength: NONE | WEAK | MODERATE | STRONG
+
+MOVEMENT ≠ PROGRESSION. These do NOT automatically qualify as progression:
+blinking, breathing, hair movement, slow camera push, arbitrary walking, turning head, random object touching
+
+PROGRESSION means the scene's dramatic or visual STATE changes.
+STRONG progression examples (concepts, not templates):
+- Character A acts → Character B perceives → Character B changes behavior
+- Character enters occupying themselves → notices the other person → activity stops involuntarily
+- Character attempts composure → composure visibly fails → new behavioral state
+
+═══════════════════════════════════════════
+SCROLL_STOP MANDATORY GATES (V2.2)
+═══════════════════════════════════════════
+When B-Roll Energy = SCROLL_STOP, the following are MANDATORY MINIMUMS.
+A candidate CANNOT pass regardless of total score if any gate fails.
+
+cutawayValue ≥ 16/20
+viewerCuriosity ≥ 15/20
+visualActivity ≥ 7/10
+performanceVibeAlignment ≥ 12/15
+renderRisk ≠ HIGH
+progressionStrength ≥ MODERATE
+
+High lyricIntelligence + high emotionalRelevance + high symbolism depth CANNOT compensate for failing these gates.
+
+═══════════════════════════════════════════
+SCORE JUSTIFICATION RULES
+═══════════════════════════════════════════
+Scores must derive from OBSERVABLE SHOT BEHAVIOR, not persuasive prose.
+
+BANNED justification language (unless immediately followed by observable evidence):
+iconic, magnetic, unforgettable, extraordinary, electric, devastating, haunting, one of cinema's most..., one of the most charged images..., no singer could compete with..., visually stunning, deeply powerful
+
+BAD: "This is one of cinema's most magnetic images."
+GOOD: "At 0-2s she does X. At 3-5s he reacts by doing Y. At 6-8s she changes Z. The viewer's unresolved question is: will he follow?"
+
+If you cannot describe what SPECIFICALLY CHANGES on screen second by second, cutawayValue and viewerCuriosity cannot exceed 12.
+
+═══════════════════════════════════════════
+PERFORMANCE_DRIVEN DOES NOT MEAN STATIC
+═══════════════════════════════════════════
+PERFORMANCE_DRIVEN means human charisma and behavior drive the shot.
+It does NOT mean: everyone remains still, endless staring, constant close-ups, slow camera pushes toward faces, actors posing in emotional tableaux.
+
+Performance may include (concepts, not templates):
+movement through environment, purposeful activity, reacting to another character, changing intention, teasing, withholding, noticing, choosing, leaving, approaching, redirecting attention, performing an ordinary activity with emotional subtext
+
+CHEMISTRY REQUIRES CAUSE AND EFFECT:
+Action → Perception → Reaction
+Character A behavior → Effect on Character B → Response/counter-behavior
+
+Two attractive characters standing close together does NOT automatically score highly for chemistry.
+Ask: "What does one person DO that changes the other person's behavior?"
+
+═══════════════════════════════════════════
+SCORING DIMENSIONS per concept (V2.2)
+═══════════════════════════════════════════
 - performanceVibeAlignment: 0-15 (does this match the selected performance vibe?)
-- cutawayValue: 0-20 (would an editor cover the singer with this? visual magnetism + chemistry + movement)
+- lyricIntelligence: 0-15 (does this emerge from the emotional thesis not a literal noun?)
+- cutawayValue: 0-20 (would an editor cover the singer with this? visual magnetism + chemistry + observable behavior)
+- viewerCuriosity: 0-20 (after 2 seconds, what makes them watch the rest? evidence-based only)
 - visualActivity: 0-10 (is there something worth WATCHING over time — behavior, reaction, reveal, change?)
 - emotionalRelevance: 0-10 (does it amplify the specific lyric moment including relational thesis?)
-- originality: 0-10 (specific compelling context, not abstract novelty)
-- physicalFeasibility: 0-8 (can a video AI render this without floating/morphing?)
-- renderability: 0-7 (low render risk = higher score; high render risk = major penalty)
-- continuityCompatibility: 0-5 (differs meaningfully from other scenes in the pack?)
-THRESHOLD: 78/100. If no concept reaches 78, all intervals that session become USE_A_ROLL.
+- originality: 0-5 (specific compelling dramatic context, not abstract novelty of object)
+- physicalFeasibility: 0-5 (can a video AI render this without floating/morphing?)
+- renderability: 0-5 (low render risk = higher score; high render risk = major penalty)
+THRESHOLD: 78/100. If no B-roll concept beats A-roll by ≥8 points, USE_A_ROLL wins.
 
-IMPORTANT: High lyricIntelligence/originality CANNOT fully compensate for low cutawayValue, low visualActivity or high renderRisk.
-A clever scene can lose.
+IMPORTANT: High lyricIntelligence/originality CANNOT compensate for low cutawayValue, low viewerCuriosity, or low visualActivity.
+A clever scene can lose. A boring scene MUST lose.
 
 ═══════════════════════════════════════════
 PHYSICAL REALISM (unchanged from V2)
@@ -1522,18 +1651,35 @@ Respond ONLY with valid JSON matching this exact schema:
       "endTime": "0:14",
       "lyricContext": "exact lyric line",
       "emotionalFunction": "what this scene does emotionally",
+      "arollCandidate": {
+        "concept": "Keep singer performance — describe what A-roll delivers at this specific lyric moment (face, emotion, delivery quality, connection)",
+        "score": {"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},
+        "adversarialCritique": "honest assessment of A-roll's strengths at this moment"
+      },
       "candidateConcepts": [
-        {"concept": "concept at idea level — human behavior preferred over object symbol","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}}
+        {
+          "concept": "concept at idea level — human behavior preferred over object symbol — must be genuinely different from other candidates (different visual mechanism)",
+          "score": {"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},
+          "sceneDynamics": {"startState":"what happens at 0-2s","midpointChange":"what changes","endState":"what is different at the end","progressionStrength":"NONE/WEAK/MODERATE/STRONG"},
+          "adversarialCritique": "apply BORING/A-ROLL/POSTER/SYMBOL/GENERATOR tests honestly — what are the weaknesses?",
+          "scrollStopGates": {"cutawayValue":"PASS/FAIL","viewerCuriosity":"PASS/FAIL","visualActivity":"PASS/FAIL","performanceAlignment":"PASS/FAIL","renderRisk":"PASS/FAIL","progressionStrength":"PASS/FAIL"},
+          "marginOverAroll": 0,
+          "decision": "SELECTED/REJECTED — reason in one sentence"
+        },
+        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"},
+        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"},
+        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"},
+        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"}
       ],
-      "selectedConcept": "the winning concept (highest score ≥78) or USE_A_ROLL if no concept clears threshold",
-      "selectionReason": "why this concept wins over A-roll",
+      "selectedConcept": "the winning concept (B-roll beat A-roll by ≥8 AND passed SCROLL_STOP gates if applicable) or USE_A_ROLL",
+      "selectionReason": "evidence-based: describe what SPECIFICALLY happens on screen second by second. No rhetoric.",
+      "arollScore": 0,
+      "winnerScore": 0,
+      "winMargin": 0,
       "cutawayValueScore": 0,
+      "viewerCuriosityScore": 0,
       "renderRisk": "low/medium/high",
-      "whyBeatsAroll": "one sentence: why an editor would willingly cover the singer with this",
+      "whyBeatsAroll": "one sentence using observable evidence only — what CHANGES on screen that makes covering the singer worth it",
       "cast": ["CHARACTER_NAME or NONE"],
       "environment": "specific physical place",
       "subjectBlocking": "where each character's body is, what surface supports them, feet accounted for",
@@ -1570,13 +1716,24 @@ TASK:
 1. Build PerformanceContext — fuse lyrics + performance vibe + visual direction into a Combined Directorial Interpretation BEFORE analyzing anything else
 2. Analyze the lyrics THROUGH that lens — find the thesis as shaped by the performance vibe, not the surface nouns
 3. Declare a VisualLanguage consistent with both the lyrics and the performance vibe
-4. As Editor: decide which intervals genuinely benefit from B-roll vs staying on A-roll. B-roll must earn the right to replace the singer. USE_A_ROLL is always a valid editorial choice.
-5. For each B-roll interval: generate 5 concepts (different at CONCEPT level — favor human behavior over object symbolism), score all 5 using V2.1 dimensions including cutawayValue and renderability, select the winner scoring ≥78
-6. Build full SceneSpec for each selected concept — physics audit + renderability audit
+4. As Editor: decide which intervals COULD benefit from B-roll (generate editDecisions). USE_A_ROLL is always valid.
+5. For each potential B-roll interval — run the FULL ADVERSARIAL SELECTION PIPELINE:
+   a. Generate 5 GENUINELY DIVERGENT B-roll concepts (different visual mechanisms — not 5 variations of staring/proximity/stillness)
+   b. Generate 1 explicit arollCandidate (what A-roll delivers here)
+   c. Apply ADVERSARIAL TESTS to all 6 candidates (BORING/A-ROLL/POSTER/SYMBOL/GENERATOR)
+   d. Score all 6 using V2.2 dimensions including viewerCuriosity
+   e. Apply SCROLL_STOP mandatory gates if B-Roll Energy = SCROLL_STOP
+   f. Calculate marginOverAroll for each B-roll candidate
+   g. Winner = B-roll candidate that (passes all gates if applicable) AND beats A-roll by ≥8 points
+   h. If no B-roll wins by ≥8: selectedConcept = USE_A_ROLL
+6. Build full SceneSpec only for the winning concept — physics audit + renderability audit
+7. In SceneSpec action/performanceIntent: use POSITIVE behavioral direction (what characters DO and INTEND), not a list of prohibitions
 
-Remember: duration=${totalSecs}s. Excellent A-roll performance exists underneath. B-roll is surgical punctuation, not mandatory coverage. 0-4 B-roll moments are all valid if editorially justified.
+PHYSICAL SAFETY RULE: Do NOT achieve render safety by freezing everyone. If a scene requires immobility to be safe, simplify the concept so characters can move naturally.
 
-KEY QUESTION for every B-roll candidate: "Would a professional editor willingly cover the singer's performance with this specific shot at this specific lyric?" If not — USE_A_ROLL.`;
+Remember: duration=${totalSecs}s. Excellent A-roll performance exists underneath. B-roll is surgical punctuation. 0 B-roll scenes is a valid outcome if no B-roll earns it.
+
+THE CRITIC'S QUESTION for every B-roll: "After 2 seconds, what specific unresolved visual question makes the viewer watch the rest? Name it. If you cannot name it, viewerCuriosity is low and this scene probably loses to A-roll."`;
 
       const directorRaw = await hwAI(directorSys, directorUsr);
       const directorData = parseJ(directorRaw);
@@ -1585,7 +1742,13 @@ KEY QUESTION for every B-roll candidate: "Would a professional editor willingly 
       }
 
       const { creativeBrief, visualLanguage, editDecisions, sceneSpecs } = directorData;
-      const approvedScenes = sceneSpecs.filter(s => s.physicsAudit && s.physicsAudit.passed !== false);
+      const approvedScenes = sceneSpecs.filter(s => s.physicsAudit && s.physicsAudit.passed !== false && s.selectedConcept && s.selectedConcept !== "USE_A_ROLL");
+      // Count rejected CONCEPTS (candidates that lost to A-roll or failed gates), not just failed physics specs
+      const rejectedConceptCount = sceneSpecs.reduce((sum, s) => {
+        const totalCandidates = (s.candidateConcepts ? s.candidateConcepts.length : 0) + 1; // +1 for arollCandidate
+        const rejected = s.candidateConcepts ? s.candidateConcepts.filter(c => c.decision && c.decision.toUpperCase().startsWith("REJECTED")).length : 0;
+        return sum + rejected;
+      }, 0);
 
       showToast("Director approved " + approvedScenes.length + " B-roll scenes. Compiling Grok prompts…", "🎬");
 
@@ -1609,8 +1772,18 @@ GROK PROMPT PHILOSOPHY:
 
 For PERFORMANCE_DRIVEN or SCROLL_STOP scenes, prioritize: clear physical grounding, one dominant behavior, emotional intention, character reaction, natural body movement, gaze behavior, restrained camera motion, generator-safe blocking.
 
+POSITIVE DIRECTION DOCTRINE:
+Use POSITIVE behavioral direction — what characters DO and INTEND.
+Use negative constraints ONLY for specific high-risk failures (singing, camera eye contact).
+
+BAD: "No touching. No smiling. No turning. No hand movement. No eye contact. Neither character moves. Scene holds. No kissing. No singing."
+BETTER: "She maintains deliberate composure while letting her attention remain on him. He responds naturally to her presence. Their attraction is conveyed through timing, gaze, and restrained body language."
+
 BAD: "She walks exactly four steps, rotates 45 degrees, raises her left hand..."
 BETTER: "She walks past him with effortless confidence, catches his eyes briefly over her shoulder — she knows exactly what she's doing. He tries to remain composed but visibly loses his train of thought."
+
+WE CONTROL THE SEED; THE GENERATOR CONTROLS THE PERFORMANCE.
+Establish: grounded physical setup, spatial relationship, one dominant dramatic intention, simple generator-safe behavior, reaction, camera logic. Then allow natural micro-performance. Do not choreograph every limb.
 
 The seed/composition owns geometry. The prompt directs performance and intention.
 
@@ -1666,7 +1839,7 @@ Respond ONLY with valid JSON:
 
       const raw = JSON.stringify({
         songTitle: form.songTitle || "Untitled",
-        directorEngineVersion: "V2.1",
+        directorEngineVersion: "V2.2",
         performanceContext: directorData.performanceContext || null,
         creativeBrief,
         visualLanguage,
@@ -1684,7 +1857,7 @@ Respond ONLY with valid JSON:
           editDecisions,
           allSceneSpecs: sceneSpecs,
           approvedSceneCount: approvedScenes.length,
-          rejectedSceneCount: sceneSpecs.length - approvedScenes.length,
+          rejectedSceneCount: rejectedConceptCount,
           compiledClips: compilerData && compilerData.compiledClips
         }
       });
@@ -1701,7 +1874,7 @@ Respond ONLY with valid JSON:
       if (finalClips.length > 0) {
         saveReelHistory(finalClips, form.videoType).catch(e => console.warn("[ReelVault]", e.message));
       }
-      showToast("Director V2 complete — " + finalClips.length + " surgical B-roll clips ready.", "🎬");
+      showToast("Director V2.2 complete — " + finalClips.length + " B-roll clips survived adversarial selection.", "🎬");
     } catch (e) {
       setErr("Director Engine V2 failed: " + e.message);
     }
@@ -2094,7 +2267,7 @@ Respond ONLY with valid JSON:
       onClick:function(){var el=document.getElementById("hw-debug-body"); el.style.display=el.style.display==="none"?"block":"none";}},
       /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR — Approved: "+(results._debug.approvedSceneCount||0)+" / Rejected: "+(results._debug.rejectedSceneCount||0)+"  (click to expand)")
     ),
-    /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:480,overflowY:"auto"}},
+    /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:600,overflowY:"auto"}},
       results._debug.performanceContext && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(255,184,0,.2)",background:"rgba(255,184,0,.04)"}},
         /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"var(--gold)",marginBottom:6,letterSpacing:.5}}, "PERFORMANCE CONTEXT"),
         /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.7)",lineHeight:1.7}},
@@ -2106,8 +2279,11 @@ Respond ONLY with valid JSON:
         )
       ),
       (results._debug.allSceneSpecs||[]).map(function(spec,i){
-        const bestScore = spec.candidateConcepts ? Math.max.apply(null,spec.candidateConcepts.map(function(c){return (c.score&&c.score.total)||0;})) : 0;
+        const winnerScore = spec.winnerScore || (spec.candidateConcepts ? Math.max.apply(null,spec.candidateConcepts.map(function(c){return (c.score&&c.score.total)||0;})) : 0);
+        const arollScore = spec.arollScore || (spec.arollCandidate && spec.arollCandidate.score ? spec.arollCandidate.score.total : 0);
+        const winMargin = spec.winMargin || (winnerScore - arollScore);
         const passed = spec.physicsAudit && spec.physicsAudit.passed !== false;
+        const isArollWin = !spec.selectedConcept || spec.selectedConcept === "USE_A_ROLL";
         const renderRisk = (spec.renderRisk || (spec.physicsAudit && spec.physicsAudit.renderRisk) || "").toLowerCase();
         const morphRisk = (spec.physicsAudit && spec.physicsAudit.morphRisk || "").toLowerCase();
         const riskColor = (r) => r==="low"?"#00E599":r==="medium"?"var(--gold)":"#ff6b6b";
@@ -2115,23 +2291,38 @@ Respond ONLY with valid JSON:
         return /*#__PURE__*/React.createElement("div", {key:i,style:{marginBottom:10,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",background:"rgba(0,0,0,.3)"}},
           /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8,marginBottom:5,flexWrap:"wrap"}},
             /*#__PURE__*/React.createElement("span", {style:{fontSize:11,fontWeight:700,fontFamily:"JetBrains Mono,monospace",color:"rgba(255,120,120,.9)"}}, spec.id),
-            /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:passed?"rgba(0,229,153,.15)":"rgba(255,100,100,.15)",color:passed?"#00E599":"#ff6b6b",fontWeight:700}}, passed?"PASS":"FAIL"),
-            /*#__PURE__*/React.createElement("span", {style:{fontSize:10,color:"rgba(255,184,0,.7)"}}, "score: "+bestScore+"/100"),
+            /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:isArollWin?"rgba(255,184,0,.15)":passed?"rgba(0,229,153,.15)":"rgba(255,100,100,.15)",color:isArollWin?"var(--gold)":passed?"#00E599":"#ff6b6b",fontWeight:700}}, isArollWin?"A-ROLL WINS":passed?"B-ROLL PASS":"FAIL"),
+            !isArollWin && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,color:"rgba(255,184,0,.7)"}}, "winner: "+winnerScore+" vs A-roll: "+arollScore+" (margin: +"+(winMargin||0)+")"),
             spec.cutawayValueScore != null && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:"rgba(123,47,190,.15)",color:"#b57bee",fontWeight:700}}, "cutaway: "+spec.cutawayValueScore+"/20"),
+            spec.viewerCuriosityScore != null && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:"rgba(0,150,255,.12)",color:"#60b8ff",fontWeight:700}}, "curiosity: "+spec.viewerCuriosityScore+"/20"),
             morphRisk && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:riskBg(morphRisk),color:riskColor(morphRisk),fontWeight:700}}, "morph: "+morphRisk),
             renderRisk && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:riskBg(renderRisk),color:riskColor(renderRisk),fontWeight:700}}, "render: "+renderRisk)
           ),
           /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Lyric: "), spec.lyricContext),
-          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Won: "), spec.selectedConcept),
-          spec.whyBeatsAroll && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(0,229,153,.8)",marginTop:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(0,229,153,.9)"}}, "Why beats A-roll: "), spec.whyBeatsAroll),
-          spec.candidateConcepts && spec.candidateConcepts.length > 0 && /*#__PURE__*/React.createElement("details", {style:{marginTop:6}},
-            /*#__PURE__*/React.createElement("summary", {style:{fontSize:10,color:"rgba(255,255,255,.4)",cursor:"pointer"}}, "All "+spec.candidateConcepts.length+" candidates"),
-            spec.candidateConcepts.map(function(cc,ci){
-              const isWinner = cc.concept === spec.selectedConcept;
-              return /*#__PURE__*/React.createElement("div", {key:ci,style:{fontSize:10,marginTop:4,padding:"4px 8px",borderRadius:4,background:isWinner?"rgba(0,229,153,.07)":"rgba(255,255,255,.02)",borderLeft:"2px solid "+(isWinner?"#00E599":"rgba(255,255,255,.1)"),color:"rgba(255,255,255,"+(isWinner?".8":".4")+")"}},
-                (cc.score&&cc.score.total||0)+"/100 — "+cc.concept
-              );
-            })
+          !isArollWin && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Won: "), spec.selectedConcept),
+          spec.whyBeatsAroll && !isArollWin && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(0,229,153,.8)",marginTop:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(0,229,153,.9)"}}, "Why beats A-roll: "), spec.whyBeatsAroll),
+          /*#__PURE__*/React.createElement("details", {style:{marginTop:6}},
+            /*#__PURE__*/React.createElement("summary", {style:{fontSize:10,color:"rgba(255,255,255,.4)",cursor:"pointer"}}, "Full competition ("+(spec.candidateConcepts?spec.candidateConcepts.length:0)+" B-roll + A-roll)"),
+            /*#__PURE__*/React.createElement("div", {style:{marginTop:6}},
+              spec.arollCandidate && /*#__PURE__*/React.createElement("div", {style:{fontSize:10,marginTop:4,padding:"5px 8px",borderRadius:4,background:isArollWin?"rgba(255,184,0,.12)":"rgba(255,255,255,.03)",borderLeft:"2px solid "+(isArollWin?"var(--gold)":"rgba(255,255,255,.15)"),color:isArollWin?"rgba(255,184,0,.9)":"rgba(255,255,255,.5)"}},
+                /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,marginBottom:2}}, "A-ROLL: "+(spec.arollCandidate.score?spec.arollCandidate.score.total:arollScore)+"/100 — "+spec.arollCandidate.concept+(isArollWin?" ✓ WINNER":"")),
+                spec.arollCandidate.adversarialCritique && /*#__PURE__*/React.createElement("div", {style:{color:"rgba(255,255,255,.4)",fontStyle:"italic"}}, spec.arollCandidate.adversarialCritique)
+              ),
+              (spec.candidateConcepts||[]).map(function(cc,ci){
+                const isWinner = cc.concept === spec.selectedConcept;
+                const rejected = cc.decision && cc.decision.toUpperCase().startsWith("REJECTED");
+                const gateFailures = cc.scrollStopGates ? Object.entries(cc.scrollStopGates).filter(([k,v])=>v==="FAIL").map(([k])=>k).join(", ") : "";
+                return /*#__PURE__*/React.createElement("div", {key:ci,style:{fontSize:10,marginTop:4,padding:"5px 8px",borderRadius:4,background:isWinner?"rgba(0,229,153,.08)":"rgba(255,255,255,.02)",borderLeft:"2px solid "+(isWinner?"#00E599":rejected?"rgba(255,100,100,.3)":"rgba(255,255,255,.1)"),color:"rgba(255,255,255,"+(isWinner?".85":".45")+")"}},
+                  /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,marginBottom:2}}, "C"+(ci+1)+": "+(cc.score&&cc.score.total||0)+"/100 vs A-roll "+(cc.marginOverAroll!=null?(cc.marginOverAroll>=0?"+":"")+cc.marginOverAroll:"?")+
+                    (isWinner?" ✓ SELECTED":rejected?" ✗ REJECTED":"")),
+                  /*#__PURE__*/React.createElement("div", {style:{marginBottom:2}}, cc.concept),
+                  cc.sceneDynamics && cc.sceneDynamics.progressionStrength && /*#__PURE__*/React.createElement("div", {style:{color:"rgba(100,180,255,.7)"}}, "Progression: "+cc.sceneDynamics.progressionStrength+(cc.sceneDynamics.midpointChange?" — "+cc.sceneDynamics.midpointChange:"")),
+                  gateFailures && /*#__PURE__*/React.createElement("div", {style:{color:"rgba(255,100,100,.7)"}}, "Gate failures: "+gateFailures),
+                  cc.adversarialCritique && /*#__PURE__*/React.createElement("div", {style:{color:"rgba(255,255,255,.35)",fontStyle:"italic",marginTop:2}}, cc.adversarialCritique),
+                  cc.decision && !isWinner && /*#__PURE__*/React.createElement("div", {style:{color:"rgba(255,100,100,.6)",marginTop:2}}, cc.decision)
+                );
+              })
+            )
           )
         );
       })
