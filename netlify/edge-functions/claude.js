@@ -2,11 +2,29 @@
 // Keeps ANTHROPIC_API_KEY server-side only. Streams response back to client
 // so long Sonnet generations don't hit Edge Function execution limits.
 
+// Allowed origins: production + Netlify preview deploys (never wildcard)
+const ALLOWED_ORIGINS = [
+  "https://hitwizardai.com",
+];
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Netlify preview deploys: https://deploy-preview-N--hitwizardai.netlify.app
+  if (/^https:\/\/deploy-preview-\d+--hitwizardai\.netlify\.app$/.test(origin)) return true;
+  // Netlify branch deploys: https://<branch>--hitwizardai.netlify.app
+  if (/^https:\/\/[a-z0-9-]+--hitwizardai\.netlify\.app$/.test(origin)) return true;
+  return false;
+}
+
 export default async function handler(request, context) {
+  const requestOrigin = request.headers.get("origin") || "";
+  const corsOrigin = isAllowedOrigin(requestOrigin) ? requestOrigin : "https://hitwizardai.com";
+
   const headers = {
-    "Access-Control-Allow-Origin": "https://hitwizardai.com",
+    "Access-Control-Allow-Origin": corsOrigin,
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
   };
 
   if (request.method === "OPTIONS") {
