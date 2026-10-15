@@ -1236,14 +1236,19 @@ function VideoEngine(_ref0) {
               return char.name + ": " + (roleMap[role]||"Lead Singer");
             }).join("\n");
           })() + "\n\n" + (function(){
-            const rows = form.sectionRows||[];
-            const filledRows = rows.filter(function(r){return r.ts||r.section;});
-            if(filledRows.length > 0){
-              return "SONG SECTIONS — your visual bible:\n" + filledRows.map(function(r){
-                return r.ts + " | [" + (r.section||"Section") + "] " + (r.lyrics||"") + (r.energy ? " | ENERGY: " + r.energy : "");
-              }).join("\n") + "\n\nCRITICAL: Match every clip to its timestamp section. Use the ENERGY description as the exact visual tone.";
+            const lyricsText = (form.lyrics || "").trim();
+            if(lyricsText.length > 0){
+              return "LYRICS — AUTO-SEGMENT THESE:\n" + lyricsText + "\n\n" +
+                "SEGMENTATION MANDATE: Read every line of these lyrics. Auto-detect the song structure " +
+                "(Intro, Verse 1, Pre-Chorus, Chorus, Bridge, Outro — whatever applies). " +
+                "For EACH section:\n" +
+                "  1. Name the section (e.g. [Verse 1])\n" +
+                "  2. Identify the dominant emotional energy (e.g. melancholic, building, triumphant, tender, explosive)\n" +
+                "  3. Pull the key lyric lines that define that energy\n" +
+                "  4. Generate clips that MATCH that section's energy exactly — never use chorus energy on a verse\n" +
+                "Distribute clips proportionally across sections. More clips where the emotional weight is highest.";
             }
-            return "LYRICS:\n" + (form.lyrics || "No lyrics — cinematic performance clips");
+            return "No lyrics provided — generate cinematic performance clips with luxury visual doctrine.";
           })() + "\n\nSPATIAL DOCTRINE: 3-4 physical objects with exact distances. TRACKING CAMERA always moving. 5-7 micro-movements per clip. Eye level always. 18-inch formula for close-ups. Warm golden lighting.\n\nReturn ONLY this JSON (no apostrophes):\n{\"clips\":[{\"number\":"+ bStart + ",\"timestamp\":\"" + Math.floor((bStart-1)*clipLen/60) + ":" + String(((bStart-1)*clipLen)%60).padStart(2,"0") + "\",\"type\":\"A-ROLL\",\"characters\":[\"CELINE\"],\"section\":\"section name\",\"lyricMoment\":\"exact lyric\",\"emotionalEnergy\":\"energy tone\",\"sceneDescription\":\"scene\",\"grokPrompt\":\"complete prompt with DNA spatial camera micro-movements\"}]}"
         ).then(function(batchRaw) {
           try {
@@ -1505,90 +1510,25 @@ function VideoEngine(_ref0) {
     })()
   )),
 
-  // ── STRUCTURED TIMESTAMP TABLE ──
+  // ── SONG LYRICS — THE HERO FIELD ──
   /*#__PURE__*/React.createElement("div", {className:"field"},
-    /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Song Sections with Timestamps ",
-      /*#__PURE__*/React.createElement("span", {className:"lbl-n"}, "— the AI uses this as its visual bible")),
+    /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Paste Your Lyrics ",
+      /*#__PURE__*/React.createElement("span", {className:"lbl-n"}, "— AI reads them and builds your entire video script")),
     /*#__PURE__*/React.createElement("div", {
-      style:{background:"rgba(255,184,0,.04)",border:"1px solid rgba(255,184,0,.15)",borderRadius:8,padding:"10px 14px",marginBottom:10,fontSize:11,color:"var(--muted)",lineHeight:1.7}
+      style:{background:"linear-gradient(135deg,rgba(123,47,190,.08),rgba(255,184,0,.05))",border:"1px solid rgba(123,47,190,.3)",borderRadius:10,padding:"12px 16px",marginBottom:12,fontSize:12,color:"rgba(255,255,255,.6)",lineHeight:1.8,display:"flex",alignItems:"flex-start",gap:10}
     },
-      "Fill in each section. The ", /*#__PURE__*/React.createElement("span", {style:{color:"var(--gold)"}}, "Emotional Energy"),
-      " column is critical — it tells the AI the visual tone: humming, soft, building, outburst, defiant, breaking, devastated, powerful, tender, etc."
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:20,flexShrink:0}}, "🤖"),
+      /*#__PURE__*/React.createElement("span", null,
+        /*#__PURE__*/React.createElement("strong", {style:{color:"#b57bee"}}, "AI Auto-Pilot: "),
+        "Paste your lyrics and hit Generate. HitWizard reads every line, detects your song structure (Intro, Verse, Chorus, Bridge), scores each section's emotional energy, and writes every clip prompt — no timestamps, no setup, no wasted time."
+      )
     ),
-    // Table header
-    /*#__PURE__*/React.createElement("div", {
-      style:{display:"grid",gridTemplateColumns:"120px 130px 1fr 1fr 36px",gap:6,marginBottom:6}
-    },
-      ["Timestamp","Section","Lyrics / Description","Emotional Energy",""].map(function(h,i){
-        return /*#__PURE__*/React.createElement("div", {
-          key:i,
-          style:{fontSize:10,fontWeight:700,color:"var(--muted)",letterSpacing:1,fontFamily:"JetBrains Mono,monospace",padding:"4px 8px"}
-        }, h);
-      })
-    ),
-    // Rows
-    (form.sectionRows || [{ts:"0:00-0:12",section:"Intro",lyrics:"",energy:""},{ts:"0:12-0:39",section:"Verse 1",lyrics:"",energy:""},{ts:"0:39-0:53",section:"Pre-Chorus",lyrics:"",energy:""},{ts:"0:53-1:25",section:"Chorus",lyrics:"",energy:""}]).map(function(row, idx){
-      const rows = form.sectionRows || [{ts:"0:00-0:12",section:"Intro",lyrics:"",energy:""},{ts:"0:12-0:39",section:"Verse 1",lyrics:"",energy:""},{ts:"0:39-0:53",section:"Pre-Chorus",lyrics:"",energy:""},{ts:"0:53-1:25",section:"Chorus",lyrics:"",energy:""}];
-      const updateRow = function(field, val){
-        const updated = rows.map(function(r,i){ return i===idx ? Object.assign({},r,{[field]:val}) : r; });
-        f("sectionRows", updated);
-      };
-      return /*#__PURE__*/React.createElement("div", {
-        key:idx,
-        style:{display:"grid",gridTemplateColumns:"120px 130px 1fr 1fr 36px",gap:6,marginBottom:6}
-      },
-        /*#__PURE__*/React.createElement("input", {
-          className:"inp",style:{fontSize:12,padding:"8px 10px",fontFamily:"JetBrains Mono,monospace"},
-          placeholder:"0:00-0:12",value:row.ts||"",
-          onChange:function(e){updateRow("ts",e.target.value);}
-        }),
-        /*#__PURE__*/React.createElement("input", {
-          className:"inp",style:{fontSize:12,padding:"8px 10px"},
-          placeholder:"Intro",value:row.section||"",
-          onChange:function(e){updateRow("section",e.target.value);}
-        }),
-        /*#__PURE__*/React.createElement("input", {
-          className:"inp",style:{fontSize:12,padding:"8px 10px"},
-          placeholder:"She's humming, piano only...",value:row.lyrics||"",
-          onChange:function(e){updateRow("lyrics",e.target.value);}
-        }),
-        /*#__PURE__*/React.createElement("input", {
-          className:"inp",style:{fontSize:12,padding:"8px 10px"},
-          placeholder:"Melancholic, intimate, soft...",value:row.energy||"",
-          onChange:function(e){updateRow("energy",e.target.value);}
-        }),
-        /*#__PURE__*/React.createElement("button", {
-          style:{background:"rgba(255,100,100,.15)",border:"1px solid rgba(255,100,100,.3)",borderRadius:8,cursor:"pointer",color:"#FF6B6B",fontSize:16,fontWeight:700},
-          onClick:function(e){
-            e.preventDefault();
-            const updated = rows.filter(function(_,i){return i!==idx;});
-            f("sectionRows", updated.length ? updated : [{ts:"",section:"",lyrics:"",energy:""}]);
-          }
-        }, "×")
-      );
-    }),
-    // Add row button
-    /*#__PURE__*/React.createElement("button", {
-      className:"btn btn-out btn-sm",
-      style:{marginTop:4,width:"100%"},
-      onClick:function(e){
-        e.preventDefault();
-        const rows = form.sectionRows || [];
-        f("sectionRows", [...rows, {ts:"",section:"",lyrics:"",energy:""}]);
-      }
-    }, "+ Add Section")
-  ),
-
-  // ── SONG LYRICS (still needed for weapons other than video) ──
-  /*#__PURE__*/React.createElement("div", {className:"field"},
-    /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Full Lyrics ",
-      /*#__PURE__*/React.createElement("span", {className:"lbl-n"}, "— optional if sections above are filled")),
     /*#__PURE__*/React.createElement("textarea", {
       className:"txa",
-      placeholder:"Paste your full lyrics here for additional AI context.",
+      style:{minHeight:220,fontFamily:"JetBrains Mono,monospace",fontSize:12,lineHeight:1.8,letterSpacing:0.2},
+      placeholder:"Paste your full lyrics here...\n\n[Verse 1]\nShe walks in like the tide...\n\n[Chorus]\nI can't let go, I can't let go...",
       value:form.lyrics,
-      onChange:e=>f("lyrics",e.target.value),
-      style:{minHeight:120,fontFamily:"JetBrains Mono,monospace",fontSize:12,lineHeight:1.8}
+      onChange:e=>f("lyrics",e.target.value)
     })
   ), /*#__PURE__*/React.createElement("div", {
     className: "field"
