@@ -477,6 +477,8 @@ window.HW_USAGE = {
   // Get limit for a weapon on current tier
   getLimit(weaponType) {
     const tier = this.getTier();
+    // Captain-tier and above = unlimited everything
+    if (["captain","admiral","fleet_commander"].includes(tier)) return -1;
     const limits = this.LIMITS[tier] || this.LIMITS.free;
     return limits[weaponType] !== undefined ? limits[weaponType] : 3;
   },
