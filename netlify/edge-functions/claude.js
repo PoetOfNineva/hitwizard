@@ -33,7 +33,7 @@ export default async function handler(request, context) {
 
     const payload = {
       model: "claude-sonnet-4-6",
-      max_tokens: requestBody.max_tokens || 4000,
+      max_tokens: requestBody.max_tokens || 8000,
       system: requestBody.system || "",
       messages: requestBody.messages || [],
       stream: true

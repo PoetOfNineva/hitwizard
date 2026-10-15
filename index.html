@@ -338,11 +338,11 @@ async function hwAI(sys, usr) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          max_tokens: 8000,
           system: sys,
           messages: [{role: "user", content: usr}]
         })
       });
-      // Parse error responses
       if (!res.ok) {
         let errMsg = "Something went wrong (" + res.status + "). Please try again.";
         try {
@@ -352,27 +352,53 @@ async function hwAI(sys, usr) {
         } catch(_) {}
         throw new Error(errMsg);
       }
-      // claude.js returns the raw Anthropic JSON response (non-streaming)
-      // Shape: { content: [ { type: "text", text: "..." } ], ... }
-      const rawBody = await res.text();
-      let fullText = "";
-      try {
-        const parsed = JSON.parse(rawBody);
-        // Standard Anthropic messages response
-        if (parsed.content && Array.isArray(parsed.content)) {
-          fullText = parsed.content
-            .filter(b => b.type === "text")
-            .map(b => b.text)
-            .join("");
-        } else if (parsed.error) {
-          throw new Error(parsed.error.message || String(parsed.error));
+      // Edge function streams SSE: "data: {...content_block_delta...}"
+      // Falls back to plain JSON body if Content-Type is not event-stream
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("event-stream") || contentType.includes("text/plain")) {
+        // SSE streaming path (live Netlify edge function)
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let buffer = "";
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, {stream: true});
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6).trim();
+              if (data === "[DONE]") break;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.type === "content_block_delta" && parsed.delta && parsed.delta.text) {
+                  fullText += parsed.delta.text;
+                }
+              } catch(ex) {}
+            }
+          }
         }
-      } catch(parseErr) {
-        // If the body itself isn't valid JSON, maybe it's plain text — use as-is
-        if (!fullText) fullText = rawBody;
+        if (!fullText || !fullText.trim()) throw new Error("No response received. Please try again.");
+        return fullText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+      } else {
+        // Non-streaming JSON path (local functions/claude.js dev server)
+        const rawBody = await res.text();
+        let fullText = "";
+        try {
+          const parsed = JSON.parse(rawBody);
+          if (parsed.content && Array.isArray(parsed.content)) {
+            fullText = parsed.content.filter(b => b.type === "text").map(b => b.text).join("");
+          } else if (parsed.error) {
+            throw new Error(parsed.error.message || String(parsed.error));
+          }
+        } catch(parseErr) {
+          if (!fullText) fullText = rawBody;
+        }
+        if (!fullText || !fullText.trim()) throw new Error("No response received. Please try again.");
+        return fullText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       }
-      if (!fullText || !fullText.trim()) throw new Error("No response received. Please try again.");
-      return fullText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
     } catch (e) {
       if (i === retries) throw e;
       await new Promise(r => setTimeout(r, 1500 * (i + 1)));
