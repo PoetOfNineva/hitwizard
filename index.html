@@ -335,6 +335,7 @@ async function hwAI(sys, usr) {
   let opts = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   for (let i = 0; i <= retries; i++) {
     try {
+      const callStart = Date.now();
       const res = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -362,6 +363,7 @@ async function hwAI(sys, usr) {
         const decoder = new TextDecoder();
         let fullText = "";
         let buffer = "";
+        let inputTokens = null, outputTokens = null;
         while (true) {
           const {done, value} = await reader.read();
           if (done) break;
@@ -374,6 +376,15 @@ async function hwAI(sys, usr) {
               if (data === "[DONE]") break;
               try {
                 const parsed = JSON.parse(data);
+                // Capture token usage from message_start event
+                if (parsed.type === "message_start" && parsed.message && parsed.message.usage) {
+                  inputTokens = parsed.message.usage.input_tokens;
+                  outputTokens = parsed.message.usage.output_tokens || 0;
+                }
+                // Capture final output token count from message_delta
+                if (parsed.type === "message_delta" && parsed.usage && parsed.usage.output_tokens) {
+                  outputTokens = parsed.usage.output_tokens;
+                }
                 if (parsed.type === "content_block_delta" && parsed.delta && parsed.delta.text) {
                   fullText += parsed.delta.text;
                 }
@@ -382,6 +393,11 @@ async function hwAI(sys, usr) {
           }
         }
         if (!fullText || !fullText.trim()) throw new Error("No response received. Please try again.");
+        // Log token usage if available — helps diagnose input-size vs output-size latency
+        if (inputTokens !== null && opts._stage) {
+          console.log("[HW-TOKENS] stage=" + opts._stage + " input=" + inputTokens + " output=" + outputTokens + " maxAllowed=" + (opts.max_tokens||8000) + " wallMs=" + (Date.now()-callStart));
+        }
+        if (opts._tokenSink) opts._tokenSink({ inputTokens, outputTokens, wallMs: Date.now()-callStart });
         return fullText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       } else {
         // Non-streaming JSON path (local functions/claude.js dev server)
@@ -1390,8 +1406,7 @@ MEDIUM: simple touch with complexity, close two-shots with blocking
 HIGH: hands on face/hair, intertwined bodies, sequential contacts, precise finger behavior, synchronized choreography
 HIGH: ELIMINATE. MEDIUM: simplify to LOW or flag +15 margin.
 
-CHARACTER DNA: ${charDNA}
-CAST: ${castNames} — casting follows concept, never mechanical alternation.
+CAST: ${castNames} — casting follows concept, never mechanical alternation. (Full character descriptions provided to Compiler separately.)
 
 ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized reproduction = IP theft.
 
@@ -1438,6 +1453,8 @@ ACTIVE VISUAL ENGINE required for SCROLL_STOP — at least one: locomotion, purs
 "Two people stare intensely" = FAIL.
 
 ADVERSARIAL TESTS: BORING (no unresolved visual question→-vc), A-ROLL (face beats it→-cv), POSTER (still image→-va), SYMBOL (inert idea→-cv-vc).
+
+GENERIC LOCOMOTION TEST: If the seed's ENTIRE dramatic event is "person walks + glances back" or "person walks toward/away" with no additional event (no social exchange, no reversal, no surprise, no arrival at something), penalize viewerCuriosity by -5 and originality by -3. Walking alone is not a dramatic event.
 
 VISUAL MECHANISM DIVERSITY GATE — runs after scoring, before finalizing:
 Each seed has a mechanism label from: LOCOMOTION-APPROACH, LOCOMOTION-DEPARTURE, SOCIAL-INTERACTION, ENVIRONMENTAL-ACTIVITY, REVEAL-TRANSFORMATION, ENTRANCE-ARRIVAL, PURSUIT-GAME, INTERRUPTION.
@@ -1534,15 +1551,22 @@ If violation found: REWRITE into intention-level language ONCE.
 If still violated after one rewrite: replace with A-roll note (validationFailed: true).
 Do NOT enter recursive repair loops.
 
+FIDELITY CHECK (run before returning):
+For each compiled clip, verify: does the grokPrompt preserve the seed's specific location, primary action, and central visual hook?
+If not — rewrite to restore them before responding. This is separate from the hard validator above.
+
 Respond ONLY with valid JSON:
 {
   "compiledClips": [
     {
       "intervalId": "0:09-0:19",
       "grokPrompt": "the compiled prompt 90-160 words",
+      "intervalDurationSecs": 9,
+      "needsExtension": false,
+      "extensionNote": "omit if needsExtension=false; otherwise 'This interval is Xs — use Grok Extend or plan multiple shots'",
       "validationPassed": true,
       "warningFlags": ["any concern"],
-      "simplificationsApplied": "any dramatic simplifications made vs original concept"
+      "simplificationsApplied": "only if dramatic changes were necessary; otherwise omit"
     }
   ]
 }`;
@@ -1569,7 +1593,8 @@ MEDIUM risk seeds: simplify before returning, flag generatorRisk: "MEDIUM".
 LOW risk seeds: include as-is.
 0 B-roll intervals is a valid outcome if A-roll is stronger throughout.`;
 
-      const plannerRaw = await hwAI(plannerSys, plannerUsr, 2, {max_tokens: 2500});
+      let plannerTokens = {};
+      const plannerRaw = await hwAI(plannerSys, plannerUsr, 2, {max_tokens: 2500, _stage:"planner", _tokenSink: t => { plannerTokens = t; }});
       perfMark("planner_end");
       const plannerData = parseJ(plannerRaw);
       if (!plannerData || !plannerData.intervals) {
@@ -1609,7 +1634,8 @@ For each interval: score all seeds, apply adversarial tests, select winner or US
 Apply diversity check across all winners — reject repetitive visual mechanisms.
 Return intervalResults array with one entry per interval.`;
 
-        const criticRaw = await hwAI(criticSys, criticUsr, 1, {max_tokens: 5000});
+        let criticTokens = {};
+        const criticRaw = await hwAI(criticSys, criticUsr, 1, {max_tokens: 5000, _stage:"critic", _tokenSink: t => { criticTokens = t; }});
         perfMark("critic_end");
         criticData = parseJ(criticRaw);
         if (criticData && criticData.intervalResults) {
@@ -1626,22 +1652,48 @@ Return intervalResults array with one entry per interval.`;
         // CALL 3 — COMPILER (all winners in ONE batched call)
         perfMark("compiler_start");
         showToast("Writing prompts…", "🎬");
+        // Build duration-aware winner list for Compiler
+        const plannerIntervalMap = {};
+        allIntervals.forEach(iv => { plannerIntervalMap[iv.startTime + "-" + iv.endTime] = iv; });
+
         const compilerUsr = `Compile Grok prompts for ALL approved B-roll winners below.
 Return one compiledClip per winner in the same order.
 Apply the hard validator inside this call — rewrite once if violation found.
 
-APPROVED WINNERS:
-${JSON.stringify(approvedWinners.map(w => ({
-  intervalId: w.startTime + "-" + w.endTime,
-  startTime: w.startTime,
-  endTime: w.endTime,
-  winnerConcept: w.winner,
-  winnerRisk: w.winnerRisk || "LOW",
-  activeVisualEngine: w.activeVisualEngine || "",
-  selectionReason: w.selectionReason || ""
-})), null, 2)}`;
+FIDELITY RULE: Preserve the winning seed's specific location, primary dramatic action, and visual hook.
+You may simplify choreography to prevent morphing artifacts, but you MUST NOT erase:
+- The location/setting the seed names
+- The specific dramatic event or social situation
+- The emotional reversal or visual hook that won the Critic
+- The mechanism type (stated in winnerMechanism)
+If the seed says "bar counter, Emily notices Kiko and conceals a smile" — the compiled prompt MUST have a bar counter and a suppressed reaction. Not "a lounge where two people feel drawn together."
 
-        const compilerRaw = await hwAI(compilerSys, compilerUsr, 1, {max_tokens: 4000});
+APPROVED WINNERS:
+${JSON.stringify(approvedWinners.map(w => {
+  const ivKey = w.startTime + "-" + w.endTime;
+  const plannerIv = plannerIntervalMap[ivKey] || {};
+  const matchedSeed = (plannerIv.conceptSeeds || []).find(s => w.winner && s.seed && w.winner.includes(s.seed.substring(0, 40)));
+  const fullSeedText = matchedSeed ? matchedSeed.seed : w.winner;
+  const startParts = w.startTime.replace(":", "m").split("m");
+  const endParts = w.endTime.replace(":", "m").split("m");
+  const startSecs = (parseInt(startParts[0]||0)*60) + parseInt(startParts[1]||0);
+  const endSecs = (parseInt(endParts[0]||0)*60) + parseInt(endParts[1]||0);
+  const durationSecs = endSecs - startSecs;
+  return {
+    intervalId: ivKey,
+    startTime: w.startTime,
+    endTime: w.endTime,
+    intervalDurationSecs: durationSecs,
+    needsExtension: durationSecs > 8,
+    winnerSeed: fullSeedText,
+    winnerMechanism: w.winnerMechanism || "UNKNOWN",
+    winnerRisk: w.winnerRisk || "LOW",
+    activeVisualEngine: w.activeVisualEngine || ""
+  };
+}), null, 2)}`;
+
+        let compilerTokens = {};
+        const compilerRaw = await hwAI(compilerSys, compilerUsr, 1, {max_tokens: 4000, _stage:"compiler", _tokenSink: t => { compilerTokens = t; }});
         perfMark("compiler_end");
         compilerData = parseJ(compilerRaw);
         console.log("[HW-DEBUG] V3 Compiler: compiledClips=" + (compilerData&&compilerData.compiledClips?compilerData.compiledClips.length:0));
@@ -1654,8 +1706,14 @@ ${JSON.stringify(approvedWinners.map(w => ({
       const perfReport = {
         modelCallCount,
         plannerLatencyMs: perfElapsed("planner_start", "planner_end"),
+        plannerInputTokens: plannerTokens.inputTokens || null,
+        plannerOutputTokens: plannerTokens.outputTokens || null,
         criticLatencyMs: brollIntervals.length > 0 ? perfElapsed("critic_start", "critic_end") : 0,
+        criticInputTokens: criticTokens.inputTokens || null,
+        criticOutputTokens: criticTokens.outputTokens || null,
         compilerLatencyMs: approvedWinners.length > 0 ? perfElapsed("compiler_start", "compiler_end") : 0,
+        compilerInputTokens: compilerTokens.inputTokens || null,
+        compilerOutputTokens: compilerTokens.outputTokens || null,
         totalGenerationLatencyMs: perfElapsed("total_start", "total_end")
       };
       console.log("[HW-PERF]", JSON.stringify(perfReport));
@@ -1751,6 +1809,9 @@ ${JSON.stringify(approvedWinners.map(w => ({
           activeVisualEngine: winner.activeVisualEngine || "",
           winMargin: winner.winMargin || 0,
           grokPrompt: compiled.grokPrompt,
+          intervalDurationSecs: compiled.intervalDurationSecs || null,
+          needsExtension: compiled.needsExtension || false,
+          extensionNote: compiled.extensionNote || "",
           warningFlags: compiled.warningFlags || [],
           simplificationsApplied: compiled.simplificationsApplied || ""
         });
@@ -1765,7 +1826,7 @@ ${JSON.stringify(approvedWinners.map(w => ({
 
       const raw = JSON.stringify({
         songTitle: form.songTitle || "Untitled",
-        directorEngineVersion: "V3.1",
+        directorEngineVersion: "V3.2",
         recordIntent: plannerData.recordIntent || null,
         visualLanguage: plannerData.visualLanguage || null,
         totalDuration: totalSecs,
@@ -2191,16 +2252,16 @@ ${JSON.stringify(approvedWinners.map(w => ({
   ), results._debug && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(255,100,100,.2)",borderRadius:12,overflow:"hidden"}},
     /*#__PURE__*/React.createElement("div", {style:{background:"rgba(255,100,100,.06)",padding:"10px 16px",cursor:"pointer"},
       onClick:function(){var el=document.getElementById("hw-debug-body"); el.style.display=el.style.display==="none"?"block":"none";}},
-      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR V3.1 — B-roll: "+(results._debug.brollCount||0)+" | A-roll: "+(results._debug.arollCount||0)+" | Calls: "+(results._debug.perfReport&&results._debug.perfReport.modelCallCount||"?")+" | "+((results._debug.perfReport&&results._debug.perfReport.totalGenerationLatencyMs)?Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000)+"s total":"")+"  (click to expand)")
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR V3.2 — B-roll: "+(results._debug.brollCount||0)+" | A-roll: "+(results._debug.arollCount||0)+" | Calls: "+(results._debug.perfReport&&results._debug.perfReport.modelCallCount||"?")+" | "+((results._debug.perfReport&&results._debug.perfReport.totalGenerationLatencyMs)?Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000)+"s total":"")+"  (click to expand)")
     ),
     /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:600,overflowY:"auto"}},
       results._debug.perfReport && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(100,200,255,.2)",background:"rgba(100,200,255,.04)"}},
-        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"rgba(100,200,255,.9)",marginBottom:6,letterSpacing:.5}}, "V3 PERFORMANCE REPORT"),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"rgba(100,200,255,.9)",marginBottom:6,letterSpacing:.5}}, "V3.2 PERFORMANCE REPORT"),
         /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.7)",lineHeight:1.9,fontFamily:"monospace"}},
           /*#__PURE__*/React.createElement("div", null, "Model calls: ", /*#__PURE__*/React.createElement("strong", {style:{color: results._debug.perfReport.modelCallCount > 3 ? "red" : "rgba(100,255,100,.9)"}}, results._debug.perfReport.modelCallCount, " / 3 max")),
-          /*#__PURE__*/React.createElement("div", null, "Planner:  ", results._debug.perfReport.plannerLatencyMs, "ms"),
-          /*#__PURE__*/React.createElement("div", null, "Critic:   ", results._debug.perfReport.criticLatencyMs, "ms"),
-          /*#__PURE__*/React.createElement("div", null, "Compiler: ", results._debug.perfReport.compilerLatencyMs, "ms"),
+          /*#__PURE__*/React.createElement("div", null, "Planner:  ", results._debug.perfReport.plannerLatencyMs, "ms", results._debug.perfReport.plannerInputTokens ? " | in="+results._debug.perfReport.plannerInputTokens+" out="+results._debug.perfReport.plannerOutputTokens : ""),
+          /*#__PURE__*/React.createElement("div", null, "Critic:   ", results._debug.perfReport.criticLatencyMs, "ms", results._debug.perfReport.criticInputTokens ? " | in="+results._debug.perfReport.criticInputTokens+" out="+results._debug.perfReport.criticOutputTokens : ""),
+          /*#__PURE__*/React.createElement("div", null, "Compiler: ", results._debug.perfReport.compilerLatencyMs, "ms", results._debug.perfReport.compilerInputTokens ? " | in="+results._debug.perfReport.compilerInputTokens+" out="+results._debug.perfReport.compilerOutputTokens : ""),
           /*#__PURE__*/React.createElement("div", null, "Total:    ", /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(100,255,100,.9)"}}, results._debug.perfReport.totalGenerationLatencyMs, "ms (", Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000), "s)")),
           /*#__PURE__*/React.createElement("div", null, "Timeline complete: ", results._debug.timelineComplete ? "✅" : "❌ INVARIANT VIOLATED")
         )
@@ -2329,7 +2390,9 @@ ${JSON.stringify(approvedWinners.map(w => ({
     style: {
       color: "var(--txt)"
     }
-  }, "Scene:"), " ", clip.sceneDescription), /*#__PURE__*/React.createElement("div", {
+  }, "Scene:"), " ", clip.sceneDescription), clip.needsExtension && /*#__PURE__*/React.createElement("div", {
+    style:{background:"rgba(255,180,0,.12)",border:"1px solid rgba(255,180,0,.3)",borderRadius:6,padding:"6px 10px",marginBottom:8,fontSize:11,color:"rgba(255,200,80,1)"}
+  }, "⏱ ", clip.extensionNote || ("This interval is " + (clip.intervalDurationSecs||"?") + "s — use Grok Extend or plan multiple shots for full coverage.")), /*#__PURE__*/React.createElement("div", {
     style:{borderRadius:8,border:"1px solid rgba(0,229,153,.2)",overflow:"hidden",marginTop:4}
   },
     /*#__PURE__*/React.createElement("div", {
