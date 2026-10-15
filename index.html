@@ -1375,10 +1375,22 @@ Output recordIntent and visualLanguage as SHORT SINGLE STRINGS (not nested objec
 recordIntent: "literal / vibe delivery / relationship / viewer feel / visual behavior / [contraindicated X Y]"
 visualLanguage: "style / motif / lighting / [prohibited X Y]"
 
-CRITICAL: Performance Vibe OVERRIDES lyric mood.
+LYRIC-MOMENT-AWARE DIRECTOR REASONING (3-level framework):
+Before choosing any B-roll decision or seed, reason across:
+  1. SONG PREMISE: What is the overarching emotional story of the entire song?
+  2. LYRIC MOMENT: What is the specific emotional meaning of the lyrics in THIS interval? (Not literal — the underlying fear, desire, conflict, or longing being expressed.)
+  3. CINEMATIC INTERPRETATION: How does the chosen style and vibe translate or contrast that emotion into a watchable, executable scene?
+
+A scene MAY contrast with the lyric — but contrast requires an identifiable dramatic purpose. You must be able to state why the contrast serves the song. Contrast without purpose is mismatch.
+
+DO NOT illustrate lyrics literally. "Hands grow weak" does NOT mean show aging, frailty, or hospitals.
+DO NOT automatically equate vulnerability with sadness imagery.
+DO allow metaphor, subtext, irony, and emotional reversals — but state the purpose in emotionalIntent.
+
+PERFORMANCE VIBE shapes HOW the scene is executed, not WHAT emotion the scene serves.
 ${perfVibe === "SEDUCTIVE" ? `SEDUCTIVE VIBE ACTIVE — this means: playful attraction, teasing confidence, stylish charisma, magnetic presence, flirtatious social behavior, unexpected reversals.
 SEDUCTIVE ≠ solemn eye contact, slow walking alone, sustained staring, melancholy symbolism, frailty, empty rooms.
-SEDUCTIVE seeds must include at least one of: playful provocation, confident entrance, teasing withdrawal, flirtatious social competition, surprising reversal, stylish nonchalance, pursuit/approach game.` : `Vibe is ${perfVibe} — let it drive seed character and energy.`}
+SEDUCTIVE seeds must include at least one of: playful provocation, confident entrance, teasing withdrawal, flirtatious social competition, surprising reversal, stylish nonchalance, pursuit/approach game.` : `Vibe is ${perfVibe} — let it shape the energy and execution of whatever emotional intent the lyric moment calls for.`}
 
 A-ROLL IS THE DEFAULT. Zero B-roll is valid. Never generate B-roll merely because an interval exists.
 
@@ -1418,12 +1430,13 @@ Respond ONLY with valid JSON:
   "recordIntent": "literal meaning / vibe delivery / relationship dynamic / viewer feel / visual behavior / [contraindicated: X]",
   "visualLanguage": "style / motif / lighting / [prohibited: X]",
   "intervals": [
-    { "startTime":"0:00","endTime":"0:09","decision":"A_ROLL","lyricContext":"" },
+    { "startTime":"0:00","endTime":"0:09","decision":"A_ROLL","lyricContext":"","emotionalIntent":"" },
     { "startTime":"0:09","endTime":"0:19","decision":"B_ROLL","lyricContext":"",
+      "emotionalIntent":"One sentence: what this lyric moment is emotionally asking, and how the chosen scene serves or intentionally contrasts it.",
       "conceptSeeds": [
-        { "seed":"WHO at LOCATION — initiating action — second beat/reversal — visual hook","mechanism":"LOCOMOTION-APPROACH","generatorRisk":"LOW" },
-        { "seed":"","mechanism":"SOCIAL-INTERACTION","generatorRisk":"LOW" },
-        { "seed":"","mechanism":"ENVIRONMENTAL-ACTIVITY","generatorRisk":"LOW" }
+        { "seed":"WHO at LOCATION — initiating action — second beat/reversal — visual hook","mechanism":"LOCOMOTION-APPROACH","generatorRisk":"LOW","narrativePurpose":"One sentence: why this scene connects to the lyric's emotional meaning." },
+        { "seed":"","mechanism":"SOCIAL-INTERACTION","generatorRisk":"LOW","narrativePurpose":"" },
+        { "seed":"","mechanism":"ENVIRONMENTAL-ACTIVITY","generatorRisk":"LOW","narrativePurpose":"" }
       ]
     }
   ]
@@ -1446,8 +1459,14 @@ RISK GATES:
 LOW → cleared. MEDIUM → +15 margin required. MEDIUM+precision-contact → +20 margin. HIGH → eliminate.
 Precision-contact (jaw/palm/hair/finger/face chains): physicalFeasibility max 2, renderability max 2.
 
+EMOTIONAL RELEVANCE GATE — evaluate BEFORE scoring:
+Each seed has a narrativePurpose field. Evaluate whether the scene serves the interval's emotionalIntent.
+A scene may contrast with the lyric — but ONLY if the contrast has clear dramatic purpose stated in narrativePurpose.
+A scene that is energetic and visually executable but IGNORES the lyric's emotional meaning scores er:0–3 (insufficient).
+A scene powered only by visual energy, with no connection to what the lyric moment is asking, MUST score emotionalRelevance below 6.
+
 SCROLL_STOP MANDATORY GATES (ALL must pass or USE_A_ROLL):
-cutawayValue≥16, viewerCuriosity≥15, visualActivity≥7, performanceVibeAlignment≥12, renderRisk≠HIGH, progressionStrength≥MODERATE
+cutawayValue≥16, viewerCuriosity≥15, visualActivity≥7, performanceVibeAlignment≥12, emotionalRelevance≥6, renderRisk≠HIGH, progressionStrength≥MODERATE
 
 SCORING (sum to total/100):
 pva:0-15 (performanceVibeAlignment), li:0-15 (lyricIntelligence), cv:0-20 (cutawayValue), vc:0-20 (viewerCuriosity), va:0-10 (visualActivity), er:0-10 (emotionalRelevance), or:0-5 (originality), pf:0-5 (physicalFeasibility), rd:0-5 (renderability)
@@ -1647,11 +1666,13 @@ ${JSON.stringify(brollIntervals.map(i => ({
   startTime: i.startTime,
   endTime: i.endTime,
   lyricContext: i.lyricContext,
+  emotionalIntent: i.emotionalIntent || "",
   conceptSeeds: (i.conceptSeeds || []).map(s => ({
     seedId: s.seedId,
     seed: s.seed,
     mechanism: s.mechanism || "UNKNOWN",
-    generatorRisk: s.generatorRisk
+    generatorRisk: s.generatorRisk,
+    narrativePurpose: s.narrativePurpose || ""
   }))
 })), null, 2)}
 
@@ -1878,7 +1899,8 @@ ${JSON.stringify(approvedWinners.map(w => {
 
         // B_ROLL interval — check if critic approved a winner
         const criticResult = criticMap[intervalKey];
-        const winner = criticResult && criticResult.winner && criticResult.winner !== "USE_A_ROLL"
+        // V3.3 FIX: field is winnerId (not the stale .winner alias)
+        const winner = criticResult && criticResult.winnerId && criticResult.winnerId !== "USE_A_ROLL"
           ? criticResult : null;
 
         if (!winner) {
