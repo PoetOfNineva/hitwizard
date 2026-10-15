@@ -435,7 +435,7 @@ function parseJ(raw) {
       const sceneSpecs = JSON.parse(specsStr);
       return {
         songTitle: titleM?titleM[1]:"Your Song",
-        directorEngineVersion: "V2",
+        directorEngineVersion: "V2.1",
         sceneSpecs: sceneSpecs,
         _partialParse: true
       };
@@ -1051,7 +1051,10 @@ function VideoEngine(_ref0) {
       charRoles: {},
       videoType: "60s-ad",
       selectedChars: [],
-      clipLength: "10"
+      clipLength: "10",
+      performanceVibe: "AUTO",
+      visualDirection: "AUTO",
+      brollEnergy: "BALANCED"
     }),
     _useState22 = _slicedToArray(_useState21, 2),
     form = _useState22[0],
@@ -1260,71 +1263,241 @@ function VideoEngine(_ref0) {
       // ══════════════════════════════════════════════════════
       showToast("Director reading lyrics and building creative brief…", "🎬");
 
-      const directorSys = `You are HitWizard's Director Engine V2. You reason about WHAT to show before writing a single word of prompt copy.
+      const perfVibe = form.performanceVibe || "AUTO";
+      const vizDir = form.visualDirection || "AUTO";
+      const brollEnergy = form.brollEnergy || "BALANCED";
 
-Your pipeline for every project:
-1. ANALYZE the lyrics emotionally — find the thesis, not the nouns
-2. DECLARE a VisualLanguage that makes all clips feel like one director made them
-3. ACT AS EDITOR — decide which time intervals actually need B-roll vs staying on performance
-4. For each B-roll interval: generate 5 genuinely different concepts at CONCEPT level (not just location), score each, select the winner
-5. BUILD a SceneSpec for each winning concept — model-independent, physics-checked
+      const vibeDescriptions = {
+        AUTO: "Infer performance vibe from lyrics, song title and all available context.",
+        SEDUCTIVE: "The performance is sensual, breathless, desirable. The singer is emotionally confident, teasing, romantically charged. Vulnerability may be expressed through attraction rather than sadness. Do NOT default to quiet melancholy.",
+        ROMANTIC: "Warm, intimate, devoted. Characters feel genuine connection and care. Chemistry is tender rather than overtly sexual.",
+        PLAYFUL: "Light tension, teasing, games between characters. Quick reactions. Visual wit. Unexpected reversals.",
+        TENDER: "Small acts, gentle proximity, emotional restraint. Slow realization. Quiet devotion.",
+        HEARTBROKEN: "Emotional distance, absence, restraint. Slower observation. Not theatrical grief — interior pain.",
+        DEFIANT: "Posture, forward motion, dismissal, confidence under pressure. The singer is not asking permission.",
+        EUPHORIC: "Kinetic environment, movement, larger energy. Joy with stakes. Physical expression of emotional release.",
+        DARK: "Low light, tension, moral ambiguity, controlled menace. Not goth — cinematic nocturnal weight.",
+        AGGRESSIVE: "Direct confrontation of camera or subject. Strong body language. Controlled physical energy.",
+        DREAMLIKE: "Controlled surrealism is permitted when generator feasibility is acceptable. Slow transitions, soft impossible elements."
+      };
 
-ANTI-LITERALIZATION RULE (always active):
-These mappings are CLICHÉS. They require exceptional justification or are banned:
+      const vizDescriptions = {
+        AUTO: "Director chooses visual direction based on all available context.",
+        PERFORMANCE_DRIVEN: "Human charisma, attraction, body language, reactions, movement, micro-performance and presence carry the video. Chemistry between characters matters most.",
+        CINEMATIC_LIFESTYLE: "Characters inhabit visually desirable real-world environments and perform believable activities with cinematic appeal. Locations feel aspirational but real.",
+        NARRATIVE: "Scenes collectively create or imply a developing story. Each shot advances something beyond mood.",
+        METAPHORICAL: "Visual concepts may represent the lyric indirectly, but must remain watchable motion-picture material with high cutaway value.",
+        SURREAL: "Controlled impossible or dreamlike imagery is allowed when generator feasibility remains acceptable."
+      };
+
+      const energyDescriptions = {
+        SUBTLE: "Restrained observation, small behavior, slower camera, intimacy. Moments earn their place through specificity not spectacle.",
+        BALANCED: "Mix of restraint and visual activity. Some contemplative shots, some behavior-driven moments.",
+        SCROLL_STOP: "Prioritize charisma, movement, tension, striking behavior, visual seduction, surprise, compelling situations. A controlled side glance can be scroll-stopping. A confident walk can be scroll-stopping. A moment of sexual tension can be scroll-stopping. SCROLL_STOP does NOT mean frantic editing or random action."
+      };
+
+      const directorSys = `You are HitWizard's Director Engine V2.1. You reason about WHAT to show before writing a single word of prompt copy.
+
+═══════════════════════════════════════════
+CORE DOCTRINE: LYRICS ARE NOT THE RECORD
+═══════════════════════════════════════════
+Lyrics tell you WHAT the singer says.
+Performance vibe tells you WHO the singer becomes while saying it.
+Visual direction must respond to BOTH.
+
+The same lyrics performed as a fragile piano ballad vs a seductive R&B banger vs euphoric EDM must produce radically different direction.
+
+═══════════════════════════════════════════
+PERFORMANCE CONTEXT (user-selected)
+═══════════════════════════════════════════
+PERFORMANCE VIBE: ${perfVibe}
+${vibeDescriptions[perfVibe] || vibeDescriptions.AUTO}
+
+VISUAL DIRECTION: ${vizDir}
+${vizDescriptions[vizDir] || vizDescriptions.AUTO}
+
+B-ROLL ENERGY: ${brollEnergy}
+${energyDescriptions[brollEnergy] || energyDescriptions.BALANCED}
+
+These are NOT adjectives to append to prompts. They are DIRECTORIAL REASONING BIASES that must influence CreativeBrief, emotional interpretation, scene conception and B-roll selection from the first step.
+
+═══════════════════════════════════════════
+DIRECTOR PIPELINE
+═══════════════════════════════════════════
+1. BUILD PerformanceContext — fuse lyrics + performance vibe + visual direction into a Combined Directorial Interpretation
+2. ANALYZE lyrics through that lens — find the thesis, not the nouns
+3. DECLARE VisualLanguage consistent with performance vibe and visual direction
+4. ACT AS EDITOR — decide which intervals need B-roll vs staying on A-roll. B-roll must earn the right to replace the singer.
+5. For each B-roll interval: generate 5 genuinely different concepts, score all 5, select winner
+6. BUILD SceneSpec for each winning concept — physics-checked, renderability-checked
+
+═══════════════════════════════════════════
+DOCTRINE: PEOPLE DO THINGS
+═══════════════════════════════════════════
+Do NOT populate scenes with people posing beside symbols.
+
+Prefer: CHARACTER + DESIRE/INTENTION + BEHAVIOR + REACTION/CONSEQUENCE
+
+Useful behavioral mechanisms (not templates — conceptual categories):
+teasing, avoiding, approaching, walking away, noticing, pretending not to notice, challenging, inviting, resisting, helping, choosing, interrupting, observing, reacting, withholding, discovering, pursuing, being pursued, performing an ordinary task with emotional subtext
+
+═══════════════════════════════════════════
+CHEMISTRY ENGINE
+═══════════════════════════════════════════
+When lyrics concern lovers, attraction or relational tension, derive scene energy from interpersonal chemistry.
+
+Chemistry does NOT require kissing, touching, embracing or both characters sharing frame.
+
+Chemistry may exist through: gaze, side glance, physical distance, reaction, anticipation, movement past another person, one character observing another, deliberate avoidance, teasing confidence, interrupted eye contact, proximity, pursuit/withdrawal, contrasting composure.
+
+The Director must ask: "What is happening BETWEEN these people?" not merely "What does each person individually symbolize?"
+
+═══════════════════════════════════════════
+ORIGINALITY DOCTRINE
+═══════════════════════════════════════════
+Originality does NOT mean: invent an object metaphor nobody expects.
+That is how you end up directing chipped crockery.
+
+Originality MEANS: give a familiar human behavior a specific, compelling dramatic context.
+
+A side glance is not automatically cliché. A walk-away is not automatically cliché. A lover watching another person is not automatically cliché.
+
+Judge execution and dramatic function, not novelty of the object.
+
+═══════════════════════════════════════════
+ANTI-LITERALIZATION (always active)
+═══════════════════════════════════════════
+These mappings are BANNED or require exceptional justification:
 time→clock, memory→photograph, promise→ring, sadness→crying, loneliness→window, future→sunset, silence→finger-over-lips, love→kissing, years→elderly, dream→sleeping
 
-SCORING DIMENSIONS per concept:
-- lyricIntelligence: 0-25 (does this concept emerge from the emotional thesis, not a literal noun?)
-- scrollStop: 0-20 (would a stranger stop scrolling for this image alone?)
-- originality: 0-20 (has this NOT been done in every music video?)
-- emotionalRelevance: 0-15 (does it amplify the specific lyric moment?)
-- physicalFeasibility: 0-10 (can a video AI render this without floating/morphing?)
-- continuityCompatibility: 0-5 (does it differ meaningfully from other scenes in the pack?)
-- modelFeasibility: 0-5 (is the blocking simple enough for Grok/Kling to execute?)
-THRESHOLD: 78/100. Regenerate concept if below.
+Also banned when Performance Vibe is SEDUCTIVE or PLAYFUL:
+empty chair, cold mug, abandonment still life, existential shadow, funeral pacing, solitary melancholy objects
 
-PHYSICAL REALISM — before approving any SceneSpec:
+═══════════════════════════════════════════
+CUTAWAY VALUE — EDITORIAL COMPETITION
+═══════════════════════════════════════════
+Every B-roll candidate must compete directly against USE_A_ROLL.
+
+Core question: "Would a professional editor willingly cover the singer's performance with THIS shot at THIS lyric?"
+
+A B-roll scene must earn the right to replace the singer. If it does not clearly beat A-roll, USE_A_ROLL wins.
+
+Cutaway Value considers: visual magnetism, performance value, movement, chemistry, emotional payoff, narrative information, whether the singer's face would actually be stronger.
+
+An intellectually valid metaphor can still have LOW cutaway value and lose.
+A static object with no visual evolution has LOW cutaway value by default.
+
+═══════════════════════════════════════════
+MICRO-NARRATIVE / VISUAL EVENT TEST
+═══════════════════════════════════════════
+For B-roll longer than ~4 seconds, prefer scenes with a visual event:
+STATE A → CHANGE/BEHAVIOR → STATE B
+
+Examples: notice → react → conceal | tease → response → walk away | confidence → glance → effect on observer | distance → recognition → changed behavior
+
+Static shots are valid only when extraordinary composition, environmental motion or emotional power justifies them.
+
+═══════════════════════════════════════════
+RENDERABILITY AUDIT — separate from PhysicsAudit
+═══════════════════════════════════════════
+Physical plausibility is NOT enough. Also evaluate generative-video reliability.
+RenderRisk = LOW | MEDIUM | HIGH
+
+HIGH RenderRisk triggers for: mirrors, identity-bearing reflections, anatomically precise shadows, overlapping bodies, intertwined fingers, complicated hand contact, object handoffs, transparent/refraction geometry, multiple simultaneous actions, character crossings, entering/exiting vehicles, heavy occlusion, pose transformations, clothing transformation, readable text, identity transformations, aggressive camera orbit
+
+If RenderRisk = HIGH: simplify or reject unless directorial value is exceptional.
+Do NOT repair a dangerous scene by appending negative prompts. Simplify.
+
+═══════════════════════════════════════════
+SYMBOLISM DENSITY CONTROL
+═══════════════════════════════════════════
+Track symbolic mechanisms across all scenes. Reject edits where every scene is:
+empty object / shadow / empty chair / photograph / mirror / cold cup / abandoned room
+
+Apply major repetition penalty to semantically related symbolic devices.
+Vary visual mechanisms: human performance, chemistry, physical behavior, environmental action, cinematic lifestyle, narrative event, spatial storytelling, object/detail.
+
+═══════════════════════════════════════════
+RELATIONSHIP THESIS CHECK
+═══════════════════════════════════════════
+For relationship songs, determine the CENTRAL RELATIONAL QUESTION (not merely the surface emotion).
+
+The entire B-roll plan must NOT drift away from the relationship into unrelated solitary symbolism.
+
+At least some selected B-roll should reveal: attraction, devotion, insecurity, commitment, desire, absence, choice, reaction, relational power, or emotional consequence.
+
+═══════════════════════════════════════════
+SCORING DIMENSIONS per concept (updated V2.1)
+═══════════════════════════════════════════
+- lyricIntelligence: 0-15 (does this emerge from the emotional thesis not a literal noun?)
+- performanceVibeAlignment: 0-15 (does this match the selected performance vibe?)
+- cutawayValue: 0-20 (would an editor cover the singer with this? visual magnetism + chemistry + movement)
+- visualActivity: 0-10 (is there something worth WATCHING over time — behavior, reaction, reveal, change?)
+- emotionalRelevance: 0-10 (does it amplify the specific lyric moment including relational thesis?)
+- originality: 0-10 (specific compelling context, not abstract novelty)
+- physicalFeasibility: 0-8 (can a video AI render this without floating/morphing?)
+- renderability: 0-7 (low render risk = higher score; high render risk = major penalty)
+- continuityCompatibility: 0-5 (differs meaningfully from other scenes in the pack?)
+THRESHOLD: 78/100. If no concept reaches 78, all intervals that session become USE_A_ROLL.
+
+IMPORTANT: High lyricIntelligence/originality CANNOT fully compensate for low cutawayValue, low visualActivity or high renderRisk.
+A clever scene can lose.
+
+═══════════════════════════════════════════
+PHYSICAL REALISM (unchanged from V2)
+═══════════════════════════════════════════
+Before approving any SceneSpec:
 - What surface supports each character? Name it.
 - Are both feet accounted for when visible?
 - Can the camera physically occupy its stated position?
 - Are characters intersecting architecture? (veto if yes)
 - MORPH RISK: overlapping bodies, hidden hands, entwined fingers, entering vehicles, character crossing — high risk = simplify
-- When in doubt: SIMPLIFY THE SCENE. Do not add negative prompts. Simplify.
+- When in doubt: SIMPLIFY THE SCENE.
 
 PERFORMANCE DIRECTION philosophy:
 - restrained, natural, micro-expressions, natural blinking
 - describe INTENT not choreography
 - BAD: "She turns 37 degrees, raises hand, takes two steps"
-- GOOD: "She notices him and tries not to reveal how much that affects her"
+- GOOD: "She walks past him and lets him see exactly enough of her face to know she's aware of him"
 
 CHARACTER DNA (inject AFTER scene conception, not before):
 ${charDNA}
 
 CAST: ${castNames}
-Cast members are AVAILABLE, not a rotation. A scene may contain: one character, both, neither, an object, an environment, abstract imagery.
-NEVER alternate characters mechanically. NEVER distribute screen time equally.
-Casting follows concept. Concept NEVER follows casting.
+Cast members are AVAILABLE, not a rotation. A scene may contain: one character, both, neither, an environment.
+NEVER alternate characters mechanically. Casting follows concept. Concept NEVER follows casting.
 
 ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized reproduction = IP theft.
 
 Respond ONLY with valid JSON matching this exact schema:
 {
+  "performanceContext": {
+    "selectedVibe": "${perfVibe}",
+    "selectedVisualDirection": "${vizDir}",
+    "selectedBrollEnergy": "${brollEnergy}",
+    "semanticEmotion": "what the lyrics literally say emotionally",
+    "performanceEmotion": "how this would be PERFORMED given the selected vibe",
+    "combinedInterpretation": "the unified directorial thesis fusing lyrics + performance vibe",
+    "relationshipDynamic": "what is happening between these people (for relationship songs)",
+    "sensualityLevel": "low/medium/high",
+    "movementBias": "restrained/moderate/kinetic"
+  },
   "creativeBrief": {
-    "emotionalThesis": "what this song is REALLY about (not its nouns)",
-    "primaryEmotion": "one word",
+    "emotionalThesis": "what this song is REALLY about through the lens of the performance vibe",
+    "primaryEmotion": "one word consistent with performance vibe",
     "secondaryEmotions": ["word","word"],
-    "dramaticQuestion": "the question the song is asking",
+    "dramaticQuestion": "the central relational/emotional question",
     "emotionalProgression": "how the emotion arc moves across the duration",
     "thingsNotToLiteralize": ["noun that should NOT become its obvious visual"],
-    "potentialMotifs": ["motif idea"]
+    "potentialMotifs": ["motif idea consistent with performance vibe"]
   },
   "visualLanguage": {
-    "style": "e.g. intimate cinematic realism",
-    "cameraGrammar": "e.g. observational restrained",
-    "performancePhilosophy": "micro-expression over theatrical",
+    "style": "e.g. seductive cinematic realism — influences by performance vibe",
+    "cameraGrammar": "e.g. observational with lingering holds on chemistry",
+    "performancePhilosophy": "aligned with performance vibe",
     "lightingPhilosophy": "one sentence",
     "motif": "the recurring visual idea that unifies the pack",
-    "prohibited": ["specific clichés banned FOR THIS SONG based on its emotional thesis"]
+    "prohibited": ["specific clichés banned FOR THIS SONG + VIBE combination"]
   },
   "editDecisions": [
     {
@@ -1350,20 +1523,23 @@ Respond ONLY with valid JSON matching this exact schema:
       "lyricContext": "exact lyric line",
       "emotionalFunction": "what this scene does emotionally",
       "candidateConcepts": [
-        {"concept": "concept description at idea level not location","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}},
-        {"concept": "...","score":{"lyricIntelligence":0,"scrollStop":0,"originality":0,"emotionalRelevance":0,"physicalFeasibility":0,"continuityCompatibility":0,"modelFeasibility":0,"total":0}}
+        {"concept": "concept at idea level — human behavior preferred over object symbol","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}},
+        {"concept": "...","score":{"lyricIntelligence":0,"performanceVibeAlignment":0,"cutawayValue":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"continuityCompatibility":0,"total":0}}
       ],
-      "selectedConcept": "the winning concept (highest score ≥78)",
-      "selectionReason": "why this concept wins",
+      "selectedConcept": "the winning concept (highest score ≥78) or USE_A_ROLL if no concept clears threshold",
+      "selectionReason": "why this concept wins over A-roll",
+      "cutawayValueScore": 0,
+      "renderRisk": "low/medium/high",
+      "whyBeatsAroll": "one sentence: why an editor would willingly cover the singer with this",
       "cast": ["CHARACTER_NAME or NONE"],
       "environment": "specific physical place",
       "subjectBlocking": "where each character's body is, what surface supports them, feet accounted for",
       "physicalSupports": "seat/floor/railing/etc that prevents floating",
-      "action": "the specific human action in this moment",
-      "performanceIntent": "what the character is feeling/trying-not-to-reveal (not choreography)",
+      "action": "the specific human behavior in this moment — prefer behavior over pose",
+      "performanceIntent": "what the character desires/feels/is-trying-not-to-reveal (not choreography)",
       "cameraPosition": "where camera physically is",
       "cameraMovement": "static/slow push/etc",
       "composition": "extreme close / medium / wide",
@@ -1371,8 +1547,9 @@ Respond ONLY with valid JSON matching this exact schema:
       "physicsAudit": {
         "passed": true,
         "morphRisk": "low/medium/high",
+        "renderRisk": "low/medium/high",
         "groundingVerified": "what surface, confirmed",
-        "simplificationsApplied": "any simplifications made to reduce morph risk"
+        "simplificationsApplied": "any simplifications made"
       },
       "forbiddenActions": ["no floating","no singing","no camera eye contact"]
     }
@@ -1382,18 +1559,24 @@ Respond ONLY with valid JSON matching this exact schema:
       const directorUsr = `SONG: "${form.songTitle || "Untitled"}"
 TOTAL DURATION: ${totalSecs} seconds
 AI TOOL: ${aiToolName}
-${lyricsText ? "LYRICS:\n" + lyricsText : "No lyrics provided — infer emotional arc from song title and build accordingly."}
+PERFORMANCE VIBE: ${perfVibe}
+VISUAL DIRECTION: ${vizDir}
+B-ROLL ENERGY: ${brollEnergy}
+${lyricsText ? "LYRICS:\n" + lyricsText : "No lyrics provided — infer emotional arc from song title, performance vibe and build accordingly."}
 
 ${priorHistoryBlock ? "PRIOR REEL HISTORY (never repeat these):\n" + priorHistoryBlock : ""}
 
 TASK:
-1. Analyze the lyrics and produce a CreativeBrief
-2. Declare a VisualLanguage for this project
-3. As Editor: decide which time intervals benefit from B-roll vs staying on A-roll performance. You do NOT need to fill every 10 seconds. Prefer 2-4 strong surgical B-roll moments over 6 mediocre ones.
-4. For each B-roll interval: generate 5 genuinely different concepts (different at CONCEPT level, not just location), score all 5, select the winner scoring ≥78
-5. Build a full SceneSpec for each selected concept with physics audit
+1. Build PerformanceContext — fuse lyrics + performance vibe + visual direction into a Combined Directorial Interpretation BEFORE analyzing anything else
+2. Analyze the lyrics THROUGH that lens — find the thesis as shaped by the performance vibe, not the surface nouns
+3. Declare a VisualLanguage consistent with both the lyrics and the performance vibe
+4. As Editor: decide which intervals genuinely benefit from B-roll vs staying on A-roll. B-roll must earn the right to replace the singer. USE_A_ROLL is always a valid editorial choice.
+5. For each B-roll interval: generate 5 concepts (different at CONCEPT level — favor human behavior over object symbolism), score all 5 using V2.1 dimensions including cutawayValue and renderability, select the winner scoring ≥78
+6. Build full SceneSpec for each selected concept — physics audit + renderability audit
 
-Remember: duration=${totalSecs}s. The user assumes a singing A-roll performance exists underneath. B-roll is punctuation, not mandatory coverage.`;
+Remember: duration=${totalSecs}s. Excellent A-roll performance exists underneath. B-roll is surgical punctuation, not mandatory coverage. 0-4 B-roll moments are all valid if editorially justified.
+
+KEY QUESTION for every B-roll candidate: "Would a professional editor willingly cover the singer's performance with this specific shot at this specific lyric?" If not — USE_A_ROLL.`;
 
       const directorRaw = await hwAI(directorSys, directorUsr);
       const directorData = parseJ(directorRaw);
@@ -1412,6 +1595,9 @@ Remember: duration=${totalSecs}s. The user assumes a singing A-roll performance 
       // ══════════════════════════════════════════════════════
       const compilerSys = `You are HitWizard's GrokPromptCompiler. You receive a SceneSpec (model-independent) and translate it into a concise Grok video prompt.
 
+PERFORMANCE CONTEXT:
+Vibe: ${perfVibe} | Visual Direction: ${vizDir} | B-Roll Energy: ${brollEnergy}
+
 GROK PROMPT PHILOSOPHY:
 - Grok responds to PERFORMANCE DIRECTION, not cinematic prose
 - Give Grok a scene it can execute, not a novella to admire
@@ -1420,6 +1606,13 @@ GROK PROMPT PHILOSOPHY:
 - Avoid: "the micro-detail that makes this feel stolen", "the world dissolves into", "like something holy" — these mean nothing to a video model
 - Do NOT append "8K hyperdetailed cinematic masterpiece" automatically
 - DO specify: both feet on surface, physical support named, one primary action, natural blinking/breathing
+
+For PERFORMANCE_DRIVEN or SCROLL_STOP scenes, prioritize: clear physical grounding, one dominant behavior, emotional intention, character reaction, natural body movement, gaze behavior, restrained camera motion, generator-safe blocking.
+
+BAD: "She walks exactly four steps, rotates 45 degrees, raises her left hand..."
+BETTER: "She walks past him with effortless confidence, catches his eyes briefly over her shoulder — she knows exactly what she's doing. He tries to remain composed but visibly loses his train of thought."
+
+The seed/composition owns geometry. The prompt directs performance and intention.
 
 CHARACTER DNA to inject precisely where scene includes them:
 ${charDNA}
@@ -1473,7 +1666,8 @@ Respond ONLY with valid JSON:
 
       const raw = JSON.stringify({
         songTitle: form.songTitle || "Untitled",
-        directorEngineVersion: "V2",
+        directorEngineVersion: "V2.1",
+        performanceContext: directorData.performanceContext || null,
         creativeBrief,
         visualLanguage,
         totalDuration: totalSecs,
@@ -1484,6 +1678,7 @@ Respond ONLY with valid JSON:
         clips: finalClips,
         // Debug inspector data — Director Debug Mode (section 19 of spec)
         _debug: {
+          performanceContext: directorData.performanceContext || null,
           creativeBrief,
           visualLanguage,
           editDecisions,
@@ -1753,7 +1948,40 @@ Respond ONLY with valid JSON:
     className: "sel",
     value: form.aiTool || "grok",
     onChange: e => f("aiTool", e.target.value)
-  }, /*#__PURE__*/React.createElement("option", {value:"grok"}, "🤖 Grok (xAI) — Default"), /*#__PURE__*/React.createElement("option", {value:"veo3"}, "🎬 Veo 3 (Google)"), /*#__PURE__*/React.createElement("option", {value:"kling"}, "🎥 Kling AI"), /*#__PURE__*/React.createElement("option", {value:"runway"}, "✈️ Runway ML"), /*#__PURE__*/React.createElement("option", {value:"pika"}, "⚡ Pika Labs"))), reelVaultCount > 0 && /*#__PURE__*/React.createElement("div", {style:{background:"rgba(123,47,190,.15)",border:"1px solid rgba(123,47,190,.4)",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}, /*#__PURE__*/React.createElement("span", {style:{fontSize:18}}, "🔒"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"#b57bee"}}, "Reel Vault Active — " + reelVaultCount + " prior pack" + (reelVaultCount === 1 ? "" : "s") + " for this song"), /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:2}}, "AI will invent completely fresh scenes — never repeating what was already made"))), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("option", {value:"grok"}, "🤖 Grok (xAI) — Default"), /*#__PURE__*/React.createElement("option", {value:"veo3"}, "🎬 Veo 3 (Google)"), /*#__PURE__*/React.createElement("option", {value:"kling"}, "🎥 Kling AI"), /*#__PURE__*/React.createElement("option", {value:"runway"}, "✈️ Runway ML"), /*#__PURE__*/React.createElement("option", {value:"pika"}, "⚡ Pika Labs"))),
+  /*#__PURE__*/React.createElement("div", {className:"field", style:{marginBottom:12}},
+    /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Performance Vibe"),
+    /*#__PURE__*/React.createElement("div", {style:{display:"flex",flexWrap:"wrap",gap:6}},
+      ["AUTO","SEDUCTIVE","ROMANTIC","PLAYFUL","TENDER","HEARTBROKEN","DEFIANT","EUPHORIC","DARK","AGGRESSIVE","DREAMLIKE"].map(function(v){
+        return /*#__PURE__*/React.createElement("button", {key:v,
+          onClick:function(){f("performanceVibe",v);},
+          style:{padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:700,cursor:"pointer",border:"1px solid "+(form.performanceVibe===v?"var(--gold)":"rgba(255,184,0,.2)"),background:form.performanceVibe===v?"rgba(255,184,0,.15)":"rgba(8,8,14,.5)",color:form.performanceVibe===v?"var(--gold)":"var(--muted)",transition:"all .15s"}
+        }, v);
+      })
+    )
+  ),
+  /*#__PURE__*/React.createElement("div", {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
+    /*#__PURE__*/React.createElement("div", {className:"field",style:{marginBottom:0}},
+      /*#__PURE__*/React.createElement("label", {className:"lbl"}, "Visual Direction"),
+      /*#__PURE__*/React.createElement("select", {className:"sel",value:form.visualDirection||"AUTO",onChange:function(e){f("visualDirection",e.target.value);}},
+        /*#__PURE__*/React.createElement("option", {value:"AUTO"}, "Auto"),
+        /*#__PURE__*/React.createElement("option", {value:"PERFORMANCE_DRIVEN"}, "Performance-Driven"),
+        /*#__PURE__*/React.createElement("option", {value:"CINEMATIC_LIFESTYLE"}, "Cinematic Lifestyle"),
+        /*#__PURE__*/React.createElement("option", {value:"NARRATIVE"}, "Narrative"),
+        /*#__PURE__*/React.createElement("option", {value:"METAPHORICAL"}, "Metaphorical"),
+        /*#__PURE__*/React.createElement("option", {value:"SURREAL"}, "Surreal")
+      )
+    ),
+    /*#__PURE__*/React.createElement("div", {className:"field",style:{marginBottom:0}},
+      /*#__PURE__*/React.createElement("label", {className:"lbl"}, "B-Roll Energy"),
+      /*#__PURE__*/React.createElement("select", {className:"sel",value:form.brollEnergy||"BALANCED",onChange:function(e){f("brollEnergy",e.target.value);}},
+        /*#__PURE__*/React.createElement("option", {value:"SUBTLE"}, "Subtle — restrained, observational"),
+        /*#__PURE__*/React.createElement("option", {value:"BALANCED"}, "Balanced — mix of restraint & activity"),
+        /*#__PURE__*/React.createElement("option", {value:"SCROLL_STOP"}, "Scroll-Stop — charisma, tension, striking")
+      )
+    )
+  ),
+  reelVaultCount > 0 && /*#__PURE__*/React.createElement("div", {style:{background:"rgba(123,47,190,.15)",border:"1px solid rgba(123,47,190,.4)",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}, /*#__PURE__*/React.createElement("span", {style:{fontSize:18}}, "🔒"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"#b57bee"}}, "Reel Vault Active — " + reelVaultCount + " prior pack" + (reelVaultCount === 1 ? "" : "s") + " for this song"), /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:2}}, "AI will invent completely fresh scenes — never repeating what was already made"))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-pur btn-full",
     onClick: generate,
     disabled: loading
@@ -1820,7 +2048,13 @@ Respond ONLY with valid JSON:
     style: {
       paddingRight: 0
     }
-  }, results.grokInstructions)), results.creativeBrief && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(123,47,190,.3)",borderRadius:12,overflow:"hidden"}},
+  }, results.grokInstructions)), results.performanceContext && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,border:"1px solid rgba(255,184,0,.25)",borderRadius:10,padding:"10px 14px",background:"rgba(255,184,0,.05)"}},
+    /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"var(--gold)",marginBottom:6,letterSpacing:.5}}, "🎭 PERFORMANCE CONTEXT — " + (results.performanceContext.selectedVibe||"AUTO") + " / " + (results.performanceContext.selectedVisualDirection||"AUTO") + " / " + (results.performanceContext.selectedBrollEnergy||"BALANCED")),
+    /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:"rgba(255,255,255,.8)",lineHeight:1.7}},
+      results.performanceContext.combinedInterpretation && /*#__PURE__*/React.createElement("div", {style:{marginBottom:4}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Director reads this as: "), results.performanceContext.combinedInterpretation),
+      results.performanceContext.relationshipDynamic && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Between them: "), results.performanceContext.relationshipDynamic)
+    )
+  ), results.creativeBrief && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(123,47,190,.3)",borderRadius:12,overflow:"hidden"}},
     /*#__PURE__*/React.createElement("div", {style:{background:"rgba(123,47,190,.15)",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"},
       onClick:function(){var el=document.getElementById("hw-brief-body"); el.style.display=el.style.display==="none"?"block":"none";}},
       /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"#b57bee",letterSpacing:.5}}, "DIRECTOR CREATIVE BRIEF"),
@@ -1860,19 +2094,45 @@ Respond ONLY with valid JSON:
       onClick:function(){var el=document.getElementById("hw-debug-body"); el.style.display=el.style.display==="none"?"block":"none";}},
       /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR — Approved: "+(results._debug.approvedSceneCount||0)+" / Rejected: "+(results._debug.rejectedSceneCount||0)+"  (click to expand)")
     ),
-    /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:380,overflowY:"auto"}},
+    /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:480,overflowY:"auto"}},
+      results._debug.performanceContext && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(255,184,0,.2)",background:"rgba(255,184,0,.04)"}},
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"var(--gold)",marginBottom:6,letterSpacing:.5}}, "PERFORMANCE CONTEXT"),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.7)",lineHeight:1.7}},
+          /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Vibe: "), results._debug.performanceContext.selectedVibe, " | ",
+            /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Direction: "), results._debug.performanceContext.selectedVisualDirection, " | ",
+            /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Energy: "), results._debug.performanceContext.selectedBrollEnergy),
+          /*#__PURE__*/React.createElement("div", {style:{marginTop:4}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Combined Interpretation: "), results._debug.performanceContext.combinedInterpretation),
+          results._debug.performanceContext.relationshipDynamic && /*#__PURE__*/React.createElement("div", {style:{marginTop:4}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.9)"}}, "Relationship Dynamic: "), results._debug.performanceContext.relationshipDynamic)
+        )
+      ),
       (results._debug.allSceneSpecs||[]).map(function(spec,i){
         const bestScore = spec.candidateConcepts ? Math.max.apply(null,spec.candidateConcepts.map(function(c){return (c.score&&c.score.total)||0;})) : 0;
         const passed = spec.physicsAudit && spec.physicsAudit.passed !== false;
+        const renderRisk = (spec.renderRisk || (spec.physicsAudit && spec.physicsAudit.renderRisk) || "").toLowerCase();
+        const morphRisk = (spec.physicsAudit && spec.physicsAudit.morphRisk || "").toLowerCase();
+        const riskColor = (r) => r==="low"?"#00E599":r==="medium"?"var(--gold)":"#ff6b6b";
+        const riskBg = (r) => r==="low"?"rgba(0,229,153,.1)":r==="medium"?"rgba(255,184,0,.1)":"rgba(255,100,100,.15)";
         return /*#__PURE__*/React.createElement("div", {key:i,style:{marginBottom:10,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",background:"rgba(0,0,0,.3)"}},
-          /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8,marginBottom:5}},
+          /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:8,marginBottom:5,flexWrap:"wrap"}},
             /*#__PURE__*/React.createElement("span", {style:{fontSize:11,fontWeight:700,fontFamily:"JetBrains Mono,monospace",color:"rgba(255,120,120,.9)"}}, spec.id),
             /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:passed?"rgba(0,229,153,.15)":"rgba(255,100,100,.15)",color:passed?"#00E599":"#ff6b6b",fontWeight:700}}, passed?"PASS":"FAIL"),
             /*#__PURE__*/React.createElement("span", {style:{fontSize:10,color:"rgba(255,184,0,.7)"}}, "score: "+bestScore+"/100"),
-            spec.physicsAudit && spec.physicsAudit.morphRisk && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:spec.physicsAudit.morphRisk==="low"?"rgba(0,229,153,.1)":spec.physicsAudit.morphRisk==="medium"?"rgba(255,184,0,.1)":"rgba(255,100,100,.15)",color:spec.physicsAudit.morphRisk==="low"?"#00E599":spec.physicsAudit.morphRisk==="medium"?"var(--gold)":"#ff6b6b",fontWeight:700}}, "morph: "+spec.physicsAudit.morphRisk)
+            spec.cutawayValueScore != null && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:"rgba(123,47,190,.15)",color:"#b57bee",fontWeight:700}}, "cutaway: "+spec.cutawayValueScore+"/20"),
+            morphRisk && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:riskBg(morphRisk),color:riskColor(morphRisk),fontWeight:700}}, "morph: "+morphRisk),
+            renderRisk && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,padding:"2px 7px",borderRadius:4,background:riskBg(renderRisk),color:riskColor(renderRisk),fontWeight:700}}, "render: "+renderRisk)
           ),
           /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Lyric: "), spec.lyricContext),
-          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)"}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Won: "), spec.selectedConcept)
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(255,255,255,.8)"}}, "Won: "), spec.selectedConcept),
+          spec.whyBeatsAroll && /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(0,229,153,.8)",marginTop:3}}, /*#__PURE__*/React.createElement("strong", {style:{color:"rgba(0,229,153,.9)"}}, "Why beats A-roll: "), spec.whyBeatsAroll),
+          spec.candidateConcepts && spec.candidateConcepts.length > 0 && /*#__PURE__*/React.createElement("details", {style:{marginTop:6}},
+            /*#__PURE__*/React.createElement("summary", {style:{fontSize:10,color:"rgba(255,255,255,.4)",cursor:"pointer"}}, "All "+spec.candidateConcepts.length+" candidates"),
+            spec.candidateConcepts.map(function(cc,ci){
+              const isWinner = cc.concept === spec.selectedConcept;
+              return /*#__PURE__*/React.createElement("div", {key:ci,style:{fontSize:10,marginTop:4,padding:"4px 8px",borderRadius:4,background:isWinner?"rgba(0,229,153,.07)":"rgba(255,255,255,.02)",borderLeft:"2px solid "+(isWinner?"#00E599":"rgba(255,255,255,.1)"),color:"rgba(255,255,255,"+(isWinner?".8":".4")+")"}},
+                (cc.score&&cc.score.total||0)+"/100 — "+cc.concept
+              );
+            })
+          )
         );
       })
     )
