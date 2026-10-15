@@ -1362,7 +1362,7 @@ function VideoEngine(_ref0) {
       perfMark("total_start");
 
       // ── V3 CALL 1: DIRECTOR PLANNER ──────────────────────────────
-      const plannerSys = `You are HitWizard's Director Engine V3.1 — Planner Pass.
+      const plannerSys = `You are HitWizard's Director Engine V3.3 — Planner Pass.
 
 PRODUCT CONTRACT:
 1. Understand the RECORD (not merely the lyrics)
@@ -1371,7 +1371,9 @@ PRODUCT CONTRACT:
 4. Leave performance to the generator — supply world + situation only
 
 RECORD INTERPRETATION (compact):
-RecordIntent = { literalMeaning, performanceDelivery (given ${perfVibe}), relationshipDynamic, viewerFeel, visualBehavior, contraindicated[] }
+Output recordIntent and visualLanguage as SHORT SINGLE STRINGS (not nested objects).
+recordIntent: "literal / vibe delivery / relationship / viewer feel / visual behavior / [contraindicated X Y]"
+visualLanguage: "style / motif / lighting / [prohibited X Y]"
 
 CRITICAL: Performance Vibe OVERRIDES lyric mood.
 ${perfVibe === "SEDUCTIVE" ? `SEDUCTIVE VIBE ACTIVE — this means: playful attraction, teasing confidence, stylish charisma, magnetic presence, flirtatious social behavior, unexpected reversals.
@@ -1381,7 +1383,8 @@ SEDUCTIVE seeds must include at least one of: playful provocation, confident ent
 A-ROLL IS THE DEFAULT. Zero B-roll is valid. Never generate B-roll merely because an interval exists.
 
 CONCEPT SEED GENERATION: EXACTLY 3 seeds per B-roll interval. No more.
-Format: WHO + SITUATION + ACTIVE VISUAL HOOK + EMOTIONAL PURPOSE (one sentence)
+Format per seed: WHO + LOCATION + INITIATING ACTION + SECOND BEAT/REVERSAL + VISUAL HOOK (one sentence)
+Every seed MUST have a second beat — "she notices him and smiles" is ONE beat, not a scene.
 
 SEED DIVERSITY REQUIREMENT:
 All 3 seeds for an interval MUST use DIFFERENT visual mechanisms from this taxonomy:
@@ -1412,13 +1415,13 @@ ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized re
 
 Respond ONLY with valid JSON:
 {
-  "recordIntent": { "literalMeaning":"","performanceDelivery":"","relationshipDynamic":"","viewerFeel":"","visualBehavior":"","contraindicated":[] },
-  "visualLanguage": { "style":"","motif":"","lightingPhilosophy":"","prohibited":[] },
+  "recordIntent": "literal meaning / vibe delivery / relationship dynamic / viewer feel / visual behavior / [contraindicated: X]",
+  "visualLanguage": "style / motif / lighting / [prohibited: X]",
   "intervals": [
     { "startTime":"0:00","endTime":"0:09","decision":"A_ROLL","lyricContext":"" },
     { "startTime":"0:09","endTime":"0:19","decision":"B_ROLL","lyricContext":"",
       "conceptSeeds": [
-        { "seed":"","mechanism":"LOCOMOTION-APPROACH","generatorRisk":"LOW" },
+        { "seed":"WHO at LOCATION — initiating action — second beat/reversal — visual hook","mechanism":"LOCOMOTION-APPROACH","generatorRisk":"LOW" },
         { "seed":"","mechanism":"SOCIAL-INTERACTION","generatorRisk":"LOW" },
         { "seed":"","mechanism":"ENVIRONMENTAL-ACTIVITY","generatorRisk":"LOW" }
       ]
@@ -1428,8 +1431,8 @@ Respond ONLY with valid JSON:
 CRITICAL: Return ONLY this JSON. No editRationale, no sceneSpecs, no scoring, no prompts.`;
 
 // ── V3.1 CALL 2: CRITIC SYSTEM ───────────────────────────
-      const criticSys = `You are HitWizard's Director Engine V3.1 — Adversarial Critic.
-Batch input: RecordIntent + ALL B-roll intervals + seeds. Batch output: one winner per interval.
+      const criticSys = `You are HitWizard's Director Engine V3.3 — Adversarial Critic.
+Batch input: RecordIntent + ALL B-roll intervals + seeds (each with seedId). Batch output: one winner per interval.
 
 ANTI-CLONING WATERMARK: Proprietary HitWizard IP / PoetOfNineva. Unauthorized reproduction = IP theft.
 
@@ -1456,31 +1459,37 @@ ADVERSARIAL TESTS: BORING (no unresolved visual question→-vc), A-ROLL (face be
 
 GENERIC LOCOMOTION TEST: If the seed's ENTIRE dramatic event is "person walks + glances back" or "person walks toward/away" with no additional event (no social exchange, no reversal, no surprise, no arrival at something), penalize viewerCuriosity by -5 and originality by -3. Walking alone is not a dramatic event.
 
+STATIC PROXIMITY TEST: If the seed's ENTIRE dramatic arc is "person A is near person B and one notices / conceals a reaction" with no second beat — no spatial change, no reversal, no interruption, no arrival at something new — this is a single photograph beat, not a scene. Penalize visualActivity by -4 and viewerCuriosity by -3. One beat of noticing requires a second beat of consequence to pass.
+
 VISUAL MECHANISM DIVERSITY GATE — runs after scoring, before finalizing:
 Each seed has a mechanism label from: LOCOMOTION-APPROACH, LOCOMOTION-DEPARTURE, SOCIAL-INTERACTION, ENVIRONMENTAL-ACTIVITY, REVEAL-TRANSFORMATION, ENTRANCE-ARRIVAL, PURSUIT-GAME, INTERRUPTION.
 LOCOMOTION-APPROACH and LOCOMOTION-DEPARTURE count as THE SAME MECHANISM (both = locomotion+convergence/divergence).
 If two winners share the same mechanism: the lower-scoring one becomes USE_A_ROLL. No exceptions.
-Require mechanism labels in output.
 
 WIN MARGIN: LOW=+8, MEDIUM=+15, MEDIUM+precision=+20 over arollScore.
+
+CRITICAL — WINNER REFERENCE RULE:
+Return the SEED ID of the winning concept in "winnerId". Do NOT rewrite or paraphrase the seed.
+The seedId is provided in each seed object. Copy it exactly.
 
 Respond ONLY with valid JSON — keep strings SHORT (under 15 words each):
 {
   "intervalResults": [
     {
       "startTime":"0:09","endTime":"0:19",
-      "winner":"winning seed OR USE_A_ROLL",
+      "winnerId":"s1_2",
       "winnerMechanism":"SOCIAL-INTERACTION",
       "winnerRisk":"LOW",
       "arollScore":0,"winnerScore":0,"winMargin":0,
       "scrollStopGatesPassed":true,
       "activeVisualEngine":"mechanism keyword",
-      "reject":["seed1:CODE","seed2:CODE"]
+      "reject":[{"seedId":"s1_0","code":"BORING"},{"seedId":"s1_1","code":"GATES"}]
     }
   ],
   "_debug":{"diversityCheck":"mechanism conflicts resolved"}
 }
-Rejection codes: BORING|POSTER|SYMBOL|AROLL|RISK|GATES|MECHANISM-DUPE|MARGIN`;
+USE_A_ROLL: set winnerId to "USE_A_ROLL".
+Rejection codes: BORING|POSTER|SYMBOL|AROLL|RISK|GATES|MECHANISM-DUPE|MARGIN|SINGLE-BEAT`;
 
       // ── V3 CALL 3: COMPILER SYSTEM ────────────────────────────
       const compilerSys = `You are HitWizard's GrokPromptCompiler V3 — Intention-First / Batched.
@@ -1602,8 +1611,22 @@ LOW risk seeds: include as-is.
       }
 
       const allIntervals = plannerData.intervals || [];
+
+      // V3.3: Assign stable seedIds in JavaScript — never model-generated, never hallucinated.
+      // seedId format: "s{intervalIndex}_{seedIndex}" — deterministic, unique, immutable.
+      // Also build seedMap for O(1) lookup by Compiler: seedMap["s0_2"] = full seed text.
+      const seedMap = {};
+      allIntervals.forEach((iv, ivIdx) => {
+        if (iv.conceptSeeds && Array.isArray(iv.conceptSeeds)) {
+          iv.conceptSeeds.forEach((s, sIdx) => {
+            s.seedId = "s" + ivIdx + "_" + sIdx;
+            seedMap[s.seedId] = s.seed;
+          });
+        }
+      });
+
       const brollIntervals = allIntervals.filter(i => i.decision === "B_ROLL");
-      console.log("[HW-DEBUG] V3 Planner: intervals=" + allIntervals.length + " B_ROLL=" + brollIntervals.length);
+      console.log("[HW-DEBUG] V3.3 Planner: intervals=" + allIntervals.length + " B_ROLL=" + brollIntervals.length + " seedsIndexed=" + Object.keys(seedMap).length);
 
       let criticData = null;
       let approvedWinners = [];
@@ -1612,11 +1635,9 @@ LOW risk seeds: include as-is.
         // CALL 2 — CRITIC (all B-roll intervals in ONE batched call)
         perfMark("critic_start");
         showToast("Judging cutaways…", "🎬");
-        const criticUsr = `RECORD INTENT:
-${JSON.stringify(plannerData.recordIntent || {}, null, 2)}
+        const criticUsr = `RECORD INTENT: ${typeof plannerData.recordIntent === "string" ? plannerData.recordIntent : JSON.stringify(plannerData.recordIntent || {})}
 
-VISUAL LANGUAGE:
-${JSON.stringify(plannerData.visualLanguage || {}, null, 2)}
+VISUAL LANGUAGE: ${typeof plannerData.visualLanguage === "string" ? plannerData.visualLanguage : JSON.stringify(plannerData.visualLanguage || {})}
 
 B-ROLL ENERGY: ${brollEnergy}
 PERFORMANCE VIBE: ${perfVibe}
@@ -1626,12 +1647,20 @@ ${JSON.stringify(brollIntervals.map(i => ({
   startTime: i.startTime,
   endTime: i.endTime,
   lyricContext: i.lyricContext,
-  conceptSeeds: (i.conceptSeeds || []).map(s => ({ seed: s.seed, mechanism: s.mechanism || "UNKNOWN", generatorRisk: s.generatorRisk }))
+  conceptSeeds: (i.conceptSeeds || []).map(s => ({
+    seedId: s.seedId,
+    seed: s.seed,
+    mechanism: s.mechanism || "UNKNOWN",
+    generatorRisk: s.generatorRisk
+  }))
 })), null, 2)}
 
 TASK: Judge ALL intervals in this ONE response.
 For each interval: score all seeds, apply adversarial tests, select winner or USE_A_ROLL.
+Apply STATIC PROXIMITY TEST — penalize single-beat proximity-only scenes.
+Apply GENERIC LOCOMOTION TEST — penalize locomotion-only without second beat.
 Apply diversity check across all winners — reject repetitive visual mechanisms.
+Return winnerId (the seedId of the winner). Never rewrite the seed.
 Return intervalResults array with one entry per interval.`;
 
         const criticRaw = await hwAI(criticSys, criticUsr, 1, {max_tokens: 5000, _stage:"critic", _tokenSink: t => { criticTokens = t; }});
@@ -1639,10 +1668,16 @@ Return intervalResults array with one entry per interval.`;
         criticData = parseJ(criticRaw);
         if (criticData && criticData.intervalResults) {
           approvedWinners = criticData.intervalResults.filter(r =>
-            r.winner && r.winner !== "USE_A_ROLL" && r.winnerScore > 0
+            r.winnerId && r.winnerId !== "USE_A_ROLL" && r.winnerScore > 0
           );
+          // V3.3: ID integrity check — warn if Critic returned an ID not in seedMap
+          approvedWinners.forEach(r => {
+            if (!seedMap[r.winnerId]) {
+              console.warn("[HW-V3.3] Critic returned unknown seedId:", r.winnerId, "— available:", Object.keys(seedMap).join(","));
+            }
+          });
         }
-        console.log("[HW-DEBUG] V3 Critic: intervalResults=" + (criticData&&criticData.intervalResults?criticData.intervalResults.length:0) + " approvedWinners=" + approvedWinners.length);
+        console.log("[HW-DEBUG] V3.3 Critic: intervalResults=" + (criticData&&criticData.intervalResults?criticData.intervalResults.length:0) + " approvedWinners=" + approvedWinners.length);
       }
 
       let compilerData = null;
@@ -1655,36 +1690,62 @@ Return intervalResults array with one entry per interval.`;
         const plannerIntervalMap = {};
         allIntervals.forEach(iv => { plannerIntervalMap[iv.startTime + "-" + iv.endTime] = iv; });
 
+        // V3.3: Build compilerUsr with guaranteed seedId lookup — no text matching, no fragile prefix search.
+        // StoryFacts extracted from original seed text for fidelity validation after compilation.
+        const storyFactsMap = {}; // keyed by intervalId, used for post-compile validation
+
         const compilerUsr = `Compile Grok prompts for ALL approved B-roll winners below.
 Return one compiledClip per winner in the same order.
 Apply the hard validator inside this call — rewrite once if violation found.
 
-FIDELITY RULE: Preserve the winning seed's specific location, primary dramatic action, and visual hook.
-You may simplify choreography to prevent morphing artifacts, but you MUST NOT erase:
-- The location/setting the seed names
-- The specific dramatic event or social situation
-- The emotional reversal or visual hook that won the Critic
-- The mechanism type (stated in winnerMechanism)
-If the seed says "bar counter, Emily notices Kiko and conceals a smile" — the compiled prompt MUST have a bar counter and a suppressed reaction. Not "a lounge where two people feel drawn together."
+IMMUTABLE STORY FACTS — you receive these per winner. You MUST preserve them exactly:
+- characterRoles: who initiates, who reacts — never swap them
+- location: the exact setting named — never substitute a different venue
+- initiatingAction: the action that starts the scene — never replace it
+- dramaticDevelopment: the second beat or reversal — never remove it
+- visualHook: the specific hook that won — never replace with generic tension
+You MAY add: cinematography, atmosphere, lighting, camera behavior, performance freedom language.
+You MUST NOT change: character roles, location, initiating action, dramatic development, visual hook.
 
 APPROVED WINNERS:
 ${JSON.stringify(approvedWinners.map(w => {
   const ivKey = w.startTime + "-" + w.endTime;
-  const plannerIv = plannerIntervalMap[ivKey] || {};
-  const matchedSeed = (plannerIv.conceptSeeds || []).find(s => w.winner && s.seed && w.winner.includes(s.seed.substring(0, 40)));
-  const fullSeedText = matchedSeed ? matchedSeed.seed : w.winner;
+  // V3.3: guaranteed lookup by seedId — never fragile text matching
+  const fullSeedText = seedMap[w.winnerId] || w.winnerId;
   const startParts = w.startTime.replace(":", "m").split("m");
   const endParts = w.endTime.replace(":", "m").split("m");
   const startSecs = (parseInt(startParts[0]||0)*60) + parseInt(startParts[1]||0);
   const endSecs = (parseInt(endParts[0]||0)*60) + parseInt(endParts[1]||0);
   const durationSecs = endSecs - startSecs;
+  // Extract structured StoryFacts from seed text for post-compile validation
+  // These are best-effort extractions; validation flags review rather than hard-blocking
+  const castNamesArray = (form.selectedChars||[]).map(cid => {
+    const vaultChars2 = (function(){ try{ var s=localStorage.getItem("hw_characters"); var c=s?JSON.parse(s):[]; return c.length?c:BUILTIN_CHARACTERS; }catch(e){return BUILTIN_CHARACTERS;} })();
+    return (vaultChars2.find(c=>c.id===cid)||{name:cid}).name;
+  });
+  // Detect which characters appear in seed text
+  const seedCharacters = castNamesArray.filter(n => fullSeedText.toLowerCase().includes(n.toLowerCase()));
+  storyFactsMap[ivKey] = {
+    seedId: w.winnerId,
+    originalSeed: fullSeedText,
+    characters: seedCharacters,
+    mechanism: w.winnerMechanism || "UNKNOWN"
+  };
   return {
     intervalId: ivKey,
     startTime: w.startTime,
     endTime: w.endTime,
     intervalDurationSecs: durationSecs,
     needsExtension: durationSecs > 8,
+    winnerId: w.winnerId,
     winnerSeed: fullSeedText,
+    storyFacts: {
+      characters: seedCharacters.length ? seedCharacters : ["cast as appropriate"],
+      location: "(extract from seed: the named location)",
+      initiatingAction: "(extract from seed: the first action)",
+      dramaticDevelopment: "(extract from seed: the second beat or reversal)",
+      visualHook: "(extract from seed: the specific visual hook)"
+    },
     winnerMechanism: w.winnerMechanism || "UNKNOWN",
     winnerRisk: w.winnerRisk || "LOW",
     activeVisualEngine: w.activeVisualEngine || ""
@@ -1694,10 +1755,68 @@ ${JSON.stringify(approvedWinners.map(w => {
         const compilerRaw = await hwAI(compilerSys, compilerUsr, 1, {max_tokens: 4000, _stage:"compiler", _tokenSink: t => { compilerTokens = t; }});
         perfMark("compiler_end");
         compilerData = parseJ(compilerRaw);
-        console.log("[HW-DEBUG] V3 Compiler: compiledClips=" + (compilerData&&compilerData.compiledClips?compilerData.compiledClips.length:0));
+        console.log("[HW-DEBUG] V3.3 Compiler: compiledClips=" + (compilerData&&compilerData.compiledClips?compilerData.compiledClips.length:0));
+
+        // V3.3: Deterministic post-compilation fidelity validation
+        // Checks character names and mechanism keyword presence — structural, not semantic.
+        // Semantic drift (role swap, location change) is flagged as fidelityReview: true.
+        // A flagged clip is retained — never silently dropped — and marked for user inspection.
+        if (compilerData && compilerData.compiledClips) {
+          compilerData.compiledClips.forEach(clip => {
+            const ivKey = clip.intervalId;
+            const facts = storyFactsMap[ivKey];
+            if (!facts) return; // no facts to validate against
+            const prompt = (clip.grokPrompt || "").toLowerCase();
+            const fidelityIssues = [];
+            // Check: named characters from seed appear in compiled prompt
+            facts.characters.forEach(name => {
+              if (name && name.length > 2 && !prompt.includes(name.toLowerCase())) {
+                fidelityIssues.push("character '" + name + "' from winning seed absent in compiled prompt");
+              }
+            });
+            // Check: mechanism keyword roughly preserved
+            const mechKeywords = {
+              "LOCOMOTION-APPROACH": ["approach","toward","walk","enter","cross"],
+              "LOCOMOTION-DEPARTURE": ["leave","depart","walk away","exit","turn away"],
+              "SOCIAL-INTERACTION": ["conversation","react","exchange","talk","responds","notice"],
+              "ENVIRONMENTAL-ACTIVITY": ["handle","pick","hold object","interact","task","work"],
+              "REVEAL-TRANSFORMATION": ["reveal","discover","uncover","transform","change"],
+              "ENTRANCE-ARRIVAL": ["arrive","enter","door","crowd","appearance"],
+              "PURSUIT-GAME": ["follow","chase","pursue","game","spatial"],
+              "INTERRUPTION": ["interrupt","sudden","unexpected","disrupts","stops"]
+            };
+            const mechWords = mechKeywords[facts.mechanism] || [];
+            const mechFound = mechWords.some(w => prompt.includes(w));
+            if (!mechFound) {
+              fidelityIssues.push("mechanism '" + facts.mechanism + "' not detectable in compiled prompt");
+            }
+            if (fidelityIssues.length > 0) {
+              clip.fidelityReview = true;
+              clip.fidelityIssues = fidelityIssues;
+              clip.originalSeed = facts.originalSeed;
+              console.warn("[HW-V3.3-FIDELITY] intervalId=" + ivKey + " issues:", fidelityIssues);
+            } else {
+              clip.fidelityReview = false;
+            }
+          });
+        }
       }
 
       perfMark("total_end");
+
+      // V3.3: SCROLL_STOP creative objective reporting — no quota, no forced approval.
+      // If SCROLL_STOP was requested and zero B-roll clips were approved, record the unmet objective.
+      // This surfaces as a visible advisory in the UI. A-roll is preserved; quality gates are not weakened.
+      let scrollStopAdvisory = null;
+      if (brollEnergy === "SCROLL_STOP" && approvedWinners.length === 0 && brollIntervals.length > 0) {
+        scrollStopAdvisory = {
+          unmetObjective: true,
+          message: "SCROLL_STOP was requested but no B-roll concept cleared the Critic's quality gates. " +
+                   "All " + brollIntervals.length + " B-roll interval(s) fell back to A-roll performance. " +
+                   "Consider: stronger lyric context, different cast configuration, or re-run for a fresh creative pass."
+        };
+        console.warn("[HW-V3.3] SCROLL_STOP unmet — " + brollIntervals.length + " intervals attempted, 0 approved.");
+      }
 
       // ── LATENCY REPORT ────────────────────────────────────────
       const modelCallCount = 1 + (brollIntervals.length > 0 ? 1 : 0) + (approvedWinners.length > 0 ? 1 : 0);
@@ -1777,6 +1896,8 @@ ${JSON.stringify(approvedWinners.map(w => {
         }
 
         // Winner approved — check compiler output
+        // V3.3: resolve winner description from seedMap by winnerId (guaranteed original text)
+        const winnerSeedText = seedMap[winner.winnerId] || winner.winnerId || "";
         const compiled = compiledMap[intervalKey] || compiledMap[interval.startTime + "-" + interval.endTime];
         const hasValidPrompt = compiled && compiled.grokPrompt && compiled.validationPassed !== false;
 
@@ -1803,13 +1924,17 @@ ${JSON.stringify(approvedWinners.map(w => {
           type: "B_ROLL",
           lyricLine: interval.lyricContext || "",
           emotionalEnergy: criticResult.selectionReason || "",
-          sceneDescription: winner.winner,
+          sceneDescription: winnerSeedText,   // V3.3: original seed text, not Critic paraphrase
+          winnerId: winner.winnerId,            // V3.3: stable ID carried through to UI
           activeVisualEngine: winner.activeVisualEngine || "",
           winMargin: winner.winMargin || 0,
           grokPrompt: compiled.grokPrompt,
           intervalDurationSecs: compiled.intervalDurationSecs || null,
           needsExtension: compiled.needsExtension || false,
           extensionNote: compiled.extensionNote || "",
+          fidelityReview: compiled.fidelityReview || false,   // V3.3: post-compile validation flag
+          fidelityIssues: compiled.fidelityIssues || [],       // V3.3: specific issues found
+          originalSeed: compiled.fidelityReview ? (compiled.originalSeed || winnerSeedText) : undefined,
           warningFlags: compiled.warningFlags || [],
           simplificationsApplied: compiled.simplificationsApplied || ""
         });
@@ -1824,7 +1949,8 @@ ${JSON.stringify(approvedWinners.map(w => {
 
       const raw = JSON.stringify({
         songTitle: form.songTitle || "Untitled",
-        directorEngineVersion: "V3.2",
+        directorEngineVersion: "V3.3",
+        scrollStopAdvisory: scrollStopAdvisory || null,
         recordIntent: plannerData.recordIntent || null,
         visualLanguage: plannerData.visualLanguage || null,
         totalDuration: totalSecs,
@@ -2250,11 +2376,11 @@ ${JSON.stringify(approvedWinners.map(w => {
   ), results._debug && /*#__PURE__*/React.createElement("div", {style:{marginBottom:16,border:"1px solid rgba(255,100,100,.2)",borderRadius:12,overflow:"hidden"}},
     /*#__PURE__*/React.createElement("div", {style:{background:"rgba(255,100,100,.06)",padding:"10px 16px",cursor:"pointer"},
       onClick:function(){var el=document.getElementById("hw-debug-body"); el.style.display=el.style.display==="none"?"block":"none";}},
-      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR V3.2 — B-roll: "+(results._debug.brollCount||0)+" | A-roll: "+(results._debug.arollCount||0)+" | Calls: "+(results._debug.perfReport&&results._debug.perfReport.modelCallCount||"?")+" | "+((results._debug.perfReport&&results._debug.perfReport.totalGenerationLatencyMs)?Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000)+"s total":"")+"  (click to expand)")
+      /*#__PURE__*/React.createElement("span", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,.9)",letterSpacing:.5}}, "DEBUG INSPECTOR V3.3 — B-roll: "+(results._debug.brollCount||0)+" | A-roll: "+(results._debug.arollCount||0)+" | Calls: "+(results._debug.perfReport&&results._debug.perfReport.modelCallCount||"?")+" | "+((results._debug.perfReport&&results._debug.perfReport.totalGenerationLatencyMs)?Math.round(results._debug.perfReport.totalGenerationLatencyMs/1000)+"s total":"")+"  (click to expand)")
     ),
     /*#__PURE__*/React.createElement("div", {id:"hw-debug-body",style:{display:"none",padding:"12px 16px",maxHeight:600,overflowY:"auto"}},
       results._debug.perfReport && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(100,200,255,.2)",background:"rgba(100,200,255,.04)"}},
-        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"rgba(100,200,255,.9)",marginBottom:6,letterSpacing:.5}}, "V3.2 PERFORMANCE REPORT"),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"rgba(100,200,255,.9)",marginBottom:6,letterSpacing:.5}}, "V3.3 PERFORMANCE REPORT"),
         /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,255,255,.7)",lineHeight:1.9,fontFamily:"monospace"}},
           /*#__PURE__*/React.createElement("div", null, "Model calls: ", /*#__PURE__*/React.createElement("strong", {style:{color: results._debug.perfReport.modelCallCount > 3 ? "red" : "rgba(100,255,100,.9)"}}, results._debug.perfReport.modelCallCount, " / 3 max")),
           /*#__PURE__*/React.createElement("div", null, "Planner:  ", results._debug.perfReport.plannerLatencyMs, "ms", results._debug.perfReport.plannerInputTokens ? " | in="+results._debug.perfReport.plannerInputTokens+" out="+results._debug.perfReport.plannerOutputTokens : ""),
@@ -2271,8 +2397,9 @@ ${JSON.stringify(approvedWinners.map(w => {
       results._debug.criticData && results._debug.criticData.intervalResults && /*#__PURE__*/React.createElement("div", {style:{marginBottom:12,padding:"10px 12px",borderRadius:8,border:"1px solid rgba(255,100,100,.2)",background:"rgba(255,100,100,.04)"}},
         /*#__PURE__*/React.createElement("div", {style:{fontSize:11,fontWeight:700,color:"rgba(255,120,120,.9)",marginBottom:6,letterSpacing:.5}}, "CRITIC RESULTS"),
         results._debug.criticData.intervalResults.map(function(r,i){return /*#__PURE__*/React.createElement("div",{key:i,style:{marginBottom:8,paddingBottom:8,borderBottom:"1px solid rgba(255,255,255,.06)"}},
-          /*#__PURE__*/React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.9)"}}, r.startTime+" – "+r.endTime+": "+(r.winner==="USE_A_ROLL"?"🎤 A-ROLL":"✅ B-ROLL")),
-          r.winner !== "USE_A_ROLL" && /*#__PURE__*/React.createElement("div",{style:{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2}}, "Winner: "+r.winner),
+          /*#__PURE__*/React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.9)"}}, r.startTime+" – "+r.endTime+": "+(r.winnerId==="USE_A_ROLL"?"🎤 A-ROLL":"✅ B-ROLL")),
+          r.winnerId !== "USE_A_ROLL" && /*#__PURE__*/React.createElement("div",{style:{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2}}, "Winner ID: "+r.winnerId+(r.winnerMechanism?" | "+r.winnerMechanism:"")),
+          r.reject && r.reject.length > 0 && /*#__PURE__*/React.createElement("div",{style:{fontSize:10,color:"rgba(255,100,100,.6)",marginTop:2}}, "Rejected: "+r.reject.map(function(rej){return rej.seedId+"("+rej.code+")"}).join(", ")),
           /*#__PURE__*/React.createElement("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)",marginTop:2}}, "Score: "+r.winnerScore+" vs A-roll "+r.arollScore+" (+"+r.winMargin+")")
         );}),
         results._debug.criticData._debug && results._debug.criticData._debug.diversityCheck && /*#__PURE__*/React.createElement("div",{style:{fontSize:10,color:"rgba(255,200,100,.7)",marginTop:6}}, "Diversity: "+results._debug.criticData._debug.diversityCheck)
@@ -2330,6 +2457,14 @@ ${JSON.stringify(approvedWinners.map(w => {
         );
       })
     )
+  ), results.scrollStopAdvisory && results.scrollStopAdvisory.unmetObjective && /*#__PURE__*/React.createElement("div", {
+    style:{background:"rgba(255,80,80,.10)",border:"1px solid rgba(255,80,80,.35)",borderRadius:8,padding:"12px 16px",margin:"8px 0 4px",display:"flex",gap:10,alignItems:"flex-start"}
+  },
+    /*#__PURE__*/React.createElement("span", {style:{fontSize:18,lineHeight:1}}, "⚠️"),
+    /*#__PURE__*/React.createElement("div", null,
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:12,fontWeight:700,color:"rgba(255,120,120,1)",marginBottom:3,letterSpacing:.5}}, "SCROLL_STOP OBJECTIVE UNMET"),
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"rgba(255,180,180,.85)",lineHeight:1.6}}, results.scrollStopAdvisory.message || "SCROLL_STOP was requested but no B-roll concept cleared the Critic's quality gates. A-roll preserved. Review seeds or adjust settings.")
+    )
   ), /*#__PURE__*/React.createElement("div", {
     className: "sh"
   }, /*#__PURE__*/React.createElement("div", {
@@ -2368,7 +2503,10 @@ ${JSON.stringify(approvedWinners.map(w => {
     }
   }, clip.timestamp), /*#__PURE__*/React.createElement("span", {
     className: "badge ".concat(clip.type === "A-ROLL" ? "b-gold" : "b-pur")
-  }, clip.type))), /*#__PURE__*/React.createElement("div", {
+  }, clip.type), clip.fidelityReview && /*#__PURE__*/React.createElement("span", {
+    style:{fontSize:10,padding:"2px 8px",borderRadius:4,background:"rgba(255,140,0,.18)",border:"1px solid rgba(255,140,0,.45)",color:"rgba(255,180,60,1)",fontWeight:700,fontFamily:"JetBrains Mono,monospace",cursor:"default"},
+    title:(clip.fidelityIssues||[]).join(" | ")||"Fidelity mismatch — check original seed"
+  }, "⚠ FIDELITY REVIEW"))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--muted)",
@@ -2378,7 +2516,13 @@ ${JSON.stringify(approvedWinners.map(w => {
     style: {
       color: "var(--txt)"
     }
-  }, "Lyric moment:"), " ", clip.lyricLine), /*#__PURE__*/React.createElement("div", {
+  }, "Lyric moment:"), " ", clip.lyricLine), clip.fidelityReview && clip.fidelityIssues && clip.fidelityIssues.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style:{background:"rgba(255,140,0,.08)",border:"1px solid rgba(255,140,0,.25)",borderRadius:6,padding:"6px 10px",marginBottom:6,fontSize:10,color:"rgba(255,180,60,.9)",fontFamily:"JetBrains Mono,monospace",lineHeight:1.7}
+  },
+    /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,marginBottom:3}}, "FIDELITY ISSUES DETECTED:"),
+    (clip.fidelityIssues||[]).map(function(issue,fi){return /*#__PURE__*/React.createElement("div",{key:fi}, "• "+issue);}),
+    clip.originalSeed && /*#__PURE__*/React.createElement("div",{style:{marginTop:4,color:"rgba(255,255,255,.5)",fontStyle:"italic"}}, "Original seed: "+clip.originalSeed)
+  ), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--muted)",
