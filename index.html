@@ -1676,66 +1676,14 @@ Respond ONLY with valid JSON matching this exact schema:
       "lyricContext": "exact lyric line this interval covers",
       "emotionalFunction": "what emotional work this B-roll does"
     }
-  ],
-  "sceneSpecs": [
-    {
-      "id": "scene_1",
-      "editIndex": 1,
-      "startTime": "0:09",
-      "endTime": "0:14",
-      "lyricContext": "exact lyric line",
-      "emotionalFunction": "what this scene does emotionally",
-      "arollCandidate": {
-        "concept": "Keep singer performance — describe what A-roll delivers at this specific lyric moment (face, emotion, delivery quality, connection)",
-        "score": {"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},
-        "adversarialCritique": "honest assessment of A-roll's strengths at this moment"
-      },
-      "candidateConcepts": [
-        {
-          "concept": "concept at idea level — human behavior preferred over object symbol — must be genuinely different from other candidates (different visual mechanism)",
-          "score": {"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},
-          "sceneDynamics": {"startState":"what happens at 0-2s","midpointChange":"what changes","endState":"what is different at the end","progressionStrength":"NONE/WEAK/MODERATE/STRONG"},
-          "adversarialCritique": "apply BORING/A-ROLL/POSTER/SYMBOL/GENERATOR tests honestly — what are the weaknesses?",
-          "scrollStopGates": {"cutawayValue":"PASS/FAIL","viewerCuriosity":"PASS/FAIL","visualActivity":"PASS/FAIL","performanceAlignment":"PASS/FAIL","renderRisk":"PASS/FAIL","progressionStrength":"PASS/FAIL"},
-          "marginOverAroll": 0,
-          "decision": "SELECTED/REJECTED — reason in one sentence"
-        },
-        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"},
-        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"},
-        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"},
-        {"concept":"...","score":{"performanceVibeAlignment":0,"lyricIntelligence":0,"cutawayValue":0,"viewerCuriosity":0,"visualActivity":0,"emotionalRelevance":0,"originality":0,"physicalFeasibility":0,"renderability":0,"total":0},"sceneDynamics":{"startState":"","midpointChange":"","endState":"","progressionStrength":"NONE"},"adversarialCritique":"","scrollStopGates":{"cutawayValue":"FAIL","viewerCuriosity":"FAIL","visualActivity":"FAIL","performanceAlignment":"FAIL","renderRisk":"PASS","progressionStrength":"FAIL"},"marginOverAroll":0,"decision":"REJECTED — reason"}
-      ],
-      "selectedConcept": "the winning concept (B-roll beat A-roll by ≥8 AND passed SCROLL_STOP gates if applicable) or USE_A_ROLL",
-      "selectionReason": "evidence-based: describe what SPECIFICALLY happens on screen second by second. No rhetoric.",
-      "arollScore": 0,
-      "winnerScore": 0,
-      "winMargin": 0,
-      "cutawayValueScore": 0,
-      "viewerCuriosityScore": 0,
-      "renderRisk": "low/medium/high",
-      "whyBeatsAroll": "one sentence using observable evidence only — what CHANGES on screen that makes covering the singer worth it",
-      "cast": ["CHARACTER_NAME or NONE"],
-      "environment": "specific physical place",
-      "subjectBlocking": "where each character's body is, what surface supports them, feet accounted for",
-      "physicalSupports": "seat/floor/railing/etc that prevents floating",
-      "action": "the specific human behavior in this moment — prefer behavior over pose",
-      "performanceIntent": "what the character desires/feels/is-trying-not-to-reveal (not choreography)",
-      "cameraPosition": "where camera physically is",
-      "cameraMovement": "static/slow push/etc",
-      "composition": "extreme close / medium / wide",
-      "lighting": "specific lighting condition",
-      "physicsAudit": {
-        "passed": true,
-        "morphRisk": "low/medium/high",
-        "renderRisk": "low/medium/high",
-        "groundingVerified": "what surface, confirmed",
-        "simplificationsApplied": "any simplifications made"
-      },
-      "forbiddenActions": ["no floating","no singing","no camera eye contact"]
-    }
   ]
-}`;
+}
 
+CRITICAL: DO NOT include sceneSpecs in this response. Output ONLY the four fields above.`;
+
+      // ── DIRECTOR PASS 1: Planning — PerformanceContext + EditDecisions only ──
+      // Kept small so it never exceeds token budget regardless of song length.
+      // sceneSpecs are built in Pass 2, one interval at a time.
       const directorUsr = `SONG: "${form.songTitle || "Untitled"}"
 TOTAL DURATION: ${totalSecs} seconds
 AI TOOL: ${aiToolName}
@@ -1746,40 +1694,96 @@ ${lyricsText ? "LYRICS:\n" + lyricsText : "No lyrics provided — infer emotiona
 
 ${priorHistoryBlock ? "PRIOR REEL HISTORY (never repeat these):\n" + priorHistoryBlock : ""}
 
-TASK:
+TASK (PASS 1 — PLANNING ONLY):
 1. Build PerformanceContext — fuse lyrics + performance vibe + visual direction into a Combined Directorial Interpretation BEFORE analyzing anything else
 2. Analyze the lyrics THROUGH that lens — find the thesis as shaped by the performance vibe, not the surface nouns
 3. Declare a VisualLanguage consistent with both the lyrics and the performance vibe
-4. As Editor: decide which intervals COULD benefit from B-roll (generate editDecisions). USE_A_ROLL is always valid.
-5. For each potential B-roll interval — run the FULL ADVERSARIAL SELECTION PIPELINE:
-   a. Generate 5 GENUINELY DIVERGENT B-roll concepts (different visual mechanisms — not 5 variations of staring/proximity/stillness)
-   b. Generate 1 explicit arollCandidate (what A-roll delivers here)
-   c. Apply ADVERSARIAL TESTS to all 6 candidates (BORING/A-ROLL/POSTER/SYMBOL/GENERATOR)
-   d. Score all 6 using V2.2 dimensions including viewerCuriosity
-   e. Apply SCROLL_STOP mandatory gates if B-Roll Energy = SCROLL_STOP
-   f. Calculate marginOverAroll for each B-roll candidate
-   g. Winner = B-roll candidate that (passes all gates if applicable) AND beats A-roll by ≥8 points
-   h. If no B-roll wins by ≥8: selectedConcept = USE_A_ROLL
-6. Build full SceneSpec only for the winning concept — physics audit + renderability audit
-7. In SceneSpec action/performanceIntent: use POSITIVE behavioral direction (what characters DO and INTEND), not a list of prohibitions
+4. As Editor: divide the ${totalSecs}s into intervals and decide USE_A_ROLL vs B_ROLL for each. B-roll must earn the right to interrupt the singer.
 
-PHYSICAL SAFETY RULE: Do NOT achieve render safety by freezing everyone. If a scene requires immobility to be safe, simplify the concept so characters can move naturally.
+DO NOT generate sceneSpecs or candidate concepts in this pass. That happens separately.
+OUTPUT ONLY: performanceContext, creativeBrief, visualLanguage, editDecisions.
 
-Remember: duration=${totalSecs}s. Excellent A-roll performance exists underneath. B-roll is surgical punctuation. 0 B-roll scenes is a valid outcome if no B-roll earns it.
+Remember: duration=${totalSecs}s. 0 B-roll intervals is a valid outcome.`;
 
-THE CRITIC'S QUESTION for every B-roll: "After 2 seconds, what specific unresolved visual question makes the viewer watch the rest? Name it. If you cannot name it, viewerCuriosity is low and this scene probably loses to A-roll."`;
-
-      const directorRaw = await hwAI(directorSys, directorUsr, 2, {max_tokens: 16000});
+      const directorRaw = await hwAI(directorSys, directorUsr, 2, {max_tokens: 4000});
       const directorData = parseJ(directorRaw);
-      if (!directorData || !directorData.sceneSpecs || directorData.sceneSpecs.length === 0) {
-        throw new Error("Director returned no scene specs. Raw: " + (directorRaw||"").substring(0, 200));
+      if (!directorData || !directorData.editDecisions) {
+        throw new Error("Director Pass 1 failed: no edit decisions. Raw: " + (directorRaw||"").substring(0, 300));
       }
 
-      const { creativeBrief, visualLanguage, editDecisions, sceneSpecs } = directorData;
+      const { creativeBrief, visualLanguage, editDecisions } = directorData;
+      const brollIntervals = (editDecisions || []).filter(d => d.type === "B_ROLL");
+
+      showToast("Director planned " + brollIntervals.length + " B-roll intervals. Running adversarial selection…", "🎬");
+
+      // ── DIRECTOR PASS 2: Adversarial Selection — one call per B-roll interval ──
+      // Each call produces ONE complete sceneSpec with full candidateConcepts, scoring,
+      // SCROLL_STOP gates, and physics audit. Token budget: ~8000 per interval.
+      const sceneSpecSys = directorSys; // reuse same system context/doctrine
+
+      const sceneSpecs = [];
+      for (let idx = 0; idx < brollIntervals.length; idx++) {
+        const interval = brollIntervals[idx];
+        showToast(`Adversarial selection: scene ${idx + 1} of ${brollIntervals.length}…`, "🎬");
+
+        const sceneUsr = `PERFORMANCE CONTEXT (from Pass 1):
+${JSON.stringify(directorData.performanceContext || {}, null, 2)}
+
+CREATIVE BRIEF THESIS: ${creativeBrief ? creativeBrief.emotionalThesis : ""}
+VISUAL LANGUAGE MOTIF: ${visualLanguage ? visualLanguage.motif : ""}
+
+INTERVAL TO EVALUATE:
+startTime: ${interval.startTime}
+endTime: ${interval.endTime}
+lyricContext: ${interval.lyricContext || ""}
+emotionalFunction: ${interval.emotionalFunction || ""}
+
+TASK (PASS 2 — ADVERSARIAL SELECTION FOR ONE INTERVAL):
+Run the FULL ADVERSARIAL SELECTION PIPELINE for this single interval:
+a. Generate 5 GENUINELY DIVERGENT B-roll concepts (different visual mechanisms — not 5 variations of staring/proximity/stillness)
+b. Generate 1 explicit arollCandidate (what A-roll delivers here — singer face, emotion, delivery)
+c. Apply ADVERSARIAL TESTS to all 6 candidates (BORING/A-ROLL/POSTER/SYMBOL/GENERATOR)
+d. Score all 6 using V2.2 dimensions including viewerCuriosity
+e. Apply SCROLL_STOP mandatory gates if B-Roll Energy = SCROLL_STOP
+f. Calculate marginOverAroll for each B-roll candidate
+g. Winner = B-roll that (passes all gates) AND beats A-roll by ≥8 points. If none: USE_A_ROLL.
+h. Build full SceneSpec for the winner — physics audit + renderability audit
+i. Use POSITIVE behavioral direction in action/performanceIntent (what characters DO/INTEND)
+j. PHYSICAL SAFETY RULE: Do NOT freeze actors. Simplify blocking if needed.
+
+THE CRITIC'S QUESTION: "After 2 seconds, what specific unresolved visual question makes the viewer watch the rest? Name it."
+
+Respond ONLY with valid JSON for ONE sceneSpec matching the schema exactly.`;
+
+        try {
+          const sceneRaw = await hwAI(sceneSpecSys, sceneUsr, 1, {max_tokens: 8000});
+          const sceneData = parseJ(sceneRaw);
+          // Accept either a bare sceneSpec object or one wrapped in sceneSpecs array
+          let spec = null;
+          if (sceneData && sceneData.sceneSpecs && sceneData.sceneSpecs.length > 0) {
+            spec = sceneData.sceneSpecs[0];
+          } else if (sceneData && sceneData.id) {
+            spec = sceneData;
+          } else if (sceneData && sceneData.selectedConcept !== undefined) {
+            spec = sceneData;
+          }
+          if (spec) {
+            spec.id = spec.id || ("scene_" + (idx + 1));
+            spec.editIndex = idx + 1;
+            spec.startTime = spec.startTime || interval.startTime;
+            spec.endTime = spec.endTime || interval.endTime;
+            spec.lyricContext = spec.lyricContext || interval.lyricContext;
+            sceneSpecs.push(spec);
+          }
+        } catch(sceneErr) {
+          console.warn("Scene " + (idx+1) + " adversarial selection failed:", sceneErr.message);
+          // Non-fatal: continue with remaining intervals
+        }
+      }
+
       const approvedScenes = sceneSpecs.filter(s => s.physicsAudit && s.physicsAudit.passed !== false && s.selectedConcept && s.selectedConcept !== "USE_A_ROLL");
-      // Count rejected CONCEPTS (candidates that lost to A-roll or failed gates), not just failed physics specs
+      // Count rejected CONCEPTS (candidates that lost to A-roll or failed gates)
       const rejectedConceptCount = sceneSpecs.reduce((sum, s) => {
-        const totalCandidates = (s.candidateConcepts ? s.candidateConcepts.length : 0) + 1; // +1 for arollCandidate
         const rejected = s.candidateConcepts ? s.candidateConcepts.filter(c => c.decision && c.decision.toUpperCase().startsWith("REJECTED")).length : 0;
         return sum + rejected;
       }, 0);
