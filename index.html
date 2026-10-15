@@ -250,7 +250,7 @@ function toText(r, title) {
             o += "\n" + "─".repeat(50) + "\n";
             o += "CLIP " + (item.number || idx + 1) + " | " + (item.timestamp || "") + " | " + (item.type || "") + "\n";
             if (item.section) o += "SECTION: " + item.section + "\n";
-            if (item.lyricMoment) o += "LYRIC: " + item.lyricMoment + "\n";
+            if (item.lyricLine || item.lyricMoment) o += "LYRIC: " + (item.lyricLine || item.lyricMoment) + "\n";
             if (item.emotionalEnergy) o += "ENERGY: " + item.emotionalEnergy + "\n";
             if (item.sceneDescription) o += "SCENE: " + item.sceneDescription + "\n";
             if (item.characters && item.characters.length) o += "CHARACTERS: " + item.characters.join(", ") + "\n";
@@ -1129,7 +1129,7 @@ function VideoEngine(_ref0) {
         timestamp: c.timestamp,
         type: c.type,
         section: c.section || "",
-        lyricMoment: c.lyricMoment || "",
+        lyricLine: c.lyricLine || c.lyricMoment || "",
         emotionalEnergy: c.emotionalEnergy || "",
         sceneDescription: c.sceneDescription || "",
         grokPrompt: c.grokPrompt || ""
